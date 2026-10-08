@@ -1,0 +1,321 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f3e6c4;
+  --paper-dark: #ead9a8;
+  --line: rgba(90, 140, 190, 0.42);
+  --margin: #c43c3c;
+  --ink: #16324f;
+  --ink-soft: #2c4a6e;
+  --ai-bg: #0e1a2b;
+  --ai-card: #15263d;
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(255, 220, 160, 0.18), transparent 50%),
+    radial-gradient(900px 500px at 100% 0%, rgba(20, 80, 90, 0.22), transparent 45%),
+    #3b2416;
+  background-attachment: fixed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-hand {
+  font-family: var(--font-caveat), "Segoe Script", cursive;
+}
+
+.font-book {
+  font-family: var(--font-literata), Georgia, serif;
+}
+
+.font-ui {
+  font-family: var(--font-dm), system-ui, sans-serif;
+}
+
+.desk-app {
+  min-height: 100vh;
+  background-image:
+    linear-gradient(180deg, rgba(20, 12, 8, 0.28), rgba(20, 12, 8, 0.45)),
+    repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.025) 0 1px, transparent 1px 5px),
+    radial-gradient(ellipse at 50% 35%, #725039 0%, #4e3425 55%, #352217 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.notebook {
+  position: relative;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg, rgba(196, 60, 60, 0.95) 0 3px, transparent 3px),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 35px,
+      var(--line) 35px 36px
+    ),
+    repeating-linear-gradient(3deg, rgba(105, 75, 35, 0.025) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 45% 20%, #fff9e9 0%, var(--paper) 72%, #eadab5 100%);
+  background-blend-mode: normal, normal, multiply, normal;
+  background-size: auto, auto, auto, cover;
+  box-shadow:
+    0 30px 70px rgba(20, 10, 0, 0.45),
+    inset 0 0 80px rgba(120, 80, 20, 0.08);
+}
+
+.notebook::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 48px;
+  background: linear-gradient(90deg, rgba(120, 80, 20, 0.16), rgba(120, 80, 20, 0) 75%);
+  pointer-events: none;
+}
+
+/* Spiral delikleri: ortası boş, koyu halkalı gerçek defter görünümü */
+.spiral-delik {
+  display: block;
+  width: 19px;
+  height: 19px;
+  margin-inline: auto;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(0, 0, 0, 0) 0 32%,
+    #4a2f1a 33% 52%,
+    #1c1109 53% 66%,
+    rgba(28, 17, 9, 0) 67%
+  );
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.4));
+}
+
+.notebook-row {
+  min-height: 36px;
+}
+
+/* Dar ekranda taşma olmasın: ızgara çocukları küçülebilsin */
+.notebook-row > *,
+.notebook .grid > * {
+  min-width: 0;
+}
+
+.notebook input,
+.notebook select,
+.notebook textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ink-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+  width: 100%;
+}
+
+.ink-input:focus {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.chip {
+  border: 1px solid rgba(22, 50, 79, 0.18);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.chip.active-nakit {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.chip.active-kart {
+  background: #fef3c7;
+  border-color: #d97706;
+  color: #b45309;
+}
+
+.chip.active-havale {
+  background: #dcfce7;
+  border-color: #15803d;
+  color: #166534;
+}
+
+.ai-panel {
+  background:
+    radial-gradient(800px 280px at 80% -10%, rgba(45, 212, 191, 0.16), transparent 50%),
+    linear-gradient(180deg, #102033, #0b1624 60%, #09101a);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+}
+
+.msg-user {
+  background: linear-gradient(180deg, #1d4e4a, #155e75);
+}
+
+.msg-ai {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Asistan mesajı zengin metin */
+.msg-html p {
+  margin: 0 0 6px;
+}
+.msg-html p:last-child {
+  margin-bottom: 0;
+}
+.msg-html strong {
+  color: #99f6e4;
+  font-weight: 700;
+}
+.msg-html code {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0 5px;
+  font-size: 12px;
+}
+.msg-html a {
+  display: inline-block;
+  margin-top: 6px;
+  background: #2dd4bf;
+  color: #0b1624 !important;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+.msg-html .msg-baslik {
+  color: #99f6e4;
+  font-weight: 700;
+  font-size: 15px;
+}
+.msg-html .msg-madde {
+  padding-left: 2px;
+}
+.msg-html .msg-bos {
+  height: 6px;
+}
+.msg-tablo {
+  margin: 6px -4px;
+  overflow-x: auto;
+  border-radius: 10px;
+}
+.msg-tablo table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.msg-tablo th,
+.msg-tablo td {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 4px 7px;
+  text-align: left;
+  white-space: nowrap;
+}
+.msg-tablo th {
+  background: rgba(45, 212, 191, 0.14);
+  color: #99f6e4;
+  font-weight: 700;
+}
+.msg-tablo td {
+  font-variant-numeric: tabular-nums;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(80, 60, 30, 0.35);
+  border-radius: 99px;
+}
+
+.ai-panel .scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.stamp {
+  border: 2px solid #9f1239;
+  color: #9f1239;
+  letter-spacing: 0.18em;
+  transform: rotate(-8deg);
+}
+
+/* Rapor grafikleri ekranda da baskıda/PDF'te de renkli çıksın */
+.yazdir-renk {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .desk-app {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-root {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .print-sheet table {
+    border-collapse: collapse !important;
+  }
+
+  .print-sheet th,
+  .print-sheet td {
+    border: 1px solid #999 !important;
+    padding: 4px 6px !important;
+  }
+
+  .print-sheet tr {
+    break-inside: avoid;
+  }
+}
+
+/* === Global Pro Themes (additive, notebook default korunur) === */
+[data-theme='pro-light'] .desk-app { background: linear-gradient(180deg,#f8fafc,#eef2f7); }
+[data-theme='pro-light'] body { background:#eef2f7; color:#0f172a; }
+[data-theme='pro-light'] .notebook { background:#ffffff; background-image:none; box-shadow:0 12px 32px rgba(15,23,42,.10); border:1px solid #e2e8f0; border-radius:18px; }
+[data-theme='pro-dark'] .desk-app { background: linear-gradient(180deg,#0b1220,#0f172a); }
+[data-theme='pro-dark'] body { background:#0b1220; color:#e2e8f0; }
+[data-theme='pro-dark'] .notebook { background:#111c30; background-image:none; color:#e2e8f0; border:1px solid rgba(148,163,184,.18); border-radius:18px; box-shadow:0 12px 32px rgba(0,0,0,.35); }
+[data-theme='pro-dark'] .notebook input,[data-theme='pro-dark'] .notebook select,[data-theme='pro-dark'] .notebook textarea { color:#e2e8f0; }
+[data-theme='pro-dark'] .ink-input { color:#e2e8f0; }
+[dir='rtl'] .notebook::before { inset:0 0 0 auto; }
