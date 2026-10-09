@@ -21,9 +21,11 @@ export function GlobalBar({ compact = false }: { compact?: boolean }) {
   }, []);
 
   return (
-    <div className="no-print flex flex-wrap items-center gap-2 rounded-[16px] bg-black/25 px-3 py-1.5 text-amber-50 backdrop-blur-md">
+    <div className={compact
+      ? "no-print flex flex-wrap items-center gap-2 px-1 py-1.5"
+      : "no-print flex flex-wrap items-center gap-2 rounded-[16px] bg-black/25 px-3 py-1.5 text-amber-50 backdrop-blur-md"}>
       <label className="flex items-center gap-1 text-xs">
-        <I name="globe" size={13} />
+        <I name="globe" size={14} className={compact ? "text-teal-700" : undefined} />
         <select
           value={locale}
           onChange={(e) => {
@@ -31,7 +33,9 @@ export function GlobalBar({ compact = false }: { compact?: boolean }) {
             setLoc(v);
             setLocale(v);
           }}
-          className="rounded-full bg-white/10 px-2 py-1 text-xs outline-none [&>option]:text-slate-900"
+          className={compact
+            ? "rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-teal-800 outline-none ring-1 ring-slate-300 hover:ring-teal-500 [&>option]:text-slate-900"
+            : "rounded-full bg-white/10 px-2 py-1 text-xs outline-none [&>option]:text-slate-900"}
           title="Language / Dil / Язык"
         >
           {LOCALES.map((l) => (
