@@ -32,6 +32,23 @@ export default function GirisPage() {
     );
   }
 
+  async function googleGiris() {
+    setBusy(true);
+    setHata(null);
+    setBilgi(null);
+    try {
+      const supa = createClient();
+      const { error } = await supa.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/app` },
+      });
+      if (error) throw error;
+    } catch (err) {
+      setHata(err instanceof Error ? err.message : "Google girişi başarısız");
+      setBusy(false);
+    }
+  }
+
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -64,7 +81,7 @@ export default function GirisPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-to-b from-slate-50 to-slate-100 p-6">
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
-        <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Tailor Ledger</p>
+        <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Shop Ledger</p>
         <h1 className="mt-2 text-center text-2xl font-extrabold">
           {mode === "register" ? "Kayıt ol — 5 gün ücretsiz" : "Giriş yap"}
         </h1>
@@ -113,6 +130,19 @@ export default function GirisPage() {
             {busy ? "…" : mode === "register" ? "Ücretsiz başla" : "Giriş yap"}
           </button>
         </form>
+        <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          veya
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        <button
+          type="button"
+          onClick={() => void googleGiris()}
+          disabled={busy}
+          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-slate-500 disabled:opacity-50"
+        >
+          G Google ile giriş yap
+        </button>
         <p className="mt-3 text-center text-[11px] text-slate-400">5 gün free · sonra Pro $3/ay</p>
       </div>
     </div>
