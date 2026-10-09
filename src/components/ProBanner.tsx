@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useT } from "@/lib/i18n";
+import { LEMON_DIRECT_URL } from "@/lib/billing";
 import { I } from "./ui-icon";
 
 export function ProBanner({ gun, email }: { gun: number; email: string }) {
@@ -21,10 +22,14 @@ export function ProBanner({ gun, email }: { gun: number; email: string }) {
         body: JSON.stringify({ email }),
       });
       const json = (await res.json()) as { ok: boolean; url?: string; error?: string };
-      if (!json.ok || !json.url) throw new Error(json.error || "checkout failed");
-      window.location.href = json.url;
+      if (json.ok && json.url) {
+        window.location.href = json.url;
+        return;
+      }
+      // API anahtarı bozuksa direkt ödeme linkine düş (webhook e-postayla eşler)
+      window.location.href = LEMON_DIRECT_URL;
     } catch (e) {
-      setHata(e instanceof Error ? e.message : "checkout failed");
+      window.location.href = LEMON_DIRECT_URL;
     } finally {
       setBusy(false);
     }

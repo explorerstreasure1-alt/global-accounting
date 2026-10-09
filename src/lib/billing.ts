@@ -20,6 +20,11 @@ export function billingConfigured(): boolean {
   return Boolean(apiKey && storeId && variantId);
 }
 
+/** API anahtarı çalışmazsa düğmeler doğrudan bu ödeme linkine gider. */
+export const LEMON_DIRECT_URL =
+  process.env.NEXT_PUBLIC_LEMON_CHECKOUT_URL ||
+  "https://projeai.lemonsqueezy.com/checkout/buy/28a3f3c5-4f04-4a74-98df-bc8e7caa1f82";
+
 export async function createCheckoutUrl(opts: { email?: string; userId?: string }): Promise<string> {
   const { apiKey, storeId, variantId } = billingEnv();
   if (!apiKey || !storeId || !variantId) throw new Error("Billing not configured");

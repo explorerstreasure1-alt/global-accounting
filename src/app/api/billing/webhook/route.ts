@@ -25,7 +25,10 @@ async function verifySignature(raw: string, sig: string | null): Promise<boolean
 
 type LemonEvent = {
   meta?: { event_name?: string; custom_data?: { user_id?: string } };
-  data?: { id?: string; attributes?: { customer_id?: number | string; status?: string } };
+  data?: {
+    id?: string;
+    attributes?: { customer_id?: number | string; status?: string; user_email?: string; user_name?: string };
+  };
 };
 
 export async function POST(req: Request) {
@@ -45,8 +48,30 @@ export async function POST(req: Request) {
   const userId = ev?.meta?.custom_data?.user_id;
   const subId = ev?.data?.id ? String(ev.data.id) : null;
   const custId = ev?.data?.attributes?.customer_id != null ? String(ev.data.attributes.customer_id) : null;
+  const buyerEmail = ev?.data?.attributes?.user_email || null;
 
-  if (userId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  async function ownerIdFor(): Promise<string | null> {
+    if (userId) return userId;
+    // Direkt linkle ödeyenler: e-postadan kullanıcıyı bul
+    if (buyerEmail && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supa0 = await createServiceClient();
+        let page = 1;
+        for (;;) {
+          const { data, error } = await supa0.auth.admin.listUsers({ page, perPage: 100 });
+          if (error || !data?.users?.length) break;
+          const hit = data.users.find((u) => u.email?.toLowerCase() === buyerEmail.toLowerCase());
+          if (hit) return hit.id;
+          if (data.users.length < 100) break;
+          page += 1;
+        }
+      } catch { /* eşleşemezse pro açılamaz, logda kalır */ }
+    }
+    return null;
+  }
+
+  const ownerId = await ownerIdFor();
+  if (ownerId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const supa = await createServiceClient();
       if (name === "subscription_created" || name === "subscription_updated" || name === "order_created") {
@@ -54,15 +79,17 @@ export async function POST(req: Request) {
           plan: "pro",
           lemon_customer_id: custId,
           lemon_subscription_id: subId,
-        }).eq("owner_id", userId);
-        console.log("[billing webhook] pro opened for", userId);
+        }).eq("owner_id", ownerId);
+        console.log("[billing webhook] pro opened for", ownerId);
       } else if (name === "subscription_cancelled" || name === "subscription_expired") {
-        await supa.from("businesses").update({ plan: "free" }).eq("owner_id", userId);
-        console.log("[billing webhook] downgraded to free for", userId);
+        await supa.from("businesses").update({ plan: "free" }).eq("owner_id", ownerId);
+        console.log("[billing webhook] downgraded to free for", ownerId);
       }
     } catch (e) {
       console.error("[billing webhook] db error:", (e as Error)?.message);
     }
+  } else {
+    console.log("[billing webhook] no owner match", { name, userId, buyerEmail });
   }
   return Response.json({ ok: true, event: name });
 }

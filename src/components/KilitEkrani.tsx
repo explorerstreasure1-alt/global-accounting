@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useT } from "@/lib/i18n";
+import { LEMON_DIRECT_URL } from "@/lib/billing";
 import { I } from "./ui-icon";
 
 export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: number; email: string; businessName: string }) {
@@ -19,10 +20,13 @@ export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: num
         body: JSON.stringify({ email }),
       });
       const json = (await res.json()) as { ok: boolean; url?: string; error?: string };
-      if (!json.ok || !json.url) throw new Error(json.error || "checkout failed");
-      window.location.href = json.url;
+      if (json.ok && json.url) {
+        window.location.href = json.url;
+        return;
+      }
+      window.location.href = LEMON_DIRECT_URL;
     } catch (e) {
-      setHata(e instanceof Error ? e.message : "checkout failed");
+      window.location.href = LEMON_DIRECT_URL;
     } finally {
       setBusy(false);
     }
