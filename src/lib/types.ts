@@ -1,14 +1,27 @@
-export const KATEGORILER = [
-  "Kira",
-  "Elektrik",
-  "Su",
-  "Doğalgaz",
-  "Ev",
-  "İş Yeri",
-  "Hizmet",
-  "Market",
-  "Diğer",
+﻿export const KATEGORILER = [
+  "Rent",
+  "Utilities",
+  "Water",
+  "Heating",
+  "Home",
+  "Workshop",
+  "Service",
+  "Groceries",
+  "Other",
 ] as const;
+
+/** Old Turkish values → English (backward compat for existing rows). */
+export const KATEGORI_ESKI: Record<string, string> = {
+  Kira: "Rent",
+  Elektrik: "Utilities",
+  Su: "Water",
+  "Doğalgaz": "Heating",
+  Ev: "Home",
+  "İş Yeri": "Workshop",
+  Hizmet: "Service",
+  Market: "Groceries",
+  "Diğer": "Other",
+};
 
 export type Kategori = (typeof KATEGORILER)[number];
 export type OdemeTipi = "Nakit" | "Kart" | "Havale";
@@ -43,7 +56,7 @@ export type Ayarlar = {
   paraBirimi: string;
   kiraSonrakiTarih: string | null;
   acilisBakiyesi: number;
-  /** Yapay zekâ motoru: otomatik (Groq beyin + Ollama anlatım), groq (her şey Groq), ollama (önce yerel) */
+  /** AI engine: otomatik (Groq + local), groq (all Groq), ollama (local first) */
   aiMotor: "otomatik" | "groq" | "ollama";
   /** Ollama modeli (ör. gemma3:4b). Ollama kapalıysa Groq devreye girer. */
   ollamaModel: string;

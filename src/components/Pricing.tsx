@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { useT } from "@/lib/i18n";
+import { createClient, supabaseConfigured } from "@/lib/supabase/client";
+import { I } from "./ui-icon";
+
+const LEMON_CHECKOUT_URL =
+  process.env.NEXT_PUBLIC_LEMON_CHECKOUT_URL ||
+  "https://projeai.lemonsqueezy.com/checkout/buy/28a3f3c5-4f04-4a74-98df-bc8e7caa1f82";
 
 export function Pricing() {
   const { t } = useT();
@@ -12,17 +18,29 @@ export function Pricing() {
     setBusy(true);
     setMsg(null);
     try {
+      // Önce API checkout (user_id işlenir → webhook Pro'yu doğru hesaba açar)
+      let email: string | undefined;
+      let userId: string | undefined;
+      if (supabaseConfigured()) {
+        try {
+          const supa = createClient();
+          const { data: { user } } = await supa.auth.getUser();
+          email = user?.email ?? undefined;
+          userId = user?.id;
+        } catch { /* misafir devam */ }
+      }
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ email, userId }),
       });
-      const json = (await res.json()) as { ok: boolean; url?: string; error?: string };
+      const json = (await res.json()) as { ok: boolean; url?: string };
       if (json.ok && json.url) {
         window.location.href = json.url;
         return;
       }
-      setMsg(json.error || "Checkout unavailable — set Lemon keys in Vercel env.");
+      // API yoksa direkt linke düş
+      window.location.href = LEMON_CHECKOUT_URL;
     } catch {
       setMsg("Checkout failed — try again.");
     } finally {
@@ -36,9 +54,9 @@ export function Pricing() {
         <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">{t("free_plan")}</p>
         <p className="mt-2 text-4xl font-bold">$0</p>
         <ul className="mt-4 space-y-2 text-sm text-slate-600">
-          <li>✓ Ledger + day/month close</li>
-          <li>✓ Excel + backup</li>
-          <li>✓ 7 languages</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> Ledger + day/month close</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> Excel + backup</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> 7 languages</li>
         </ul>
         <a
           href="/app"
@@ -53,9 +71,9 @@ export function Pricing() {
           $3<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
         </p>
         <ul className="mt-4 space-y-2 text-sm text-slate-200">
-          <li>✓ Everything in Starter</li>
-          <li>✓ AI assistant (Groq + HuggingFace fallback)</li>
-          <li>✓ Priority support for tailors</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> Everything in Starter</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> Word reports + priority support</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> Priority support for small businesses</li>
         </ul>
         <button
           onClick={() => void goPro()}

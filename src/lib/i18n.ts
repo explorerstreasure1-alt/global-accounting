@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { globalDicts } from "./i18n-dict";
 
 /** Global locale + theme foundation. Additive, breaks nothing. */
 
@@ -26,7 +27,7 @@ export const THEMES: Array<{ id: ThemeId; label: string }> = [
 type Dict = Record<string, string>;
 
 const en: Dict = {
-  app_sub: "Tailor accounting · Assistant",
+  app_sub: "Small business ledger",
   ledger: "Ledger",
   assistant: "Assistant",
   income: "Income",
@@ -81,7 +82,7 @@ const en: Dict = {
 };
 
 const tr: Dict = {
-  app_sub: "Muhasebe defteri · Defterdar",
+  app_sub: "Esnaf muhasebe defteri",
   ledger: "Defter",
   assistant: "Asistan",
   income: "Gelir",
@@ -132,11 +133,11 @@ const tr: Dict = {
   start_free: "Uygulamayı aç",
   go_pro: "Pro'ya geç — $3/ay",
   pro_active: "Pro aktif",
-  payment: "�deme",
+  payment: "Ödeme",
 };
 
 const ru: Dict = {
-  app_sub: "Учёт ателье · Ассистент",
+  app_sub: "Бухгалтерия малого бизнеса",
   ledger: "Книга",
   assistant: "Ассистент",
   income: "Доход",
@@ -192,7 +193,7 @@ const ru: Dict = {
 
 // de/fr/es/ar: core translated, extended falls back to en
 const de: Dict = {
-  app_sub: "Schneider-Buchhaltung · Assistent",
+  app_sub: "Kleinunternehmen-Buchhaltung",
   ledger: "Buch",
   assistant: "Assistent",
   income: "Einnahmen",
@@ -247,7 +248,7 @@ const de: Dict = {
 };
 
 const fr: Dict = {
-  app_sub: "Compta tailleur · Assistant",
+  app_sub: "Compta petites entreprises",
   ledger: "Registre",
   assistant: "Assistant",
   income: "Recettes",
@@ -302,7 +303,7 @@ const fr: Dict = {
 };
 
 const es: Dict = {
-  app_sub: "Contabilidad sastre · Asistente",
+  app_sub: "Contabilidad negocios",
   ledger: "Libro",
   assistant: "Asistente",
   income: "Ingresos",
@@ -357,7 +358,7 @@ const es: Dict = {
 };
 
 const ar: Dict = {
-  app_sub: "محاسبة الخياط · مساعد",
+  app_sub: "دفتر المحاسبة",
   ledger: "الدفتر",
   assistant: "المساعد",
   income: "الدخل",
@@ -411,7 +412,36 @@ const ar: Dict = {
   payment: "الدفع",
 };
 
-const MAP: Record<LocaleCode, Dict> = { en, tr, ru, de, fr, es, ar };
+const MAP: Record<LocaleCode, Dict> = {
+  en: { ...en, ...globalDicts.en },
+  tr: { ...tr, ...globalDicts.tr },
+  ru: { ...ru, ...globalDicts.ru },
+  de: { ...de, ...globalDicts.de },
+  fr: { ...fr, ...globalDicts.fr },
+  es: { ...es, ...globalDicts.es },
+  ar: { ...ar, ...globalDicts.ar },
+};
+
+/** Locale → Intl + default currency. */
+export const LOCALE_META: Record<LocaleCode, { intl: string; currency: string }> = {
+  en: { intl: "en-US", currency: "USD" },
+  tr: { intl: "tr-TR", currency: "TRY" },
+  ru: { intl: "ru-RU", currency: "RUB" },
+  de: { intl: "de-DE", currency: "EUR" },
+  fr: { intl: "fr-FR", currency: "EUR" },
+  es: { intl: "es-ES", currency: "EUR" },
+  ar: { intl: "ar-SA", currency: "SAR" },
+};
+
+export const CURRENCIES = [
+  { code: "TRY", label: "TRY ₺" },
+  { code: "USD", label: "USD $" },
+  { code: "EUR", label: "EUR €" },
+  { code: "GBP", label: "GBP £" },
+  { code: "SAR", label: "SAR ر.س" },
+  { code: "RUB", label: "RUB ₽" },
+  { code: "AED", label: "AED د.إ" },
+] as const;
 
 export function getLocale(): LocaleCode {
   if (typeof window === "undefined") return "en";
@@ -425,6 +455,14 @@ export function setLocale(code: LocaleCode) {
   const meta = LOCALES.find((l) => l.code === code);
   document.documentElement.lang = code;
   document.documentElement.dir = meta?.dir || "ltr";
+  // Kullanıcı elle para birimi seçmediyse dilin varsayılanına geç
+  try {
+    if (!window.localStorage.getItem("tailor-currency")) {
+      const cur = LOCALE_META[code]?.currency ?? "USD";
+      window.localStorage.setItem("tailor-currency", cur);
+      window.dispatchEvent(new CustomEvent("tailor-currency-change", { detail: cur }));
+    }
+  } catch { /* ignore */ }
   window.dispatchEvent(new CustomEvent("tailor-locale-change", { detail: code }));
 }
 
@@ -440,24 +478,60 @@ export function setTheme(id: ThemeId) {
   document.documentElement.dataset.theme = id;
 }
 
+export function getCurrency(fallbackLocale?: LocaleCode): string {
+  if (typeof window === "undefined") return "USD";
+  const v = window.localStorage.getItem("tailor-currency");
+  if (v && /^[A-Z]{3}$/.test(v)) return v;
+  const loc = fallbackLocale ?? getLocale();
+  return LOCALE_META[loc]?.currency ?? "USD";
+}
+
+export function setCurrency(code: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("tailor-currency", code);
+  window.dispatchEvent(new CustomEvent("tailor-currency-change", { detail: code }));
+}
+
+/** Stored English category → display label. TR shows Turkish, others show stored English. */
+const KAT_TR: Record<string, string> = {
+  Rent: "Kira", Utilities: "Elektrik", Water: "Su", Heating: "Doğalgaz", Home: "Ev",
+  Workshop: "İş Yeri", Service: "Hizmet", Groceries: "Market", Other: "Diğer",
+};
+export function catLabel(kategori: string, locale: LocaleCode): string {
+  if (locale === "tr") return KAT_TR[kategori] ?? kategori;
+  return kategori;
+}
+
 export function t(locale: LocaleCode, key: string): string {
   return MAP[locale]?.[key] ?? en[key] ?? key;
 }
 
-/** Reactive translator hook. Re-renders on language change. */
-export function useT(): { locale: LocaleCode; t: (key: string) => string } {
+/** Reactive translator hook. Re-renders on language/currency change. */
+export function useT(): { locale: LocaleCode; t: (key: string) => string; intl: string; currency: string } {
   const [locale, setLoc] = useState<LocaleCode>(() => getLocale());
+  const [currency, setCur] = useState<string>(() => getCurrency(getLocale()));
   useEffect(() => {
-    const fn = (e: Event) => setLoc((e as CustomEvent).detail as LocaleCode);
-    const storage = () => setLoc(getLocale());
+    const fn = (e: Event) => {
+      const v = (e as CustomEvent).detail as LocaleCode;
+      setLoc(v);
+      setCur(getCurrency(v));
+    };
+    const cur = (e: Event) => setCur((e as CustomEvent).detail as string);
+    const storage = () => {
+      setLoc(getLocale());
+      setCur(getCurrency());
+    };
     window.addEventListener("tailor-locale-change", fn as EventListener);
+    window.addEventListener("tailor-currency-change", cur as EventListener);
     window.addEventListener("storage", storage);
     return () => {
       window.removeEventListener("tailor-locale-change", fn as EventListener);
+      window.removeEventListener("tailor-currency-change", cur as EventListener);
       window.removeEventListener("storage", storage);
     };
   }, []);
-  return { locale, t: (key: string) => t(locale, key) };
+  const meta = LOCALE_META[locale] ?? LOCALE_META.en;
+  return { locale, t: (key: string) => t(locale, key), intl: meta.intl, currency };
 }
 
 

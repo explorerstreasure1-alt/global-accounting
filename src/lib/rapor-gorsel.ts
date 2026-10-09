@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { jsPDF } from "jspdf";
 import type { Ayarlar, RaporOzet } from "./types";
-import { formatMoney, formatTRDate } from "./format";
+import { formatMoneyLocale, formatDate } from "./format";
+import { LOCALE_META, type LocaleCode } from "./i18n";
 
 const W = 1080;
 const PAD = 48;
@@ -21,8 +22,13 @@ function kisalt(ctx: CanvasRenderingContext2D, s: string, maxW: number): string 
   return `${t}…`;
 }
 
-/** Raporu WhatsApp'lık fiş görseli olarak çizer (1080px, Türkçe sorunsuz). */
-export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, damga: string): HTMLCanvasElement {
+/** Raporu WhatsApp'lık fiş görseli olarak çizer (1080px). */
+export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, damga: string, opts?: { locale?: string; currency?: string }): HTMLCanvasElement {
+  const loc = (opts?.locale ?? "en") as LocaleCode;
+  const intl = LOCALE_META[loc]?.intl ?? "en-US";
+  const currency = opts?.currency ?? LOCALE_META[loc]?.currency ?? "USD";
+  const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
+  const fd = (iso: string) => formatDate(iso, intl);
   const canvas = document.createElement("canvas");
   const kats = [...rapor.kategoriler].sort((a, b) => b.gelir + b.gider - (a.gelir + a.gider)).slice(0, 8);
   const gunler = rapor.gunler.slice(-20);
@@ -59,9 +65,9 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   ctx.fillText(kisalt(ctx, ayarlar.isletmeAdi, 640), PAD, y + 20);
   ctx.font = "600 25px system-ui, sans-serif";
   ctx.fillStyle = SOLUK;
-  ctx.fillText(baslik.toLocaleUpperCase("tr-TR"), PAD, y + 62);
+  ctx.fillText(baslik.toLocaleUpperCase(intl), PAD, y + 62);
   ctx.font = "24px system-ui, sans-serif";
-  ctx.fillText(`${formatTRDate(rapor.baslangic)} — ${formatTRDate(rapor.bitis)}`, PAD, y + 96);
+  ctx.fillText(`${fd(rapor.baslangic)} — ${fd(rapor.bitis)}`, PAD, y + 96);
   // Damga
   ctx.font = "700 24px system-ui, sans-serif";
   const damgaW = ctx.measureText(damga).width + 36;
@@ -82,17 +88,17 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
 
   // İstatistik ızgarası
   const kutular: Array<[string, string, string?]> = [
-    ["Nakit Gelir", formatMoney(rapor.nakitGelir)],
-    ["Nakit Gider", formatMoney(rapor.nakitGider)],
-    ["Kart Gelir", formatMoney(rapor.kartGelir)],
-    ["Kart Gider", formatMoney(rapor.kartGider)],
-    ["Havale Gelir", formatMoney(rapor.havaleGelir)],
-    ["Havale Gider", formatMoney(rapor.havaleGider)],
-    ["Nakit Net", formatMoney(rapor.nakitNet), YESIL],
-    ["Kart Net", formatMoney(rapor.kartNet), YESIL],
-    ["Havale Net", formatMoney(rapor.havaleNet), YESIL],
-    ["Toplam Gelir", formatMoney(rapor.gelir)],
-    ["Toplam Gider", formatMoney(rapor.gider)],
+    ["Nakit Gelir", fm(rapor.nakitGelir)],
+    ["Nakit Gider", fm(rapor.nakitGider)],
+    ["Kart Gelir", fm(rapor.kartGelir)],
+    ["Kart Gider", fm(rapor.kartGider)],
+    ["Havale Gelir", fm(rapor.havaleGelir)],
+    ["Havale Gider", fm(rapor.havaleGider)],
+    ["Nakit Net", fm(rapor.nakitNet), YESIL],
+    ["Kart Net", fm(rapor.kartNet), YESIL],
+    ["Havale Net", fm(rapor.havaleNet), YESIL],
+    ["Toplam Gelir", fm(rapor.gelir)],
+    ["Toplam Gider", fm(rapor.gider)],
     ["Kayıt", `${rapor.adet} satır`],
   ];
   const sutun = 4;
@@ -109,7 +115,7 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
     ctx.stroke();
     ctx.fillStyle = SOLUK;
     ctx.font = "20px system-ui, sans-serif";
-    ctx.fillText(etiket.toLocaleUpperCase("tr-TR"), cx + 14, cy + 20);
+    ctx.fillText(etiket.toLocaleUpperCase(intl), cx + 14, cy + 20);
     ctx.fillStyle = renk ?? INK;
     ctx.font = "700 27px system-ui, sans-serif";
     ctx.fillText(kisalt(ctx, deger, kutuW - 28), cx + 14, cy + 44);
@@ -119,9 +125,9 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
 
   // Net şeridi
   const serit: Array<[string, string, string]> = [
-    ["GENEL NET", formatMoney(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
-    ["AÇILIŞ", formatMoney(rapor.acilisBakiyesi), INK],
-    ["KAPANIŞ", formatMoney(rapor.kapanisBakiyesi), LACIVERT],
+    ["GENEL NET", fm(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
+    ["AÇILIŞ", fm(rapor.acilisBakiyesi), INK],
+    ["KAPANIŞ", fm(rapor.kapanisBakiyesi), LACIVERT],
   ];
   serit.forEach(([etiket, deger, renk], i) => {
     const cx = PAD + i * ((W - PAD * 2 - 28) / 3 + 14);
@@ -160,7 +166,7 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
     ctx.fillRect(400, y - 6, Math.max(8, 420 * oran), 26);
     ctx.fillStyle = INK;
     ctx.font = "700 24px system-ui, sans-serif";
-    ctx.fillText(formatMoney(k.net, false), 836, y + 16);
+    ctx.fillText(fm(k.net, false), 836, y + 16);
     ctx.font = "24px system-ui, sans-serif";
     y += 46;
     kes();
@@ -178,14 +184,14 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
     for (const g of gunler) {
       const oran = Math.abs(g.net) / maxGun;
       ctx.fillStyle = SOLUK;
-      ctx.fillText(formatTRDate(g.tarih).slice(0, 5), PAD, y + 14);
+      ctx.fillText(fd(g.tarih).slice(0, 5), PAD, y + 14);
       ctx.fillStyle = "#E7DFC9";
       ctx.fillRect(180, y - 6, 560, 24);
       ctx.fillStyle = g.net >= 0 ? YESIL : KIRMIZI;
       ctx.fillRect(180, y - 6, Math.max(8, 560 * oran), 24);
       ctx.fillStyle = INK;
       ctx.font = "700 23px system-ui, sans-serif";
-      ctx.fillText(formatMoney(g.net, false), 760, y + 14);
+      ctx.fillText(fm(g.net, false), 760, y + 14);
       ctx.font = "23px system-ui, sans-serif";
       y += 42;
       kes();
@@ -215,10 +221,10 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   ctx.font = "24px system-ui, sans-serif";
   for (const k of fisler) {
     ctx.fillStyle = SOLUK;
-    ctx.fillText(formatTRDate(k.tarih), PAD, y);
+    ctx.fillText(fd(k.tarih), PAD, y);
     ctx.fillStyle = INK;
     ctx.fillText(kisalt(ctx, k.aciklama, 560), 220, y);
-    const tutar = formatMoney(k.gelir || k.gider);
+    const tutar = fm(k.gelir || k.gider);
     ctx.font = "700 24px system-ui, sans-serif";
     ctx.fillText(kisalt(ctx, tutar, 190), W - PAD - 190, y);
     ctx.font = "24px system-ui, sans-serif";
@@ -242,8 +248,8 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   ctx.stroke();
   ctx.fillStyle = SOLUK;
   ctx.font = "22px system-ui, sans-serif";
-  const simdi = new Date().toLocaleString("tr-TR");
-  ctx.fillText(`${ayarlar.isletmeAdi} · Defterdar ile hazırlandı · ${simdi}`, PAD, y + 30);
+  const simdi = new Date().toLocaleString("en-US");
+  ctx.fillText(`${ayarlar.isletmeAdi} · prepared with LedgerAI · ${simdi}`, PAD, y + 30);
 
   (canvas as HTMLCanvasElement & { _kesimler?: number[] })._kesimler = [...kesimler, H];
   return canvas;
@@ -283,7 +289,7 @@ export async function raporPaylas(canvas: HTMLCanvasElement, baslik: string, rap
   const nav = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean; share?: (d: { files: File[]; title: string }) => Promise<void> };
   try {
     if (nav.canShare?.({ files: [dosya] }) && nav.share) {
-      await nav.share({ files: [dosya], title: `${baslik} ${formatTRDate(rapor.baslangic)} - ${formatTRDate(rapor.bitis)}` });
+      await nav.share({ files: [dosya], title: `${baslik} ${rapor.baslangic} - ${rapor.bitis}` });
       return "paylasildi";
     }
   } catch {
@@ -376,7 +382,7 @@ export async function gonderRapor(opts: {
     }
     if (!blob) return "hata";
 
-    const ozet = `${baslik} ${formatTRDate(rapor.baslangic)} - ${formatTRDate(rapor.bitis)}: Gelir ${formatMoney(rapor.gelir)} / Gider ${formatMoney(rapor.gider)} / Net ${formatMoney(rapor.net)} (${isletmeAdi})`;
+    const ozet = `${baslik} ${rapor.baslangic} - ${rapor.bitis} (${isletmeAdi})`;
     // 1) Dosya insin (garanti)
     indirBlob(blob, ad);
     // 2) Dosya panoya (sohbete Ctrl+V)

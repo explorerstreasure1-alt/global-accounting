@@ -1,4 +1,4 @@
-import {
+﻿import {
   date,
   integer,
   numeric,
@@ -32,7 +32,7 @@ export const ayarlar = pgTable("ayarlar", {
   acilisBakiyesi: numeric("acilis_bakiyesi", { precision: 14, scale: 2 }).notNull().default("0"),
   aiMotor: varchar("ai_motor", { length: 20 }).notNull().default("otomatik"),
   ollamaModel: varchar("ollama_model", { length: 100 }).notNull().default("gemma3:4b"),
-  whatsappAlici: varchar("whatsapp_alici", { length: 30 }).notNull().default("0556102095"),
+  whatsappAlici: varchar("whatsapp_alici", { length: 30 }).notNull().default(""),
 });
 
 export const sohbetMesajlari = pgTable("sohbet_mesajlari", {

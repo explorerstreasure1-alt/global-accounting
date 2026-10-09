@@ -1,9 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { Ayarlar, RaporOzet } from "@/lib/types";
-import { formatMoney, formatTRDate, formatTRDateLong } from "@/lib/format";
+import { formatMoneyLocale, formatDate, formatDateLong } from "@/lib/format";
 import { gonderRapor, raporCanvas, raporJpgIndir, type GonderFormati } from "@/lib/rapor-gorsel";
+import { I } from "./ui-icon";
+import { useT, catLabel } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -43,6 +45,9 @@ export function ReportModal({
   const [hazirlaniyor, setHazirlaniyor] = useState(false);
   const [gonderSec, setGonderSec] = useState(false);
   const [gonderDurum, setGonderDurum] = useState<string | null>(null);
+  const { t, intl, currency, locale } = useT();
+  const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
+  const fd = (iso: string) => formatDate(iso, intl);
   if (!open) return null;
 
   const damgaMetni = damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU");
@@ -50,7 +55,7 @@ export function ReportModal({
   function gorselHazirla(): HTMLCanvasElement | null {
     if (!rapor) return null;
     try {
-      return raporCanvas(rapor, ayarlar, title, damgaMetni);
+      return raporCanvas(rapor, ayarlar, title, damgaMetni, { locale, currency });
     } catch {
       return null;
     }
@@ -92,10 +97,10 @@ export function ReportModal({
             </>
           )}
           <button onClick={onRefresh} className="rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-white">
-            Getir
+            {t("rep_fetch")}
           </button>
           <button onClick={onExcel} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm text-white">
-            Excel
+            {t("rep_excel")}
           </button>
           <button
             disabled={hazirlaniyor || !rapor}
@@ -103,20 +108,27 @@ export function ReportModal({
               const c = gorselHazirla();
               if (c && rapor) raporJpgIndir(c, title, rapor);
             }}
-            className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            title="Raporu resim olarak indir (WhatsApp'a atılır)"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
           >
-            📥 JPG
+            <I name="backup" size={14} /> {t("rep_jpg")}
           </button>
           <button
             disabled={hazirlaniyor || !rapor}
             onClick={() => {
-              window.location.href = `/api/pdf?tip=${encodeURIComponent(pdfTip ?? "z")}&baslangic=${baslangic}&bitis=${bitis}`;
+              window.location.href = `/api/pdf?tip=${encodeURIComponent(pdfTip ?? "z")}&baslangic=${baslangic}&bitis=${bitis}&locale=${locale}&currency=${currency}`;
             }}
-            className="rounded-lg bg-rose-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            title="Raporu PDF olarak indir (sunucudan, kesintisiz)"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-rose-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
           >
-            📄 PDF
+            <I name="report" size={14} /> {t("rep_pdf")}
+          </button>
+          <button
+            disabled={hazirlaniyor || !rapor}
+            onClick={() => {
+              window.location.href = `/api/word?tip=${encodeURIComponent(pdfTip ?? "z")}&baslangic=${baslangic}&bitis=${bitis}&locale=${locale}&currency=${currency}`;
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+          >
+            <I name="report" size={14} /> Word
           </button>
           <button
             disabled={hazirlaniyor || !rapor}
@@ -124,23 +136,22 @@ export function ReportModal({
               setGonderDurum(null);
               setGonderSec(true);
             }}
-            className="rounded-lg bg-sky-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-            title="Format seçip WhatsApp ile gönder"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-3 py-1.5 text-sm text-white disabled:opacity-50"
           >
-            📤 Gönder
+            <I name="send" size={14} /> {t("rep_send")}
           </button>
           <button onClick={() => window.print()} className="rounded-lg bg-indigo-700 px-3 py-1.5 text-sm text-white">
-            Yazdır / PDF
+            {t("rep_printBtn")}
           </button>
           <button onClick={onClose} className="rounded-lg px-3 py-1.5 text-sm text-slate-600">
-            Kapat
+            {t("rep_close")}
           </button>
         </div>
 
         {gonderSec ? (
           <div className="no-print border-b border-amber-200 bg-sky-50 px-5 py-3">
             <p className="text-sm font-semibold text-slate-800">
-              Ne olarak göndereyim? <span className="font-normal text-slate-500">(alıcı: {ayarlar.whatsappAlici || "tanımsız"})</span>
+              {t("rep_sendAs")} <span className="font-normal text-slate-500">({ayarlar.whatsappAlici || t("noDate")})</span>
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {(["pdf", "jpg", "excel"] as GonderFormati[]).map((f) => (
@@ -150,7 +161,7 @@ export function ReportModal({
                   onClick={async () => {
                     if (!rapor) return;
                     setHazirlaniyor(true);
-                    setGonderDurum("Hazırlanıyor…");
+                    setGonderDurum(t("rep_loading"));
                     try {
                       const sonuc = await gonderRapor({
                         format: f,
@@ -165,25 +176,25 @@ export function ReportModal({
                       });
                       setGonderDurum(
                         sonuc === "whatsapp-acildi"
-                          ? "WhatsApp açılıyor — dosyayı sohbete yapıştır (Ctrl+V) ya da ataçla ekle."
+                          ? t("toast_backupDownloading")
                           : sonuc === "indirildi"
-                            ? "Dosya indirildi (WhatsApp açılamadıysa numarayı ayarlardan kontrol et)."
-                            : "Olmadı — tekrar dene.",
+                            ? t("toast_backupDownloading")
+                            : t("toast_backupFailed"),
                       );
                     } finally {
                       setHazirlaniyor(false);
                     }
                   }}
-                  className="rounded-lg bg-sky-700 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
                 >
-                  {f === "pdf" ? "📄 PDF" : f === "jpg" ? "🖼️ JPG" : "📊 Excel"}
+                  <I name={f === "excel" ? "excel" : "report"} size={14} /> {f === "pdf" ? "PDF" : f === "jpg" ? "JPG" : "Excel"}
                 </button>
               ))}
               <button
                 onClick={() => setGonderSec(false)}
                 className="rounded-lg px-3 py-1.5 text-sm text-slate-600"
               >
-                Vazgeç
+                {t("rep_giveUp")}
               </button>
             </div>
             {gonderDurum ? <p className="mt-1 text-xs text-slate-600">{gonderDurum}</p> : null}
@@ -198,7 +209,7 @@ export function ReportModal({
                 <p className="font-hand text-4xl leading-none">{ayarlar.isletmeAdi}</p>
                 <p className="mt-1 text-sm uppercase tracking-[0.2em] text-slate-500">{title}</p>
                 <p className="text-sm text-slate-600">
-                  {rapor ? `${formatTRDate(rapor.baslangic)} — ${formatTRDate(rapor.bitis)}` : ""}
+                  {rapor ? `${fd(rapor.baslangic)} — ${fd(rapor.bitis)}` : ""}
                 </p>
               </div>
             </div>
@@ -208,104 +219,104 @@ export function ReportModal({
           {rapor ? (
             <>
               <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Stat label="Nakit Gelir" value={formatMoney(rapor.nakitGelir)} />
-                <Stat label="Nakit Gider" value={formatMoney(rapor.nakitGider)} />
-                <Stat label="Kart Gelir" value={formatMoney(rapor.kartGelir)} />
-                <Stat label="Kart Gider" value={formatMoney(rapor.kartGider)} />
-                <Stat label="Havale Gelir" value={formatMoney(rapor.havaleGelir)} />
-                <Stat label="Havale Gider" value={formatMoney(rapor.havaleGider)} />
-                <Stat label="Nakit Net" value={formatMoney(rapor.nakitNet)} accent />
-                <Stat label="Kart Net" value={formatMoney(rapor.kartNet)} accent />
-                <Stat label="Havale Net" value={formatMoney(rapor.havaleNet)} accent />
-                <Stat label="Toplam Gelir" value={formatMoney(rapor.gelir)} />
-                <Stat label="Toplam Gider" value={formatMoney(rapor.gider)} />
+                <Stat label={t("rep_cashIncome")} value={fm(rapor.nakitGelir)} />
+                <Stat label={t("rep_cashExpense")} value={fm(rapor.nakitGider)} />
+                <Stat label={t("rep_cardIncome")} value={fm(rapor.kartGelir)} />
+                <Stat label={t("rep_cardExpense")} value={fm(rapor.kartGider)} />
+                <Stat label={t("rep_transferIncome")} value={fm(rapor.havaleGelir)} />
+                <Stat label={t("rep_transferExpense")} value={fm(rapor.havaleGider)} />
+                <Stat label={t("rep_cashNet")} value={fm(rapor.nakitNet)} accent />
+                <Stat label={t("rep_cardNet")} value={fm(rapor.kartNet)} accent />
+                <Stat label={t("rep_transferNet")} value={fm(rapor.havaleNet)} accent />
+                <Stat label={t("rep_totalIncome")} value={fm(rapor.gelir)} />
+                <Stat label={t("rep_totalExpense")} value={fm(rapor.gider)} />
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-3">
-                <Stat label="Genel Net" value={formatMoney(rapor.net)} big />
-                <Stat label="Açılış" value={formatMoney(rapor.acilisBakiyesi)} />
-                <Stat label="Kapanış" value={formatMoney(rapor.kapanisBakiyesi)} big />
+                <Stat label={t("rep_grandNet")} value={fm(rapor.net)} big />
+                <Stat label={t("rep_opening")} value={fm(rapor.acilisBakiyesi)} />
+                <Stat label={t("rep_closing")} value={fm(rapor.kapanisBakiyesi)} big />
               </div>
 
               <GrafikCubuklari rapor={rapor} />
 
-              <h3 className="mt-8 font-hand text-2xl">Günlük döküm</h3>
+              <h3 className="mt-8 font-hand text-2xl">{t("rep_dailyBreak")}</h3>
               <table className="mt-2 w-full border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wider text-slate-500">
-                    <th className="py-2">Tarih</th>
-                    <th>Nakit</th>
-                    <th>Kart</th>
-                    <th>Havale</th>
-                    <th>Gelir</th>
-                    <th>Gider</th>
-                    <th>Net</th>
+                    <th className="py-2">{t("nb_thDate")}</th>
+                    <th>{t("pay_cash")}</th>
+                    <th>{t("pay_card")}</th>
+                    <th>{t("pay_transfer")}</th>
+                    <th>{t("nb_thIncome")}</th>
+                    <th>{t("nb_thExpense")}</th>
+                    <th>{t("net")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rapor.gunler.map((g) => (
                     <tr key={g.tarih} className="border-b border-slate-200">
-                      <td className="py-1.5">{formatTRDate(g.tarih)}</td>
-                      <td>{formatMoney(g.nakitGelir - g.nakitGider)}</td>
-                      <td>{formatMoney(g.kartGelir - g.kartGider)}</td>
-                      <td>{formatMoney(g.havaleGelir - g.havaleGider)}</td>
-                      <td>{formatMoney(g.gelir)}</td>
-                      <td>{formatMoney(g.gider)}</td>
-                      <td className="font-semibold">{formatMoney(g.net)}</td>
+                      <td className="py-1.5">{fd(g.tarih)}</td>
+                      <td>{fm(g.nakitGelir - g.nakitGider)}</td>
+                      <td>{fm(g.kartGelir - g.kartGider)}</td>
+                      <td>{fm(g.havaleGelir - g.havaleGider)}</td>
+                      <td>{fm(g.gelir)}</td>
+                      <td>{fm(g.gider)}</td>
+                      <td className="font-semibold">{fm(g.net)}</td>
                     </tr>
                   ))}
                   {rapor.gunler.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-4 text-center text-slate-500">
-                        Bu aralıkta kayıt yok.
+                        {t("rep_noRange")}
                       </td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
 
-              <h3 className="mt-8 font-hand text-2xl">Kategoriler</h3>
+              <h3 className="mt-8 font-hand text-2xl">{t("rep_categories")}</h3>
               <div className="mt-2 grid gap-2 md:grid-cols-2">
                 {rapor.kategoriler.map((k) => (
                   <div key={k.kategori} className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-sm">
-                    <span>{k.kategori} · {k.adet} kayıt</span>
-                    <span className="tabular-nums">{formatMoney(k.net)}</span>
+                    <span>{catLabel(k.kategori, locale)} · {k.adet}</span>
+                    <span className="tabular-nums">{fm(k.net)}</span>
                   </div>
                 ))}
               </div>
 
-              <h3 className="mt-8 font-hand text-2xl">Fiş listesi</h3>
+              <h3 className="mt-8 font-hand text-2xl">{t("rep_receipts")}</h3>
               <table className="mt-2 w-full border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wider text-slate-500">
-                    <th className="py-2">Tarih</th>
-                    <th>Açıklama</th>
-                    <th>Kategori</th>
-                    <th>Tip</th>
-                    <th>Gelir</th>
-                    <th>Gider</th>
+                    <th className="py-2">{t("nb_thDate")}</th>
+                    <th>{t("nb_thDesc")}</th>
+                    <th>{t("nb_thCat")}</th>
+                    <th>{t("nb_thPay")}</th>
+                    <th>{t("nb_thIncome")}</th>
+                    <th>{t("nb_thExpense")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rapor.kayitlar.map((k) => (
                     <tr key={k.id} className="border-b border-slate-200">
-                      <td className="py-1.5">{formatTRDate(k.tarih)}</td>
+                      <td className="py-1.5">{fd(k.tarih)}</td>
                       <td>{k.aciklama}</td>
-                      <td>{k.kategori}</td>
-                      <td>{k.odemeTipi}</td>
-                      <td>{k.gelir ? formatMoney(k.gelir) : "—"}</td>
-                      <td>{k.gider ? formatMoney(k.gider) : "—"}</td>
+                      <td>{catLabel(k.kategori, locale)}</td>
+                      <td>{k.odemeTipi === "Nakit" ? t("pay_cash") : k.odemeTipi === "Havale" ? t("pay_transfer") : t("pay_card")}</td>
+                      <td>{k.gelir ? fm(k.gelir) : "—"}</td>
+                      <td>{k.gider ? fm(k.gider) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
               <p className="mt-8 text-right text-xs text-slate-500">
-                {ayarlar.isletmeAdi} · {formatTRDateLong(rapor.bitis)} · Mgroq Defter
+                {ayarlar.isletmeAdi} · {formatDateLong(rapor.bitis, intl)}
               </p>
             </>
           ) : (
-            <p className="py-10 text-center text-slate-500">Rapor yükleniyor…</p>
+            <p className="py-10 text-center text-slate-500">{t("rep_loading")}</p>
           )}
         </div>
       </div>
@@ -314,17 +325,20 @@ export function ReportModal({
 }
 
 function GrafikCubuklari({ rapor }: { rapor: RaporOzet }) {
+  const { t, intl, currency, locale } = useT();
+  const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
+  const fd = (iso: string) => formatDate(iso, intl);
   const maxGun = Math.max(1, ...rapor.gunler.map((g) => Math.abs(g.net)));
   const maxKat = Math.max(1, ...rapor.kategoriler.map((k) => k.gider + k.gelir));
   const gunler = rapor.gunler.slice(-14);
   return (
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       <div className="rounded-xl border border-amber-200 bg-white/80 p-3">
-        <p className="text-[11px] uppercase tracking-wider text-slate-500">Günlük net grafiği{rapor.gunler.length > 14 ? " (son 14 gün)" : ""}</p>
+        <p className="text-[11px] uppercase tracking-wider text-slate-500">{t("rep_dailyChart")}{rapor.gunler.length > 14 ? " (14)" : ""}</p>
         <div className="mt-2 space-y-1">
           {gunler.map((g) => (
             <div key={g.tarih} className="flex items-center gap-2 text-[11px]">
-              <span className="w-14 shrink-0 tabular-nums text-slate-600">{formatTRDate(g.tarih).slice(0, 5)}</span>
+              <span className="w-14 shrink-0 tabular-nums text-slate-600">{fd(g.tarih).slice(0, 5)}</span>
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="yazdir-renk h-3 rounded-full"
@@ -334,18 +348,18 @@ function GrafikCubuklari({ rapor }: { rapor: RaporOzet }) {
                   }}
                 />
               </div>
-              <span className="w-20 shrink-0 text-right tabular-nums text-slate-700">{formatMoney(g.net, false)}</span>
+              <span className="w-20 shrink-0 text-right tabular-nums text-slate-700">{fm(g.net, false)}</span>
             </div>
           ))}
-          {gunler.length === 0 ? <p className="text-xs text-slate-400">Grafik için kayıt yok.</p> : null}
+          {gunler.length === 0 ? <p className="text-xs text-slate-400">{t("rep_noRange")}</p> : null}
         </div>
       </div>
       <div className="rounded-xl border border-amber-200 bg-white/80 p-3">
-        <p className="text-[11px] uppercase tracking-wider text-slate-500">Kategori dağılımı (hacme göre)</p>
+        <p className="text-[11px] uppercase tracking-wider text-slate-500">{t("rep_catDist")}</p>
         <div className="mt-2 space-y-1">
           {rapor.kategoriler.slice(0, 8).map((k) => (
             <div key={k.kategori} className="flex items-center gap-2 text-[11px]">
-              <span className="w-16 shrink-0 truncate text-slate-600">{k.kategori}</span>
+              <span className="w-16 shrink-0 truncate text-slate-600">{catLabel(k.kategori, locale)}</span>
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="yazdir-renk h-3 rounded-full"
@@ -355,10 +369,10 @@ function GrafikCubuklari({ rapor }: { rapor: RaporOzet }) {
                   }}
                 />
               </div>
-              <span className="w-20 shrink-0 text-right tabular-nums text-slate-700">{formatMoney(k.net, false)}</span>
+              <span className="w-20 shrink-0 text-right tabular-nums text-slate-700">{fm(k.net, false)}</span>
             </div>
           ))}
-          {rapor.kategoriler.length === 0 ? <p className="text-xs text-slate-400">Grafik için kayıt yok.</p> : null}
+          {rapor.kategoriler.length === 0 ? <p className="text-xs text-slate-400">{t("rep_noRange")}</p> : null}
         </div>
       </div>
     </div>
@@ -394,7 +408,62 @@ type SettingsProps = {
   onYedekIndir: () => void;
   onYedekYukle: () => void;
   onSifirla: () => void;
+  onKiraBol: (ay: number) => Promise<boolean>;
 };
+
+function KiraBolBolumu({ varsayilanAy, onKiraBol }: { varsayilanAy: number; onKiraBol: (ay: number) => Promise<boolean> }) {
+  const { t } = useT();
+  const [ay, setAy] = useState(varsayilanAy > 0 ? varsayilanAy : 6);
+  const [kurulu, setKurulu] = useState(false);
+  const [yapiliyor, setYapiliyor] = useState(false);
+  if (!kurulu) {
+    return (
+      <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3 ring-1 ring-amber-200">
+        <label className="text-xs text-slate-600">
+          {t("kirabol_ay")}
+          <input
+            type="number"
+            min={1}
+            max={36}
+            value={ay}
+            onChange={(e) => setAy(Math.max(1, Math.min(36, Number(e.target.value) || 1)))}
+            className="mt-1 w-20 rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-sm"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => setKurulu(true)}
+          className="rounded-lg bg-indigo-700 px-3 py-1.5 text-sm text-white"
+        >
+          {t("kirabol_btn")}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl bg-indigo-50 p-3 ring-1 ring-indigo-300">
+      <span className="text-sm">{t("kirabol_emin")} ({ay})</span>
+      <button
+        type="button"
+        disabled={yapiliyor}
+        onClick={async () => {
+          setYapiliyor(true);
+          try {
+            if (await onKiraBol(ay)) setKurulu(false);
+          } finally {
+            setYapiliyor(false);
+          }
+        }}
+        className="rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
+      >
+        {yapiliyor ? "…" : t("kirabol_onay")}
+      </button>
+      <button type="button" onClick={() => setKurulu(false)} className="rounded-lg px-3 py-1.5 text-sm">
+        {t("rep_giveUp")}
+      </button>
+    </div>
+  );
+}
 
 type HafizaBilgi = {
   mod: string;
@@ -417,6 +486,7 @@ function HafizaBolumu({
 }) {
   const [bilgi, setBilgi] = useState<HafizaBilgi | null>(null);
   const [sifirlaKurulu, setSifirlaKurulu] = useState(false);
+  const { t } = useT();
 
   useEffect(() => {
     fetch("/api/hafiza")
@@ -433,48 +503,42 @@ function HafizaBolumu({
 
   return (
     <div className="mt-5 rounded-2xl bg-slate-900 p-4 text-slate-100">
-      <p className="font-hand text-2xl text-emerald-200">💾 Hafıza koruması</p>
+      <p className="font-hand inline-flex items-center gap-2 text-2xl text-emerald-200"><I name="db" size={20} /> {t("mem_title")}</p>
       {bilgi ? (
         <>
           <div className="mt-2 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
             <div className="rounded-xl bg-white/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Mod</p>
-              <p className="font-semibold">{bilgi.mod === "postgres" ? "DB + Dosya" : "Kalıcı dosya"}</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-400">{t("mem_mode")}</p>
+              <p className="font-semibold">{bilgi.mod === "postgres" ? t("mem_dbFile") : t("mem_file")}</p>
             </div>
             <div className="rounded-xl bg-white/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Kayıt</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-400">{t("mem_records")}</p>
               <p className="font-semibold tabular-nums">{bilgi.kayitSayisi}</p>
             </div>
             <div className="rounded-xl bg-white/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Sohbet</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-400">{t("mem_chat")}</p>
               <p className="font-semibold tabular-nums">{bilgi.mesajSayisi}</p>
             </div>
             <div className="rounded-xl bg-white/5 px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Yedek</p>
-              <p className="font-semibold tabular-nums">{bilgi.yedekSayisi} adet</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-400">{t("mem_backupCount")}</p>
+              <p className="font-semibold tabular-nums">{bilgi.yedekSayisi}</p>
             </div>
           </div>
           <p className="mt-2 truncate text-[11px] text-slate-400" title={bilgi.veriKlasoru}>
-            📁 {bilgi.veriKlasoru}
-          </p>
-          <p className="mt-1 text-[11px] text-slate-400">
-            Veriler program klasörünün <span className="text-emerald-300">dışında</span> saklanır — güncelleme yapsanız bile
-            silinmez. Her yazımda <span className="text-emerald-300">.bak</span> kopyası + günlük otomatik yedek alınır.
-            {bilgi.sonYedek ? ` Son yedek: ${bilgi.sonYedek}.` : ""}
+            {bilgi.veriKlasoru}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={onYedekIndir} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white">
-              📥 Yedeği indir
+            <button type="button" onClick={onYedekIndir} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white">
+              <I name="backup" size={14} /> {t("mem_download")}
             </button>
-            <button type="button" onClick={onYedekYukle} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm">
-              📤 Yedekten geri yükle
+            <button type="button" onClick={onYedekYukle} className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm">
+              <I name="reset" size={14} /> {t("mem_restore")}
             </button>
           </div>
           <div className="mt-3 rounded-xl border border-rose-500/40 p-3">
-            <p className="text-xs text-rose-200">⛔ Tehlike bölgesi: tüm kayıtlar, kasa açılışı ve kira sıfırlanır. Geri alınamaz!</p>
+            <p className="inline-flex items-center gap-1.5 text-xs text-rose-200"><I name="warn" size={13} /> {t("mem_danger")}</p>
             {sifirlaKurulu ? (
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-white">Emin misin? HEPSİ gidecek!</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -483,35 +547,37 @@ function HafizaBolumu({
                   }}
                   className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white"
                 >
-                  Evet, SIFIRLA
+                  {t("mem_yesReset")}
                 </button>
                 <button type="button" onClick={() => setSifirlaKurulu(false)} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm">
-                  Vazgeç
+                  {t("rep_giveUp")}
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => setSifirlaKurulu(true)}
-                className="mt-2 rounded-lg border border-rose-400/60 px-3 py-1.5 text-sm text-rose-200"
+                className="inline-flex items-center gap-1.5 mt-2 rounded-lg border border-rose-400/60 px-3 py-1.5 text-sm text-rose-200"
               >
-                🗑️ Tüm veriyi sıfırla
+                <I name="delete" size={14} /> {t("mem_resetAll")}
               </button>
             )}
           </div>
         </>
       ) : (
-        <p className="mt-2 text-sm text-slate-400">Hafıza bilgisi yükleniyor…</p>
+        <p className="mt-2 text-sm text-slate-400">{t("mem_loading")}</p>
       )}
     </div>
   );
 }
 
-export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, onYedekYukle, onSifirla }: SettingsProps) {  if (!open) return null;
+export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, onYedekYukle, onSifirla, onKiraBol }: SettingsProps) {
+  const { t, currency } = useT();
+  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
       <form
-        className="w-full max-w-lg rounded-2xl bg-[#fbf6ea] p-6 shadow-2xl"
+        className="scroll-thin my-auto max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[#fbf6ea] p-6 shadow-2xl"
         onSubmit={async (e) => {
           e.preventDefault();
           const form = e.currentTarget;
@@ -525,69 +591,51 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             aylikKiraKarsiligi: kiraPeriyodu ? kiraTutari / kiraPeriyodu : 0,
             kiraSonrakiTarih: String(data.get("kiraSonrakiTarih") || "") || null,
             acilisBakiyesi: Number(data.get("acilisBakiyesi") || 0),
-            aiMotor: ["otomatik", "groq", "ollama"].includes(String(data.get("aiMotor")))
-              ? (String(data.get("aiMotor")) as Ayarlar["aiMotor"])
-              : "otomatik",
-            ollamaModel: String(data.get("ollamaModel") || "").trim() || "gemma3:4b",
-            whatsappAlici: String(data.get("whatsappAlici") || "").trim() || "0556102095",
+            whatsappAlici: String(data.get("whatsappAlici") || "").trim() || "",
           });
           onClose();
         }}
       >
-        <p className="font-hand text-3xl">Defter ayarları</p>
+        <p className="font-hand text-3xl">{t("set_title")}</p>
         <div className="mt-4 grid gap-3">
           <label className="text-sm">
-            İşletme adı
+            {t("set_shop")}
             <input name="isletmeAdi" defaultValue={ayarlar.isletmeAdi} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm">
-              Kira tutarı (₺)
+              {t("set_rent")} ({currency})
               <input name="kiraTutari" type="number" step="0.01" defaultValue={ayarlar.kiraTutari} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
             </label>
             <label className="text-sm">
-              Periyot (ay)
+              {t("set_period")}
               <input name="kiraPeriyodu" type="number" defaultValue={ayarlar.kiraPeriyodu} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
             </label>
           </div>
           <p className="text-xs text-slate-600">
-            6 ayda bir 150.000 ₺ girilirse aylık karşılık otomatik 25.000 ₺ olur.
+            {t("set_periodHint")}
           </p>
           <label className="text-sm">
-            Sonraki kira tarihi
+            {t("set_nextRent")}
             <input name="kiraSonrakiTarih" type="date" defaultValue={ayarlar.kiraSonrakiTarih ?? ""} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
           <label className="text-sm">
-            Açılış bakiyesi (₺)
+            {t("set_opening")} ({currency})
             <input name="acilisBakiyesi" type="number" step="0.01" defaultValue={ayarlar.acilisBakiyesi} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
+          <KiraBolBolumu varsayilanAy={ayarlar.kiraPeriyodu} onKiraBol={onKiraBol} />
           <label className="text-sm">
-            Yapay zekâ motoru
-            <select name="aiMotor" defaultValue={ayarlar.aiMotor} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2">
-              <option value="otomatik">Otomatik (önerilir: Groq beyin + yerel anlatım)</option>
-              <option value="groq">Groq (hepsi internetten, key harcar)</option>
-              <option value="ollama">Ollama (önce yerel, key harcamaz)</option>
-            </select>
+            {t("set_waNumber")}
+            <input name="whatsappAlici" defaultValue={ayarlar.whatsappAlici} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
-          <label className="text-sm">
-            Ollama modeli
-            <input name="ollamaModel" defaultValue={ayarlar.ollamaModel} placeholder="gemma3:4b" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
-          </label>
-          <label className="text-sm">
-            WhatsApp alıcı no (rapor buraya gider)
-            <input name="whatsappAlici" defaultValue={ayarlar.whatsappAlici} placeholder="0556102095" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
-          </label>
-          <p className="text-xs text-slate-600">
-            Ollama kapalıysa veya model bulunamazsa otomatik Groq devreye girer. Yeni model çekmek için: <code>ollama pull model-adi</code>
-          </p>
         </div>
         <HafizaBolumu onYedekIndir={onYedekIndir} onYedekYukle={onYedekYukle} onSifirla={onSifirla} />
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="sticky bottom-0 mt-5 flex justify-end gap-2 bg-[#fbf6ea] py-3">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm">
-            Vazgeç
+            {t("set_giveUp")}
           </button>
           <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">
-            Kaydet
+            {t("set_save")}
           </button>
         </div>
       </form>
@@ -604,6 +652,7 @@ type TelefonBilgi = {
 
 /** Telefonda aç: aynı Wi-Fi'den karekodla bağlan. */
 export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   const [bilgi, setBilgi] = useState<TelefonBilgi | null>(null);
   const [kopya, setKopya] = useState(false);
   const [kurabilir, setKurabilir] = useState(false);
@@ -634,16 +683,16 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
   async function kur() {
     const olay = (window as unknown as { __kurOlay?: { prompt: () => void; userChoice: Promise<{ outcome: string }> } }).__kurOlay;
     if (!olay) {
-      setKuruldu("Telefonda tarayıcı menüsünden kur (aşağıya bak).");
+      setKuruldu("Install from your phone browser menu (see instructions above).");
       return;
     }
     try {
       olay.prompt();
       const secim = await olay.userChoice;
-      setKuruldu(secim.outcome === "accepted" ? "Kuruluyor — ana ekrana Defterdar gelecek." : "Vazgeçtin — menüden de kurabilirsin.");
+      setKuruldu(secim.outcome === "accepted" ? "Installing — Shop Ledger will appear on your home screen." : "Cancelled — you can also install from the menu.");
       if (secim.outcome === "accepted") setKurabilir(false);
     } catch {
-      setKuruldu("Olmadı — menüden dene.");
+      setKuruldu("Failed — try from the menu.");
     }
   }
 
@@ -655,17 +704,15 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-[#fbf6ea] p-6 text-center shadow-2xl">
-        <p className="font-hand text-3xl">📱 Telefonda aç</p>
-        <p className="mt-1 text-xs text-slate-600">Aynı Wi-Fi'ye bağlı telefonun kamerasıyla oku</p>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="scroll-thin my-auto max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-[#fbf6ea] p-6 text-center shadow-2xl">
+        <p className="font-hand text-3xl">📱 {t("phone_title")}</p>
+        <p className="mt-1 text-xs text-slate-600">{t("phone_sub")}</p>
         {bilgi ? (
           <>
             {bilgi.qr ? (
-              <img src={bilgi.qr} alt="Bağlantı karekodu" className="mx-auto mt-3 h-52 w-52 rounded-xl bg-white p-2 ring-1 ring-amber-300" />
-            ) : (
-              <p className="mt-3 text-sm text-slate-500">Karekod üretilemedi — adresi elle yaz:</p>
-            )}
+              <img src={bilgi.qr} alt="QR" className="mx-auto mt-3 h-52 w-52 rounded-xl bg-white p-2 ring-1 ring-amber-300" />
+            ) : null}
             <p className="mt-3 font-mono text-lg font-bold text-slate-900">{bilgi.url}</p>
             <button
               type="button"
@@ -675,38 +722,14 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
                   () => undefined,
                 );
               }}
-              className="mt-2 rounded-lg bg-slate-900 px-4 py-1.5 text-sm text-white"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 text-sm text-white"
             >
-              {kopya ? "Kopyalandı ✓" : "Adresi kopyala"}
+              {kopya ? (<><I name="check" size={14} /> {t("phone_copied")}</>) : t("phone_copy")}
             </button>
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              Açılmazsa: bilgisayar açık + aynı Wi-Fi'de olmalısın. Windows sorarsa ağ iznini ver.
-              Bilgisayar kapanınca telefon da kesilir.
-            </p>
-            <div className="mt-3 rounded-xl bg-teal-50 p-3 ring-1 ring-teal-200">
-              <p className="text-sm font-semibold text-teal-900">📲 Uygulama gibi kur</p>
-              {kurabilir ? (
-                <button
-                  type="button"
-                  onClick={() => void kur()}
-                  className="mt-2 w-full rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
-                >
-                  Telefona kur
-                </button>
-              ) : (
-                <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
-                  iPhone: Safari'de Paylaş → <b>Ana Ekrana Ekle</b>.
-                  Android: Chrome'da <b>⋮ → Ana ekrana ekle / Uygulamayı yükle</b>.
-                </p>
-              )}
-              {kuruldu ? <p className="mt-1 text-[11px] text-teal-800">{kuruldu}</p> : null}
-            </div>
           </>
-        ) : (
-          <p className="mt-4 text-sm text-slate-500">Adres bulunuyor…</p>
-        )}
+        ) : null}
         <button type="button" onClick={onClose} className="mt-4 rounded-lg px-4 py-2 text-sm text-slate-600">
-          Kapat
+          {t("phone_close")}
         </button>
       </div>
     </div>

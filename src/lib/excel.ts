@@ -1,6 +1,16 @@
 import ExcelJS from "exceljs";
 import type { Ayarlar, RaporOzet } from "./types";
-import { formatTRDate } from "./format";
+import { formatDate } from "./format";
+
+const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
+  tr: { intl: "tr-TR", currency: "TRY" },
+  en: { intl: "en-US", currency: "USD" },
+  de: { intl: "de-DE", currency: "EUR" },
+  fr: { intl: "fr-FR", currency: "EUR" },
+  es: { intl: "es-ES", currency: "EUR" },
+  ar: { intl: "ar-SA", currency: "SAR" },
+  ru: { intl: "ru-RU", currency: "RUB" },
+};
 
 /**
  * Tasarımlı Excel raporu: Kapak + Günlük + Kategoriler + Fişler.
@@ -16,13 +26,23 @@ const YESIL = "FF15803D";
 const KIRMIZI = "FFB91C1C";
 const PARA_FMT = '#,##0.00 "₺"';
 
-export function raporBasligi(tip: string): string {
-  if (tip === "defter") return "Tam Defter Dökümü";
-  if (tip === "z") return "Z Raporu";
-  if (tip === "gunsonu") return "Gün Sonu";
-  if (tip === "aysonu") return "Ay Sonu";
-  if (tip === "karzarar") return "Kar-Zarar";
-  return "Dönem Özeti";
+export function raporBasligi(tip: string, locale = "en"): string {
+  const T: Record<string, Record<string, string>> = {
+    tr: { defter: "Tam Defter Dökümü", z: "Z Raporu", gunsonu: "Gün Sonu", aysonu: "Ay Sonu", karzarar: "Kar-Zarar", ozet: "Dönem Özeti" },
+    en: { defter: "Full Ledger", z: "Z Report", gunsonu: "Day Close", aysonu: "Month Close", karzarar: "Profit-Loss", ozet: "Period Summary" },
+    de: { defter: "Komplettes Buch", z: "Z-Bericht", gunsonu: "Tagesschluss", aysonu: "Monatsschluss", karzarar: "Gewinn-Verlust", ozet: "Übersicht" },
+    fr: { defter: "Registre complet", z: "Rapport Z", gunsonu: "Clôture jour", aysonu: "Clôture mois", karzarar: "Profit-Perte", ozet: "Résumé" },
+    es: { defter: "Libro completo", z: "Informe Z", gunsonu: "Cierre día", aysonu: "Cierre mes", karzarar: "Ganancia-Pérdida", ozet: "Resumen" },
+    ar: { defter: "الدفتر الكامل", z: "تقرير Z", gunsonu: "إغلاق اليوم", aysonu: "إغلاق الشهر", karzarar: "ربح-خسارة", ozet: "ملخص" },
+    ru: { defter: "Полная книга", z: "Z-отчёт", gunsonu: "Закрытие дня", aysonu: "Закрытие месяца", karzarar: "Прибыль-Убыток", ozet: "Итог" },
+  };
+  const m = T[locale] ?? T.en;
+  if (tip === "defter") return m.defter;
+  if (tip === "z") return m.z;
+  if (tip === "gunsonu") return m.gunsonu;
+  if (tip === "aysonu") return m.aysonu;
+  if (tip === "karzarar") return m.karzarar;
+  return m.ozet;
 }
 
 function baslikStili(ws: ExcelJS.Worksheet, rowNo: number, colCount: number) {
@@ -87,7 +107,9 @@ function kapakYaz(
   ayarlar: Ayarlar,
   rapor: RaporOzet,
   uretim: string,
+  intl = "en-US",
 ): number {
+  const fdLocal = (iso: string) => formatDate(iso, intl);
   ws.mergeCells("A1:E1");
   const t = ws.getCell("A1");
   t.value = `${ayarlar.isletmeAdi} — ${baslik}`;
@@ -97,7 +119,7 @@ function kapakYaz(
 
   ws.mergeCells("A2:E2");
   const alt = ws.getCell("A2");
-  alt.value = `${formatTRDate(rapor.baslangic)} — ${formatTRDate(rapor.bitis)}  •  Üretim: ${uretim}`;
+  alt.value = `${fdLocal(rapor.baslangic)} — ${fdLocal(rapor.bitis)}  •  ${uretim}`;
   alt.font = { size: 11, color: { argb: "FF555555" } };
   alt.alignment = { horizontal: "center" };
 
@@ -149,16 +171,20 @@ export function buildExcel(
   tip: string,
   ayarlar: Ayarlar,
   rapor: RaporOzet,
+  opts?: { locale?: string; currency?: string },
 ): ExcelJS.Workbook {
+  const locale = opts?.locale ?? "en";
+  const intl = LOCALE_INTL[locale]?.intl ?? "en-US";
+  const fd = (iso: string) => formatDate(iso, intl);
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Mgroq Defter";
+  wb.creator = "Tailor Ledger";
   wb.created = new Date();
-  const baslik = raporBasligi(tip);
-  const uretim = new Date().toLocaleString("tr-TR");
+  const baslik = raporBasligi(tip, locale);
+  const uretim = new Date().toLocaleString(intl);
 
   // --- 1) Kapak / Özet ---
-  const kapak = wb.addWorksheet("Özet");
-  const ozetSon = kapakYaz(kapak, baslik, ayarlar, rapor, uretim);
+  const kapak = wb.addWorksheet("Summary");
+  const ozetSon = kapakYaz(kapak, baslik, ayarlar, rapor, uretim, intl);
 
   // --- 1b) Özet sayfasına fiş listesi (sekmeye geçmeden görünsün) ---
   const fisBaslik = ozetSon + 2;
@@ -172,7 +198,7 @@ export function buildExcel(
   const sirali = [...rapor.kayitlar].sort((a, b) => a.tarih.localeCompare(b.tarih));
   let fr = fisTabloBas + 1;
   for (const k of sirali) {
-    kapak.getCell(fr, 1).value = formatTRDate(k.tarih);
+    kapak.getCell(fr, 1).value = fd(k.tarih);
     kapak.getCell(fr, 1).alignment = { horizontal: "center" };
     kapak.getCell(fr, 2).value = k.aciklama;
     kapak.getCell(fr, 3).value = k.kategori;
@@ -207,7 +233,7 @@ export function buildExcel(
   const gunIlk = 2;
   for (const gd of rapor.gunler) {
     const row = gun.addRow([
-      formatTRDate(gd.tarih),
+      fd(gd.tarih),
       Math.round((gd.nakitGelir - gd.nakitGider) * 100) / 100,
       Math.round((gd.kartGelir - gd.kartGider) * 100) / 100,
       Math.round((gd.havaleGelir - gd.havaleGider) * 100) / 100,
@@ -304,7 +330,7 @@ export function buildExcel(
   fis.addRow(["Tarih", "Açıklama", "Kategori", "Ödeme", "Gelir", "Gider"]);
   const fisIlk = 2;
   for (const k of rapor.kayitlar) {
-    const row = fis.addRow([formatTRDate(k.tarih), k.aciklama, k.kategori, k.odemeTipi, k.gelir, k.gider]);
+    const row = fis.addRow([fd(k.tarih), k.aciklama, k.kategori, k.odemeTipi, k.gelir, k.gider]);
     row.getCell(1).alignment = { horizontal: "center" };
     row.getCell(4).alignment = { horizontal: "center" };
     for (const c of [5, 6]) {

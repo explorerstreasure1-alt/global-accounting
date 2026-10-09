@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Ayarlar, Kayit, KayitGirdi, Kategori } from "@/lib/types";
 import { KATEGORILER } from "@/lib/types";
-import { useT } from "@/lib/i18n";
-import { formatMoney, formatMoneySigned, formatTRDate, toISODate } from "@/lib/format";
+import { useT, catLabel } from "@/lib/i18n";
+import { I } from "./ui-icon";
+import { formatMoneyLocale, formatMoneySignedLocale, formatDate, toISODate } from "@/lib/format";
 
 type Props = {
   kayitlar: Kayit[];
@@ -19,7 +20,10 @@ type Props = {
 };
 
 export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, onAdd, onUpdate, onDelete }: Props) {
-  const { t } = useT();
+  const { t, intl, currency, locale } = useT();
+  const fm = (v: number, sym = true): string => formatMoneyLocale(v, intl, currency, sym);
+  const fms = (v: number): string => formatMoneySignedLocale(v, intl, currency);
+  const fd = (iso: string): string => formatDate(iso, intl);
   const today = toISODate();
   const prefix = `${year}-${String(month).padStart(2, "0")}`;
   const rows = useMemo(
@@ -30,7 +34,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
   const [draft, setDraft] = useState<KayitGirdi>({
     tarih: today.startsWith(prefix) ? today : `${prefix}-01`,
     aciklama: "",
-    kategori: "Hizmet",
+    kategori: "Service",
     gelir: 0,
     gider: 0,
     odemeTipi: "Nakit",
@@ -60,12 +64,12 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
 
   // Defter içi arama (açıklama / kategori / ödeme tipi)
   const süzülmüş = useMemo(() => {
-    const q = arama.trim().toLocaleLowerCase("tr-TR");
+    const q = arama.trim().toLocaleLowerCase(intl);
     if (!q) return rows;
     return rows.filter((k) =>
-      `${k.aciklama} ${k.kategori} ${k.odemeTipi} ${formatTRDate(k.tarih)}`.toLocaleLowerCase("tr-TR").includes(q),
+      `${k.aciklama} ${k.kategori} ${k.odemeTipi} ${fd(k.tarih)}`.toLocaleLowerCase(intl).includes(q),
     );
-  }, [rows, arama]);
+  }, [rows, arama, intl, fd]);
 
   const gunluk = useMemo(() => {
     const map = new Map<string, Kayit[]>();
@@ -110,7 +114,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
               max="2035-12-31"
               onChange={(e) => setTariheGit(e.target.value)}
               className="w-28 min-w-0 rounded-lg border border-amber-900/20 bg-white/60 px-2 py-1 text-xs"
-              title="Tarihe git (geçmiş dahil)"
+              title={t("calendar")}
             />
             <button
               onClick={() => {
@@ -123,15 +127,15 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                 setTariheGit("");
               }}
               className="rounded-lg bg-[var(--ink)] px-2 py-1 text-xs text-white"
-              title="Bu tarihe kayıt yaz"
+              title={t("new_entry")}
             >
-              Git
+              {t("nb_go")}
             </button>
           </div>
         </div>
 
         <div className="mt-2 flex min-w-0 items-center gap-1.5">
-          <span className="text-slate-500">🔍</span>
+          <span className="text-slate-500"><I name="search" size={15} /></span>
           <input
             value={arama}
             onChange={(e) => setArama(e.target.value)}
@@ -141,20 +145,20 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
           {arama ? (
             <button
               onClick={() => setArama("")}
-              className="shrink-0 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-white/40"
-              title="Aramayı temizle"
+              className="grid shrink-0 place-items-center rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-white/40"
+              title={t("close")}
             >
-              ✕
+              <I name="close" size={13} />
             </button>
           ) : null}
         </div>
         {arama.trim() ? (
           <p className="mt-1 px-1 text-[11px] text-slate-500">
-            {süzülmüş.length} kayıt bulundu{rows.length !== süzülmüş.length ? ` (${rows.length} satırdan)` : ""}
+            {süzülmüş.length} {t("nb_found")}{rows.length !== süzülmüş.length ? ` (${rows.length} ${t("nb_ofRows")})` : ""}
           </p>
         ) : null}
 
-        <div className="hidden gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 xl:grid xl:grid-cols-[148px_1fr_118px_100px_100px_92px_92px_52px]">
+        <div className="hidden gap-1 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 xl:grid xl:grid-cols-[148px_1fr_118px_100px_100px_110px_110px_52px]">
           <span>{t("date")}</span>
           <span>{t("description")}</span>
           <span>{t("category")}</span>
@@ -172,9 +176,9 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
             return (
               <section key={tarih}>
                 <div className="flex items-center justify-between px-1">
-                  <p className="font-hand text-xl text-blue-900">{formatTRDate(tarih)}</p>
+                  <p className="font-hand text-xl text-blue-900">{fd(tarih)}</p>
                   <p className="text-[11px] tabular-nums text-slate-600">
-                    +{formatMoney(gelir, false)} / −{formatMoney(gider, false)} · net {formatMoney(gelir - gider)}
+                    +{fm(gelir, false)} / −{fm(gider, false)} · net {fm(gelir - gider)}
                   </p>
                 </div>
                 {list.map((k) =>
@@ -196,19 +200,26 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                   ) : (
                     <article
                       key={k.id}
-                      className="notebook-row grid grid-cols-1 items-center gap-x-2 gap-y-1 border-b border-transparent px-1 py-1 text-sm min-[480px]:grid-cols-2 xl:grid-cols-[148px_1fr_118px_100px_100px_92px_92px_52px]"
+                      className="notebook-row grid grid-cols-1 items-center gap-x-2 gap-y-1 border-b border-transparent px-1 py-1 text-sm min-[480px]:grid-cols-2 xl:grid-cols-[148px_minmax(0,1fr)_118px_100px_100px_110px_110px_52px]"
                     >
-                      <span className="font-book text-[13px] text-slate-600 min-[480px]:col-span-2 xl:col-span-1">{formatTRDate(k.tarih)}</span>
-                      <span className="font-book break-words text-[15px] text-[var(--ink)] min-[480px]:col-span-2 xl:col-span-1">{k.aciklama}</span>
-                      <span className="w-fit rounded-full bg-white/50 px-2 py-0.5 text-[11px]">{k.kategori}</span>
-                      <span className="text-right tabular-nums text-emerald-800">{k.gelir ? formatMoney(k.gelir, false) : ""}</span>
-                      <span className="text-right tabular-nums text-rose-800">{k.gider ? formatMoney(k.gider, false) : ""}</span>
-                      <span>
-                        <span className={`chip rounded-full px-2 py-0.5 text-[11px] ${k.odemeTipi === "Nakit" ? "active-nakit" : k.odemeTipi === "Havale" ? "active-havale" : "active-kart"}`}>
-                          {k.odemeTipi === "Nakit" ? "🔵 Nakit" : k.odemeTipi === "Havale" ? "🏦 Havale" : "💳 Kart"}
+                      <span className="font-book text-[13px] text-slate-600 min-[480px]:col-span-2 xl:col-span-1">{fd(k.tarih)}</span>
+                      <span className="font-book break-words text-[15px] text-[var(--ink)] min-[480px]:col-span-2 xl:col-span-1 min-w-0">{k.aciklama}</span>
+                      <span className="w-fit max-w-full truncate rounded-full bg-white/50 px-2 py-0.5 text-[11px]">{catLabel(k.kategori, locale)}</span>
+                      <span className="text-right tabular-nums text-emerald-800">{k.gelir ? fm(k.gelir, false) : ""}</span>
+                      <span className="text-right tabular-nums text-rose-800">{k.gider ? fm(k.gider, false) : ""}</span>
+                      <span className="min-w-0">
+                        <span
+                          className={`chip inline-flex max-w-full items-center gap-1 truncate whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] ${k.odemeTipi === "Nakit" ? "active-nakit" : k.odemeTipi === "Havale" ? "active-havale" : "active-kart"}`}
+                          title={k.odemeTipi === "Nakit" ? t("pay_cash") : k.odemeTipi === "Havale" ? t("pay_transfer") : t("pay_card")}
+                        >
+                          <I
+                            name={k.odemeTipi === "Nakit" ? "cash" : k.odemeTipi === "Havale" ? "transfer" : "card"}
+                            size={14}
+                            className={k.odemeTipi === "Nakit" ? "text-blue-700" : k.odemeTipi === "Havale" ? "text-green-700" : "text-amber-600"}
+                          />
                         </span>
                       </span>
-                      <span className="text-right tabular-nums text-[var(--ink-soft)]">{formatMoneySigned(k.kasaEtkisi)}</span>
+                      <span className="text-right tabular-nums text-[var(--ink-soft)]">{fms(k.kasaEtkisi)}</span>
                       <span className="flex justify-end gap-1">
                         <button
                           className="text-xs"
@@ -223,18 +234,18 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                               odemeTipi: k.odemeTipi,
                             });
                           }}
-                          title="Düzenle"
-                          aria-label={`${k.aciklama} kaydını düzenle`}
+                          title={t("edit")}
+                          aria-label={`${k.aciklama}`}
                         >
-                          ✏️
+                          <I name="edit" size={14} />
                         </button>
                         <button
                           className="text-xs"
                           onClick={() => setConfirmId(k.id)}
-                          title="Sil"
-                          aria-label={`${k.aciklama} kaydını sil`}
+                          title={t("delete")}
+                          aria-label={`${k.aciklama}`}
                         >
-                          🗑️
+                          <I name="delete" size={14} />
                         </button>
                       </span>
                     </article>
@@ -244,34 +255,33 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
             );
           })}
           {rows.length === 0 ? (
-            <p className="font-hand py-10 text-center text-2xl text-slate-500">Bu ay henüz satır yok. İlk kaydı alta yazın.</p>
+            <p className="font-hand py-10 text-center text-2xl text-slate-500">{t("nb_empty")}</p>
           ) : süzülmüş.length === 0 ? (
-            <p className="font-hand py-10 text-center text-2xl text-slate-500">Aramaya uyan satır yok.</p>
+            <p className="font-hand py-10 text-center text-2xl text-slate-500">{t("nb_noSearch")}</p>
           ) : null}
         </div>
 
         <div className="mt-3 rounded-2xl bg-white/35 p-2 ring-1 ring-amber-900/10">
           <p className="px-1 pb-1 text-[10px] uppercase tracking-wider text-slate-500">
-            Yeni satır — tarih kutusundan geçmiş gün de seçebilirsiniz ({formatTRDate(today)} bugün)
+            {t("nb_newRow")} ({fd(today)})
           </p>
           <RowEditor
             value={draft}
             onChange={setDraft}
             onSave={addRow}
             saving={pending}
-            saveLabel={pending ? "…" : "Ekle"}
+            saveLabel={pending ? "…" : t("add")}
           />
         </div>
       </div>
 
       {confirmId ? (
-        <div className="absolute inset-0 z-10 grid place-items-center bg-[#f3e6c4]/80">
-          <div className="rounded-2xl bg-white p-5 shadow-xl">
-            <p className="font-hand text-2xl">Satır silinsin mi?</p>
-            <p className="mt-1 text-sm text-slate-600">Bu işlem defterden kalıcı olarak kaldırır.</p>
+        <div className="absolute inset-0 z-10 grid place-items-center overflow-y-auto bg-[#f3e6c4]/80 p-4">
+          <div className="my-auto w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <p className="font-hand text-2xl">{t("confirm_delete")}</p>
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={() => setConfirmId(null)} className="rounded-lg px-3 py-1.5 text-sm">
-                Vazgeç
+                {t("cancel")}
               </button>
               <button
                 onClick={async () => {
@@ -280,7 +290,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                 }}
                 className="rounded-lg bg-rose-700 px-3 py-1.5 text-sm text-white"
               >
-                Sil
+                {t("yes_delete")}
               </button>
             </div>
           </div>
@@ -296,7 +306,7 @@ function RowEditor({
   onSave,
   onCancel,
   saving,
-  saveLabel = "Kaydet",
+  saveLabel,
 }: {
   value: KayitGirdi;
   onChange: (v: KayitGirdi) => void;
@@ -305,8 +315,11 @@ function RowEditor({
   saving?: boolean;
   saveLabel?: string;
 }) {
+  const { t, intl, currency, locale } = useT();
+  const saveText = saveLabel ?? t("nb_save");
+  const fmsLocal = (v: number) => formatMoneySignedLocale(v, intl, currency);
   return (
-    <div className="grid grid-cols-1 items-center gap-1 min-[480px]:grid-cols-2 xl:grid-cols-[148px_1fr_118px_100px_100px_92px_92px_auto]">
+    <div className="grid grid-cols-1 items-center gap-x-2 gap-y-1 min-[480px]:grid-cols-2 xl:grid-cols-[148px_minmax(0,1fr)_118px_100px_100px_110px_110px_auto]">
       <input
         type="date"
         value={value.tarih}
@@ -314,12 +327,12 @@ function RowEditor({
         max="2035-12-31"
         onChange={(e) => onChange({ ...value, tarih: e.target.value })}
         className="ink-input col-span-1 min-w-0 rounded px-1 py-1 text-sm tabular-nums min-[480px]:col-span-2 xl:col-span-1"
-        title="İstediğiniz tarihi seçin (geçmiş dahil)"
+        title={t("date")}
       />
       <input
         value={value.aciklama}
         onChange={(e) => onChange({ ...value, aciklama: e.target.value })}
-        placeholder="Açıklama"
+        placeholder={t("description")}
         className="ink-input min-w-0 rounded px-1 py-1 font-book text-[15px] min-[480px]:col-span-2 xl:col-span-1"
         onKeyDown={(e) => {
           if (e.key === "Enter") void onSave();
@@ -328,10 +341,10 @@ function RowEditor({
       <select
         value={value.kategori}
         onChange={(e) => onChange({ ...value, kategori: e.target.value as Kategori })}
-        className="ink-input rounded px-1 py-1 text-sm"
+        className="ink-input min-w-0 rounded px-1 py-1 text-sm"
       >
         {KATEGORILER.map((k) => (
-          <option key={k}>{k}</option>
+          <option key={k} value={k}>{catLabel(k, locale)}</option>
         ))}
       </select>
       <input
@@ -340,52 +353,52 @@ function RowEditor({
         step="0.01"
         value={value.gelir || ""}
         onChange={(e) => onChange({ ...value, gelir: Number(e.target.value || 0), gider: Number(e.target.value || 0) ? 0 : value.gider })}
-        placeholder="Gelir"
-        className="ink-input rounded px-1 py-1 text-right tabular-nums"
+        placeholder={t("nb_incomePh")}
+        className="ink-input min-w-0 rounded px-1 py-1 text-right tabular-nums"
       />
       <input
         type="number"
         min="0"
         step="0.01"
         value={value.gider || ""}
-        onChange={(e) => onChange({ ...value, gider: Number(e.target.value || 0), gelir: Number(e.target.value || 0) ? 0 : value.gelir })}
-        placeholder="Gider"
-        className="ink-input rounded px-1 py-1 text-right tabular-nums"
+        onChange={(e) => onChange({ ...value, gider: Number(e.target.value || 0), gelir: Number(e.target.value || 0) ? 0 : value.gider })}
+        placeholder={t("nb_expensePh")}
+        className="ink-input min-w-0 rounded px-1 py-1 text-right tabular-nums"
       />
-      <div className="flex gap-1">
+      <div className="flex min-w-0 flex-wrap gap-1">
         <PayChip
           active={value.odemeTipi === "Nakit"}
-          label="🔵"
-          title="Nakit"
+          icon="cash"
+          title={t("pay_cash")}
           onClick={() => onChange({ ...value, odemeTipi: "Nakit" })}
         />
         <PayChip
           active={value.odemeTipi === "Kart"}
-          label="💳"
-          title="Kart"
+          icon="card"
+          title={t("pay_card")}
           onClick={() => onChange({ ...value, odemeTipi: "Kart" })}
         />
         <PayChip
           active={value.odemeTipi === "Havale"}
-          label="🏦"
-          title="Havale"
+          icon="transfer"
+          title={t("pay_transfer")}
           onClick={() => onChange({ ...value, odemeTipi: "Havale" })}
         />
       </div>
-      <span className="hidden text-right text-xs tabular-nums text-slate-500 xl:block">
-        {formatMoneySigned((value.gelir || 0) - (value.gider || 0))}
+      <span className="hidden min-w-0 overflow-hidden text-ellipsis text-right text-xs tabular-nums text-slate-500 xl:block">
+        {fmsLocal((value.gelir || 0) - (value.gider || 0))}
       </span>
-      <div className="flex gap-1">
+      <div className="flex shrink-0 gap-1">
         <button
           disabled={saving}
           onClick={() => void onSave()}
           className="rounded-lg bg-[var(--ink)] px-2 py-1 text-[11px] text-white"
         >
-          {saveLabel}
+          {saveText}
         </button>
         {onCancel ? (
           <button onClick={onCancel} className="rounded-lg px-2 py-1 text-[11px]">
-            Vazgeç
+            {t("nb_cancel")}
           </button>
         ) : null}
       </div>
@@ -395,12 +408,12 @@ function RowEditor({
 
 function PayChip({
   active,
-  label,
+  icon,
   title,
   onClick,
 }: {
   active: boolean;
-  label: string;
+  icon: "cash" | "card" | "transfer";
   title: string;
   onClick: () => void;
 }) {
@@ -408,10 +421,15 @@ function PayChip({
     <button
       type="button"
       title={title}
+      aria-label={title}
       onClick={onClick}
-      className={`chip rounded-full px-1.5 py-0.5 text-xs ${active ? (title === "Nakit" ? "active-nakit" : title === "Havale" ? "active-havale" : "active-kart") : ""}`}
+      className={`chip inline-flex max-w-full shrink-0 items-center gap-1 truncate whitespace-nowrap rounded-full px-1.5 py-0.5 text-xs ${active ? (icon === "cash" ? "active-nakit" : icon === "transfer" ? "active-havale" : "active-kart") : ""}`}
     >
-      {label}
+      <I
+        name={icon}
+        size={15}
+        className={icon === "cash" ? "text-blue-700" : icon === "transfer" ? "text-green-700" : "text-amber-600"}
+      />
     </button>
   );
 }
@@ -437,15 +455,17 @@ export function TotalsStrip({
   const kasa =
     ayarlar.acilisBakiyesi +
     kayitlar.filter((k) => k.odemeTipi === "Nakit").reduce((s, k) => s + k.kasaEtkisi, 0);
+  const { t, intl, currency } = useT();
+  const fm = (v: number) => formatMoneyLocale(v, intl, currency);
 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-      <TotalCard label="Nakit toplam" value={formatMoney(nakit)} />
-      <TotalCard label="Kart toplam" value={formatMoney(kart)} />
-      <TotalCard label="Havale toplam" value={formatMoney(havale)} />
-      <TotalCard label="Genel toplam" value={formatMoney(gelir - gider)} />
-      <TotalCard label="Aylık net" value={formatMoney(gelir - gider)} hint={`Gelir ${formatMoney(gelir)}`} />
-      <TotalCard label="Kasa (nakit)" value={formatMoney(kasa)} hint={`Açılış ${formatMoney(ayarlar.acilisBakiyesi)}`} />
+      <TotalCard label={t("total_cash")} value={fm(nakit)} />
+      <TotalCard label={t("total_card")} value={fm(kart)} />
+      <TotalCard label={t("total_transfer")} value={fm(havale)} />
+      <TotalCard label={t("total_grand")} value={fm(gelir - gider)} />
+      <TotalCard label={t("total_monthlyNet")} value={fm(gelir - gider)} hint={`${t("income")} ${fm(gelir)}`} />
+      <TotalCard label={t("total_safe")} value={fm(kasa)} hint={`${t("rep_opening")} ${fm(ayarlar.acilisBakiyesi)}`} />
     </div>
   );
 }

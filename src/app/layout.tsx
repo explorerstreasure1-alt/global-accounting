@@ -19,15 +19,16 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Tailor Ledger — Global Tailor Accounting",
-  description: "Global tailor accounting: ledger, day/month close, Z-report, Excel, backup. 7 languages.",
+  title: "Shop Ledger — Global Small Business Accounting",
+  description: "Global small business accounting: ledger, day/month close, Z-report, Excel, backup. 7 languages.",
   manifest: "/manifest.webmanifest",
   themeColor: "#0f172a",
-  applicationName: "Tailor Ledger",
+  applicationName: "Shop Ledger",
+  other: { google: "notranslate" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Tailor Ledger",
+    title: "Shop Ledger",
   },
   icons: {
     icon: [
@@ -41,8 +42,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="notebook" className={`${caveat.variable} ${literata.variable} ${dmSans.variable}`}>
-      <body className="font-ui antialiased">{children}</body>
+    <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable}`}>
+      <body className="font-ui antialiased notranslate">{children}</body>
     </html>
   );
 }

@@ -1,9 +1,9 @@
-import { desc, eq } from "drizzle-orm";
+﻿import { desc, eq } from "drizzle-orm";
 import { db, hasDatabase } from "@/db";
 import { ayarlar, kayitlar, sohbetMesajlari } from "@/db/schema";
 import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, OdemeTipi, SohbetMesaji } from "./types";
 import { addDays, addMonths, num, round2, toISODate } from "./format";
-import { KATEGORILER } from "./types";
+import { KATEGORILER, KATEGORI_ESKI } from "./types";
 import {
   fileGetAll,
   fileSaveAll,
@@ -15,9 +15,10 @@ import {
 } from "./file-store";
 
 function mapKayit(row: typeof kayitlar.$inferSelect): Kayit {
-  const kategori = (KATEGORILER as readonly string[]).includes(row.kategori)
+  const list = KATEGORILER as readonly string[];
+  const kategori = list.includes(row.kategori)
     ? (row.kategori as Kategori)
-    : "Diğer";
+    : ((KATEGORI_ESKI[row.kategori] ?? "Other") as Kategori);
   return {
     id: row.id,
     tarih: row.tarih,
@@ -44,7 +45,7 @@ function mapAyarlar(row: typeof ayarlar.$inferSelect): Ayarlar {
     acilisBakiyesi: num(row.acilisBakiyesi),
     aiMotor: raw.aiMotor === "groq" || raw.aiMotor === "ollama" ? raw.aiMotor : "otomatik",
     ollamaModel: typeof raw.ollamaModel === "string" && raw.ollamaModel.trim() ? raw.ollamaModel.trim() : "gemma3:4b",
-    whatsappAlici: typeof raw.whatsappAlici === "string" && raw.whatsappAlici.trim() ? raw.whatsappAlici.trim() : "0556102095",
+    whatsappAlici: typeof raw.whatsappAlici === "string" && raw.whatsappAlici.trim() ? raw.whatsappAlici.trim() : "",
   };
 }
 
@@ -60,23 +61,23 @@ function mapMesaj(row: typeof sohbetMesajlari.$inferSelect): SohbetMesaji {
 function seedKayitlar(today: string): KayitGirdi[] {
   const d = (offset: number) => addDays(today, offset);
   return [
-    { tarih: d(-12), aciklama: "Açılış nakit hizmet", kategori: "Hizmet", gelir: 8200, gider: 0, odemeTipi: "Nakit" },
-    { tarih: d(-12), aciklama: "Kartlı hizmet", kategori: "Hizmet", gelir: 4650, gider: 0, odemeTipi: "Kart" },
-    { tarih: d(-11), aciklama: "Market alışverişi", kategori: "Market", gelir: 0, gider: 890, odemeTipi: "Nakit" },
-    { tarih: d(-10), aciklama: "Günlük hizmet", kategori: "Hizmet", gelir: 7100, gider: 0, odemeTipi: "Nakit" },
-    { tarih: d(-10), aciklama: "Su faturası", kategori: "Su", gelir: 0, gider: 420, odemeTipi: "Kart" },
-    { tarih: d(-8), aciklama: "Elektrik faturası", kategori: "Elektrik", gelir: 0, gider: 1250, odemeTipi: "Kart" },
-    { tarih: d(-7), aciklama: "Hafta sonu hizmet", kategori: "Hizmet", gelir: 9800, gider: 0, odemeTipi: "Nakit" },
-    { tarih: d(-7), aciklama: "Kartlı hizmet", kategori: "Hizmet", gelir: 5400, gider: 0, odemeTipi: "Kart" },
-    { tarih: d(-6), aciklama: "Doğalgaz faturası", kategori: "Doğalgaz", gelir: 0, gider: 1875, odemeTipi: "Kart" },
-    { tarih: d(-5), aciklama: "Dükkan temizlik malzemesi", kategori: "İş Yeri", gelir: 0, gider: 340, odemeTipi: "Nakit" },
-    { tarih: d(-4), aciklama: "Günlük hizmet", kategori: "Hizmet", gelir: 6400, gider: 0, odemeTipi: "Nakit" },
-    { tarih: d(-3), aciklama: "Ev market", kategori: "Ev", gelir: 0, gider: 560, odemeTipi: "Kart" },
-    { tarih: d(-2), aciklama: "Günlük hizmet", kategori: "Hizmet", gelir: 7300, gider: 0, odemeTipi: "Nakit" },
-    { tarih: d(-2), aciklama: "Kartlı hizmet", kategori: "Hizmet", gelir: 3900, gider: 0, odemeTipi: "Kart" },
-    { tarih: d(-1), aciklama: "Elektrik ek ödeme", kategori: "Elektrik", gelir: 0, gider: 380, odemeTipi: "Nakit" },
-    { tarih: today, aciklama: "Sabah nakit hizmet", kategori: "Hizmet", gelir: 2750, gider: 0, odemeTipi: "Nakit" },
-    { tarih: today, aciklama: "Öğleden sonra kartlı hizmet", kategori: "Hizmet", gelir: 1680, gider: 0, odemeTipi: "Kart" },
+    { tarih: d(-12), aciklama: "Opening cash alteration", kategori: "Service", gelir: 82, gider: 0, odemeTipi: "Nakit" },
+    { tarih: d(-12), aciklama: "Card alteration", kategori: "Service", gelir: 46.5, gider: 0, odemeTipi: "Kart" },
+    { tarih: d(-11), aciklama: "Fabric store", kategori: "Groceries", gelir: 0, gider: 8.9, odemeTipi: "Nakit" },
+    { tarih: d(-10), aciklama: "Daily alteration", kategori: "Service", gelir: 71, gider: 0, odemeTipi: "Nakit" },
+    { tarih: d(-10), aciklama: "Water bill", kategori: "Water", gelir: 0, gider: 4.2, odemeTipi: "Kart" },
+    { tarih: d(-8), aciklama: "Electricity bill", kategori: "Utilities", gelir: 0, gider: 12.5, odemeTipi: "Kart" },
+    { tarih: d(-7), aciklama: "Weekend alteration", kategori: "Service", gelir: 98, gider: 0, odemeTipi: "Nakit" },
+    { tarih: d(-7), aciklama: "Card alteration", kategori: "Service", gelir: 54, gider: 0, odemeTipi: "Kart" },
+    { tarih: d(-6), aciklama: "Heating bill", kategori: "Heating", gelir: 0, gider: 18.75, odemeTipi: "Kart" },
+    { tarih: d(-5), aciklama: "Shop cleaning supplies", kategori: "Workshop", gelir: 0, gider: 3.4, odemeTipi: "Nakit" },
+    { tarih: d(-4), aciklama: "Daily alteration", kategori: "Service", gelir: 64, gider: 0, odemeTipi: "Nakit" },
+    { tarih: d(-3), aciklama: "Home groceries", kategori: "Home", gelir: 0, gider: 5.6, odemeTipi: "Kart" },
+    { tarih: d(-2), aciklama: "Daily alteration", kategori: "Service", gelir: 73, gider: 0, odemeTipi: "Nakit" },
+    { tarih: d(-2), aciklama: "Card alteration", kategori: "Service", gelir: 39, gider: 0, odemeTipi: "Kart" },
+    { tarih: d(-1), aciklama: "Extra electricity", kategori: "Utilities", gelir: 0, gider: 3.8, odemeTipi: "Nakit" },
+    { tarih: today, aciklama: "Morning cash alteration", kategori: "Service", gelir: 27.5, gider: 0, odemeTipi: "Nakit" },
+    { tarih: today, aciklama: "Afternoon card alteration", kategori: "Service", gelir: 16.8, gider: 0, odemeTipi: "Kart" },
   ];
 }
 
@@ -102,16 +103,16 @@ export async function ensureDefaults(): Promise<void> {
       const today = toISODate();
       await db!.insert(ayarlar).values({
         id: 1,
-        isletmeAdi: "Mavi Dükkan Defteri",
-        kiraTutari: "150000.00",
+        isletmeAdi: "My Shop",
+        kiraTutari: "1500.00",
         kiraPeriyodu: 6,
-        aylikKiraKarsiligi: "25000.00",
-        paraBirimi: "TL",
+        aylikKiraKarsiligi: "250.00",
+        paraBirimi: "USD",
         kiraSonrakiTarih: addMonths(today, 1).slice(0, 8) + "01",
-        acilisBakiyesi: "12500.00",
+        acilisBakiyesi: "125.00",
         aiMotor: "otomatik",
         ollamaModel: "gemma3:4b",
-        whatsappAlici: "0556102095",
+        whatsappAlici: "",
       });
 
       const now = new Date();
@@ -132,7 +133,8 @@ export async function ensureDefaults(): Promise<void> {
         id: crypto.randomUUID(),
         rol: "assistant",
         icerik:
-          "Merhaba, ben Defterdar — dijital muhasebeciniz. Deftere doğal dille kayıt girebilirim, gün sonu ve Z raporu hazırlarım.\n\nÖrnekler:\n• \"Bugün 5.000 TL nakit hizmet yaptım\"\n• \"Elektrik faturası 1.250 TL kart ile ödedim\"\n• \"Bu ayın kar-zarar durumu ne?\"\n• \"1-15 arası Z raporu al\"",
+          "Hello, I'm LedgerAI — your shop assistant. Add entries in natural language, get day close and Z reports.\n\nExamples:\n• \"Today cash service $50\"\n• \"Paid electricity $12.50 by card\"\n• \"This month's profit and loss?\"\n• \"Z report 1-15\"",
+
         olusturmaZamani: now,
       });
     },
@@ -214,7 +216,7 @@ export async function createKayit(input: KayitGirdi): Promise<Kayit> {
       const row = {
         id: crypto.randomUUID(),
         tarih,
-        aciklama: input.aciklama.trim() || "Kayıt",
+        aciklama: input.aciklama.trim() || "Entry",
         kategori: input.kategori,
         gelir: gelir.toFixed(2),
         gider: gider.toFixed(2),
@@ -233,7 +235,7 @@ export async function createKayit(input: KayitGirdi): Promise<Kayit> {
       const kayit: Kayit = {
         id: crypto.randomUUID(),
         tarih,
-        aciklama: input.aciklama.trim() || "Kayıt",
+        aciklama: input.aciklama.trim() || "Entry",
         kategori: input.kategori,
         gelir,
         gider,
@@ -342,8 +344,8 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
         : (current.ollamaModel || "gemma3:4b"),
     whatsappAlici:
       patch.whatsappAlici !== undefined
-        ? patch.whatsappAlici.trim() || "0556102095"
-        : (current.whatsappAlici || "0556102095"),
+        ? patch.whatsappAlici.trim() || ""
+        : (current.whatsappAlici || ""),
   };
   return withDb(
     async () => {
@@ -404,15 +406,23 @@ export async function addMesaj(rol: "user" | "assistant", icerik: string): Promi
   );
 }
 
-const TEMIZ_SELAMLAMA =
-  "Sohbet temizlendi. 🧹 Ben Defterdar, dijital muhasebeciniz. Nasıl yardımcı olayım?";
+const SELAMLAMA: Record<string, string> = {
+  tr: "Sohbet temizlendi. Ben Defterdar, dijital muhasebeciniz. Nasıl yardımcı olayım?",
+  en: "Chat cleared. I'm LedgerAI, your shop assistant. How can I help?",
+  de: "Chat gelöscht. Ich bin LedgerAI, Ihr Assistent. Wie kann ich helfen?",
+  fr: "Discussion effacée. Je suis LedgerAI, votre assistant. Comment aider ?",
+  es: "Chat borrado. Soy LedgerAI, tu asistente. ¿En qué ayudo?",
+  ar: "تم مسح المحادثة. أنا LedgerAI، مساعدك. كيف أساعد؟",
+  ru: "Чат очищен. Я LedgerAI, ваш ассистент. Чем помочь?",
+};
 
 /** Sohbeti temizle: eski mesajlar gider, selamlama kalır. Kayıtlara dokunulmaz. */
-export async function temizleSohbet(): Promise<SohbetMesaji[]> {
+export async function temizleSohbet(locale = "en"): Promise<SohbetMesaji[]> {
+  const selamIcerik = SELAMLAMA[locale] ?? SELAMLAMA.en;
   const selam: SohbetMesaji = {
     id: crypto.randomUUID(),
     rol: "assistant",
-    icerik: TEMIZ_SELAMLAMA,
+    icerik: selamIcerik,
     olusturmaZamani: new Date().toISOString(),
   };
   return withDb(
@@ -438,7 +448,7 @@ export function emptyKayit(tarih: string): KayitGirdi {
   return {
     tarih,
     aciklama: "",
-    kategori: "Diğer",
+    kategori: "Other",
     gelir: 0,
     gider: 0,
     odemeTipi: "Nakit",
@@ -464,7 +474,7 @@ export async function sifirlaTumu(): Promise<InitData> {
     id: crypto.randomUUID(),
     rol: "assistant",
     icerik:
-      "Defter sıfırlandı, tertemiz başlıyoruz. 🧹\n\nKayıtlar silindi, açılış bakiyesi ve kira sıfırlandı.\n\nÖrnekler:\n• \"Bugün 5.000 TL nakit hizmet yaptım\"\n• \"12.03.2024 tarihinde 2.000 TL kart hizmet\" (geçmişe de yazabilirsiniz)\n• \"Ay sonu al\" / \"Gün sonu al\"",
+      "Ledger reset — fresh start.\n\nRecords cleared, opening balance and rent reset.\n\nExamples:\n• \"Today cash alteration $50\"\n• \"March 12 card alteration $20\"\n• \"Month close\" / \"Day close\"",
     olusturmaZamani: new Date().toISOString(),
   };
   return withDb(
@@ -511,16 +521,17 @@ export async function restoreSnapshot(snapshot: InitData): Promise<InitData> {
     const date = String(item.tarih || "");
     const parsedDate = new Date(`${date}T00:00:00Z`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) {
-      throw new Error("Yedekte geçersiz kayıt tarihi var.");
+      throw new Error("Backup has an invalid entry date.");
     }
     const gelir = Number(item.gelir);
     const gider = Number(item.gider);
-    if (!Number.isFinite(gelir) || !Number.isFinite(gider)) throw new Error("Yedekte geçersiz tutar var.");
-    const kategori = (KATEGORILER as readonly string[]).includes(item.kategori) ? item.kategori : "Diğer";
+    if (!Number.isFinite(gelir) || !Number.isFinite(gider)) throw new Error("Backup has an invalid amount.");
+    const katList = KATEGORILER as readonly string[];
+    const kategori = (katList.includes(item.kategori) ? item.kategori : (KATEGORI_ESKI[item.kategori] ?? "Other")) as Kategori;
     return {
       id: /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(item.id) ? item.id : crypto.randomUUID(),
       tarih: date,
-      aciklama: String(item.aciklama || "Kayıt"),
+      aciklama: String(item.aciklama || "Entry"),
       kategori,
       gelir: round2(Math.max(0, gelir)),
       gider: round2(Math.max(0, gider)),
@@ -533,7 +544,7 @@ export async function restoreSnapshot(snapshot: InitData): Promise<InitData> {
   });
   const restoredAyarlar = snapshot.ayarlar;
   if (!Number.isFinite(Number(restoredAyarlar.kiraTutari)) || !Number.isFinite(Number(restoredAyarlar.acilisBakiyesi))) {
-    throw new Error("Yedekte geçersiz ayar bilgisi var.");
+    throw new Error("Backup has invalid settings.");
   }
   const restoredMesajlar = snapshot.mesajlar.map((item) => ({
     id: /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(item.id) ? item.id : crypto.randomUUID(),
@@ -588,3 +599,4 @@ export async function restoreSnapshot(snapshot: InitData): Promise<InitData> {
 }
 
 export type { OdemeTipi };
+

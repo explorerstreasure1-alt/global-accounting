@@ -1,9 +1,9 @@
 export const HIZLI_KOMUTLAR = [
-  { id: "gunluk", label: "Günlük Özet", icon: "📊", prompt: "Bugünün günlük kasa özetini ver" },
-  { id: "kasa", label: "Kasa Durumu", icon: "💰", prompt: "Nakit ve kart toplamlarını göster" },
-  { id: "karzarar", label: "Kar-Zarar", icon: "📈", prompt: "Bu ayın kar-zarar durumu ne?" },
-  { id: "kira", label: "Kira Hatırlat", icon: "🏠", prompt: "Kira ne kadar kaldı?" },
-  { id: "z", label: "Z Raporu", icon: "🧾", prompt: "Bu ayın nakit kart Z raporunu ver" },
-  { id: "gunsonu", label: "Gün Sonu", icon: "🌙", prompt: "Bugünün gün sonu raporunu al" },
-  { id: "aysonu", label: "Ay Sonu", icon: "📅", prompt: "Bu ayın ay sonu raporunu al" },
+  { id: "gunluk", label: "Daily summary", icon: "report", prompt: "Give today's cash summary" },
+  { id: "kasa", label: "Cash status", icon: "cash", prompt: "Show cash and card totals" },
+  { id: "karzarar", label: "Profit & loss", icon: "spark", prompt: "What is this month's profit and loss?" },
+  { id: "kira", label: "Rent reminder", icon: "bank", prompt: "How much rent is left?" },
+  { id: "z", label: "Z report", icon: "report", prompt: "Give this month's cash/card Z report" },
+  { id: "gunsonu", label: "Day close", icon: "day", prompt: "Get today's day-close report" },
+  { id: "aysonu", label: "Month close", icon: "month", prompt: "Get this month's month-close report" },
 ];

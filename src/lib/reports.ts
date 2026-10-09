@@ -124,7 +124,8 @@ export function monthRange(year: number, month: number): { baslangic: string; bi
   return { baslangic, bitis };
 }
 
-export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toISODate()): Uyari[] {
+export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toISODate(), locale = "en"): Uyari[] {
+  const tr = locale === "tr";
   const now = parseISODate(today);
   const { baslangic, bitis } = monthRange(now.getFullYear(), now.getMonth() + 1);
   const ay = buildRapor(kayitlar, ayarlar, baslangic, bitis);
@@ -134,8 +135,10 @@ export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toI
     const oran = Math.round((ay.gider / ay.gelir) * 100);
     uyarilar.push({
       tip: ay.gider >= ay.gelir ? "kritik" : "dikkat",
-      baslik: "Gider oranı yüksek",
-      mesaj: `Bu ay giderler gelirlerin %${oran}'ine ulaştı. Nakit akışını sıkı tutun.`,
+      baslik: tr ? "Gider oranı yüksek" : "High expense ratio",
+      mesaj: tr
+        ? `Bu ay giderler gelirlerin %${oran}'ine ulaştı. Nakit akışını sıkı tutun.`
+        : `Expenses reached ${oran}% of income this month. Watch cash flow.`,
     });
   }
 
@@ -147,14 +150,18 @@ export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toI
     if (kalan <= 15 && kalan >= 0) {
       uyarilar.push({
         tip: kalan <= 3 ? "kritik" : "dikkat",
-        baslik: "Kira hatırlatması",
-        mesaj: `Kira ödemesine ${kalan} gün kaldı (${ayarlar.kiraSonrakiTarih}). Dönem tutarı ${ayarlar.kiraTutari.toLocaleString("tr-TR")} ₺.`,
+        baslik: tr ? "Kira hatırlatması" : "Rent reminder",
+        mesaj: tr
+          ? `Kira ödemesine ${kalan} gün kaldı (${ayarlar.kiraSonrakiTarih}).`
+          : `${kalan} days until rent payment (${ayarlar.kiraSonrakiTarih}).`,
       });
     } else if (kalan < 0 && kalan > -20) {
       uyarilar.push({
         tip: "kritik",
-        baslik: "Kira tarihi geçti",
-        mesaj: `Planlanan kira tarihi ${Math.abs(kalan)} gün geçti. Aylık karşılık ${ayarlar.aylikKiraKarsiligi.toLocaleString("tr-TR")} ₺.`,
+        baslik: tr ? "Kira tarihi geçti" : "Rent overdue",
+        mesaj: tr
+          ? `Planlanan kira tarihi ${Math.abs(kalan)} gün geçti.`
+          : `Planned rent date passed ${Math.abs(kalan)} days ago.`,
       });
     }
   }
@@ -162,14 +169,16 @@ export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toI
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevRange = monthRange(prev.getFullYear(), prev.getMonth() + 1);
   const oncekiAy = buildRapor(kayitlar, ayarlar, prevRange.baslangic, prevRange.bitis);
-  const dogalgazBu = ay.kategoriler.find((k) => k.kategori === "Doğalgaz")?.gider ?? 0;
-  const dogalgazOnce = oncekiAy.kategoriler.find((k) => k.kategori === "Doğalgaz")?.gider ?? 0;
+  const dogalgazBu = ay.kategoriler.find((k) => k.kategori === "Heating")?.gider ?? 0;
+  const dogalgazOnce = oncekiAy.kategoriler.find((k) => k.kategori === "Heating")?.gider ?? 0;
   if (dogalgazOnce > 0 && dogalgazBu >= dogalgazOnce * 1.4) {
     const artis = Math.round(((dogalgazBu - dogalgazOnce) / dogalgazOnce) * 100);
     uyarilar.push({
       tip: "dikkat",
-      baslik: "Doğalgaz artışı",
-      mesaj: `Doğalgaz geçen aya göre %${artis} artmış. Faturayı kontrol edin.`,
+      baslik: tr ? "Doğalgaz artışı" : "Heating cost spike",
+      mesaj: tr
+        ? `Doğalgaz geçen aya göre %${artis} artmış. Faturayı kontrol edin.`
+        : `Heating is up ${artis}% vs last month. Check the bill.`,
     });
   }
 
@@ -184,8 +193,10 @@ export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toI
     if (kasa + ortNet * 3 < 0) {
       uyarilar.push({
         tip: "kritik",
-        baslik: "Nakit akışı uyarısı",
-        mesaj: "Son günlerin nakit ortalamasına göre kasa 3 gün içinde negatife düşebilir.",
+        baslik: tr ? "Nakit akışı uyarısı" : "Cash flow warning",
+        mesaj: tr
+          ? "Son günlerin nakit ortalamasına göre kasa 3 gün içinde negatife düşebilir."
+          : "At the recent cash rate the safe may go negative within 3 days.",
       });
     }
   }
@@ -193,8 +204,10 @@ export function computeUyarilar(kayitlar: Kayit[], ayarlar: Ayarlar, today = toI
   if (uyarilar.length === 0 && ay.adet > 0) {
     uyarilar.push({
       tip: "bilgi",
-      baslik: "Defter dengede",
-      mesaj: "Bu ay için kritik bir uyarı yok. Kayıtlar düzenli görünüyor.",
+      baslik: tr ? "Defter dengede" : "Ledger balanced",
+      mesaj: tr
+        ? "Bu ay için kritik bir uyarı yok. Kayıtlar düzenli görünüyor."
+        : "No critical warnings this month. Records look tidy.",
     });
   }
 

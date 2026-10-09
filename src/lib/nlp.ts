@@ -65,14 +65,14 @@ export type KayitAraligi = {
 };
 
 const KATEGORI_ANAHTAR: { kategori: Kategori; keys: string[] }[] = [
-  { kategori: "Kira", keys: ["kira", "kirası", "kirasi", "rent"] },
-  { kategori: "Elektrik", keys: ["elektrik", "elektrik faturası", "elektrik faturasi", "aydınlatma"] },
-  { kategori: "Su", keys: ["su faturası", "su faturasi", "su "] },
-  { kategori: "Doğalgaz", keys: ["doğalgaz", "dogalgaz", "gaz faturası", "gaz faturasi"] },
-  { kategori: "Ev", keys: ["ev ", "evde", "ev gider", "ev market"] },
-  { kategori: "İş Yeri", keys: ["iş yeri", "is yeri", "dükkan", "dukkan", "işyeri", "isyeri", "mağaza", "magaza"] },
-  { kategori: "Hizmet", keys: ["hizmet", "hizmetler", "hizmet geliri", "servis", "satış", "satis", "ciro", "hasılat", "hasilat", "günlük satış", "gunluk satis", "paça", "paca", "terzi", "dikim", "tadilat", "tamir"] },
-  { kategori: "Market", keys: ["market", "bakkal", "alışveriş", "alisveris", "gıda", "gida"] },
+  { kategori: "Rent", keys: ["kira", "kirası", "kirasi", "rent", "miete", "loyer", "alquiler", "аренда", "إيجار"] },
+  { kategori: "Utilities", keys: ["elektrik", "aydınlatma", "electricity", "electric", "strom", "électricité", "electricidad", "электричество", "كهرباء"] },
+  { kategori: "Water", keys: ["su faturası", "su faturasi", "water", "wasser", "eau", "agua", "вода", "ماء"] },
+  { kategori: "Heating", keys: ["doğalgaz", "dogalgaz", "gaz faturası", "gaz faturasi", "gas", "heating", "heizung", "chauffage", "calefacción", "отопление", "غاز"] },
+  { kategori: "Home", keys: ["ev ", "evde", "ev gider", "ev market", "home", "zuhause", "maison", "casa", "дом", "منزل"] },
+  { kategori: "Workshop", keys: ["iş yeri", "is yeri", "dükkan", "dukkan", "işyeri", "isyeri", "mağaza", "magaza", "shop", "store", "office", "atelier", "taller", "ателье", "محل"] },
+  { kategori: "Service", keys: ["hizmet", "servis", "satış", "satis", "ciro", "hasılat", "hasilat", "terzi", "dikim", "tadilat", "tamir", "service", "sale", "sales", "income", "revenue", "tailor", "alteration", "dienstleistung", "servicio", "услуга", "خدمة"] },
+  { kategori: "Groceries", keys: ["market", "bakkal", "alışveriş", "alisveris", "gıda", "gida", "grocery", "groceries", "lebensmittel", "courses", "comestibles", "продукты", "بقالة"] },
 ];
 
 export function detectKategori(text: string): Kategori | null {
@@ -85,9 +85,9 @@ export function detectKategori(text: string): Kategori | null {
 function detectOdeme(text: string): OdemeTipi | null {
   // "deftere" içindeki "eft" Havale sanılmasın diye defter sözcükleri ayıklanır.
   const temiz = text.replace(/defter\w*/g, " ");
-  if (/iban|ıban|havale|eft|fast/.test(temiz)) return "Havale";
-  if (/\bkart\b|kredi kart|pos\b|krediyle/.test(temiz)) return "Kart";
-  if (/\bnakit\b|elden|peşin|pesin|cash/.test(temiz)) return "Nakit";
+  if (/iban|ıban|havale|eft|fast|transfer|wire|bank|überweisung|virement|transferencia|перевод|تحويل/.test(temiz)) return "Havale";
+  if (/\bkart\b|kredi kart|pos\b|krediyle|card\b|credit|karte|carte|tarjeta|карта|بطاقة/.test(temiz)) return "Kart";
+  if (/\bnakit\b|elden|peşin|pesin|cash|bar\b|cash\b|espèces|efectivo|наличные|نقد/.test(temiz)) return "Nakit";
   return null;
 }
 
@@ -246,11 +246,11 @@ function parseExplicitDate(text: string, today: string): string | null {
 }
 
 function parseDate(text: string, today: string): string | null {
-  if (/\bbugün\b|\bbugun\b/.test(text)) return today;
-  if (/\bdün\b|\bdun\b/.test(text)) return addDays(today, -1);
-  if (/evvelsi|önceki gün|onceki gun/.test(text)) return addDays(today, -2);
-  if (/yarın|yarin/.test(text)) return addDays(today, 1);
-  const gunOnce = text.match(/(\d+)\s*(?:gün|gun)\s*(?:önce|once)/);
+  if (/\bbugün\b|\bbugun\b|\btoday\b/.test(text)) return today;
+  if (/\bdün\b|\bdun\b|\byesterday\b/.test(text)) return addDays(today, -1);
+  if (/evvelsi|önceki gün|onceki gun|day before/.test(text)) return addDays(today, -2);
+  if (/yarın|yarin|tomorrow/.test(text)) return addDays(today, 1);
+  const gunOnce = text.match(/(\d+)\s*(?:gün|gun|day)s?\s*(?:önce|once|ago)/);
   if (gunOnce) return addDays(today, -Number(gunOnce[1]));
   // "2 hafta önce"
   const haftaOnce = text.match(/(\d+)\s*hafta\s*(?:önce|once)/);
@@ -436,9 +436,9 @@ export function isQuestion(text: string): boolean {
   return /\b(ne|neler|nedir|nelerdir|kaç|kac|hangi|hangisi|hangileri|kim|neden|niçin|nicin|nasıl|nasil|var mı|varmi|yok mu|göster|goster|liste|soyle|söyle|anlat|bul|getir|durum|özet|ozet|bak|bakayım|bakalim|miyim|misin|mi|mı|mu|mü)\b/.test(text);
 }
 
-function isIncome(text: string, kategori: Kategori | null): boolean {  if (/gider|ödedim|odedim|fatura|masraf|harcama|aldım|aldim|ödeme|odeme/.test(text)) return false;
-  if (/satış|satis|hizmet|servis|ciro|hasılat|hasilat|gelir|tahsil|kasa giriş|kasa giris|paça kısalt|paca kisalt|terzi|dikim|tadilat|tamir/.test(text)) return true;
-  return kategori === "Hizmet";
+function isIncome(text: string, kategori: Kategori | null): boolean {  if (/gider|ödedim|odedim|fatura|masraf|harcama|aldım|aldim|ödeme|odeme|expense|paid|bill|cost|spent|purchase|ausgabe|dépense|gasto|расход|مصروف/.test(text)) return false;
+  if (/satış|satis|hizmet|servis|ciro|hasılat|hasilat|gelir|tahsil|kasa giriş|kasa giris|paça kısalt|paca kisalt|terzi|dikim|tadilat|tamir|income|sale|service|revenue|earning|einnahme|recette|ingreso|доход|دخل/.test(text)) return true;
+  return kategori === "Service";
 }
 
 function buildDescription(raw: string): string {
@@ -784,7 +784,7 @@ export function parseCommand(raw: string, today = toISODate()): NlpIntent {
     const kalemler = tarihsizCumleler.flatMap((cumle) => {
       const tutarlar = extractAmounts(cumle);
       if (tutarlar.length !== 1) return [];
-      const kategori = detectKategori(cumle) ?? detectKategori(text) ?? "Diğer";      const gelirMi = isIncome(cumle, kategori);
+      const kategori: Kategori = detectKategori(cumle) ?? detectKategori(text) ?? "Other";      const gelirMi = isIncome(cumle, kategori);
       return [{
         tarih: "",
         aciklama: buildDescription(cumle) || kategori,
@@ -818,7 +818,7 @@ export function parseCommand(raw: string, today = toISODate()): NlpIntent {
       if (dateWasSpecified && !tarih) {
         return { type: "netlestir", mesaj: "Tarihi netleştiremedim. Hangi güne yazmamı istersiniz?", confidence: 0.99 };
       }
-    const kategori = detectKategori(text) ?? (isIncome(text, null) ? "Hizmet" : "Diğer");
+    const kategori: Kategori = detectKategori(text) ?? (isIncome(text, null) ? "Service" : "Other");
       const gelirMi = isIncome(text, kategori);
       const odemeTipi = detectOdeme(text) ?? "Nakit";
       const aciklama = buildDescription(raw) || kategori;
@@ -847,7 +847,7 @@ export function parseCommand(raw: string, today = toISODate()): NlpIntent {
     ).test(text);
     const parsedDate = parseDate(text, today);
     if (dateWasSpecified && !parsedDate) return { type: "sohbet", confidence: 0.2 };
-    const kategori = detectKategori(text) ?? (isIncome(text, null) ? "Hizmet" : "Diğer");
+    const kategori: Kategori = detectKategori(text) ?? (isIncome(text, null) ? "Service" : "Other");
     const odeme = detectOdeme(text) ?? "Nakit";
     const tarih = parsedDate ?? today;
     const gelirMi = isIncome(text, kategori);
@@ -857,7 +857,7 @@ export function parseCommand(raw: string, today = toISODate()): NlpIntent {
 
     let not: string | undefined;
     const periyot = text.match(/(\d+)\s*ayl[ıi]k/);
-    if (kategori === "Kira" && periyot) {
+    if (kategori === "Rent" && periyot) {
       const ay = Number(periyot[1]);
       const aylik = Math.round((amount / ay) * 100) / 100;
       aciklama = aciklama || `Dükkan kirası (${ay} aylık)`;

@@ -1,30 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
-    <radialGradient id="a" cx="35%" cy="25%" r="95%">
-      <stop offset="0%" stop-color="#1d4e4a"/>
-      <stop offset="60%" stop-color="#102033"/>
-      <stop offset="100%" stop-color="#0b1624"/>
-    </radialGradient>
-    <linearGradient id="t" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="t2" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#99f6e4"/>
       <stop offset="100%" stop-color="#2dd4bf"/>
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="248" height="248" rx="56" fill="url(#a)"/>
-  <rect x="4" y="4" width="248" height="248" rx="56" fill="none" stroke="#2dd4bf" stroke-opacity="0.5" stroke-width="6"/>
-  <!-- robot kafa -->
-  <rect x="66" y="78" width="124" height="96" rx="28" fill="#f3e6c4"/>
-  <rect x="66" y="78" width="124" height="96" rx="28" fill="none" stroke="url(#t)" stroke-width="6"/>
-  <circle cx="104" cy="126" r="14" fill="#16324f"/>
-  <circle cx="152" cy="126" r="14" fill="#16324f"/>
-  <circle cx="108" cy="122" r="4" fill="#99f6e4"/>
-  <circle cx="156" cy="122" r="4" fill="#99f6e4"/>
-  <rect x="108" y="148" width="40" height="8" rx="4" fill="#9a3412"/>
-  <!-- anten -->
-  <line x1="128" y1="78" x2="128" y2="52" stroke="url(#t)" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="128" cy="44" r="10" fill="url(#t)"/>
-  <!-- kulaklık -->
-  <rect x="54" y="110" width="14" height="34" rx="7" fill="url(#t)"/>
-  <rect x="188" y="110" width="14" height="34" rx="7" fill="url(#t)"/>
-  <text x="128" y="212" text-anchor="middle" font-family="Georgia, serif" font-size="30" font-weight="bold" fill="url(#t)">₺ AI</text>
+  <rect x="4" y="4" width="248" height="248" rx="56" fill="#0b1624"/>
+  <rect x="4" y="4" width="248" height="248" rx="56" fill="none" stroke="url(#t2)" stroke-opacity="0.5" stroke-width="6"/>
+  <!-- chat bubble + needle -->
+  <rect x="52" y="70" width="152" height="104" rx="26" fill="#f8fafc"/>
+  <path d="M80 174 L70 200 L102 176 Z" fill="#f8fafc"/>
+  <g stroke="#0f172a" stroke-width="8" stroke-linecap="round" fill="none">
+    <line x1="92" y1="136" x2="150" y2="100"/>
+  </g>
+  <circle cx="157" cy="95" r="8" fill="none" stroke="#0f172a" stroke-width="6"/>
+  <text x="128" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="url(#t2)">AI</text>
 </svg>

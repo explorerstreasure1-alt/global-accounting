@@ -1,4 +1,4 @@
-import { promises as fs } from "node:fs";
+﻿import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Ayarlar, Kayit, SohbetMesaji } from "./types";
 import { addDays, addMonths, round2, toISODate } from "./format";
@@ -20,8 +20,8 @@ import { addDays, addMonths, round2, toISODate } from "./format";
  *  - DB varsa dosyaya ayna + tarayıcı localStorage (istemci tarafı)
  */
 
-const APP_ADI = "Defterdar";
-const ESKI_APP_ADI = "MgroqDefter"; // eski klasörden otomatik taşıma için
+const APP_ADI = "TailorLedger";
+const ESKI_APP_ADI = "Defterdar"; // migrate once from old folder
 
 function appDataDir(): string | null {
   const appData =
@@ -81,7 +81,7 @@ function dataDir(): string {
 
 let migratePromise: Promise<void> | null = null;
 
-/** Eski konumlar (otomatik taşıma kaynakları): önce eski APPDATA, sonra proje-içi */
+/** Old locations (auto-migrate sources): previous APPDATA dirs, then project dir */
 function eskiDizinler(): string[] {
   const list: string[] = [];
   const appData =
@@ -89,7 +89,10 @@ function eskiDizinler(): string[] {
     (process.platform === "win32" && process.env.USERPROFILE
       ? path.join(process.env.USERPROFILE, "AppData", "Roaming")
       : null);
-  if (appData) list.push(path.join(appData, ESKI_APP_ADI, "data"));
+  if (appData) {
+    list.push(path.join(appData, ESKI_APP_ADI, "data"));
+    list.push(path.join(appData, "MgroqDefter", "data"));
+  }
   list.push(legacyDir());
   return list.filter((d) => d !== getDataDir());
 }
@@ -166,7 +169,8 @@ async function readJson<T>(name: string, fallback: T): Promise<T> {
 async function writeJsonAtomic(name: string, value: unknown): Promise<void> {
   await ensureDirs();
   const full = path.join(dataDir(), name);
-  const tmp = `${full}.${process.pid}.tmp`;
+  // Eşzamanlı yazımlar çakışmasın diye benzersiz tmp adı (aynı pid'den çift istek gelebilir)
+  const tmp = `${full}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(value, null, 2), "utf-8");
   // Üzerine yazmadan önce son sağlam kopyayı .bak olarak sakla
   // (güncelleme/crash anında yarım yazıma karşı)
@@ -176,7 +180,25 @@ async function writeJsonAtomic(name: string, value: unknown): Promise<void> {
   } catch {
     /* ilk yazım, yedeklenecek eski dosya yok */
   }
-  await fs.rename(tmp, full);
+  // Antivirüs anlık kilitlerine karşı: birkaç kez dene, olmazsa düz yazıma düş
+  let yazildi = false;
+  for (let deneme = 0; deneme < 4 && !yazildi; deneme += 1) {
+    try {
+      await fs.rename(tmp, full);
+      yazildi = true;
+    } catch (err) {
+      if (deneme === 3) {
+        console.warn(`[hafiza] rename olmadı, düz yazım: ${name} (${(err as Error)?.message})`);
+        await fs.writeFile(full, JSON.stringify(value, null, 2), "utf-8");
+        yazildi = true;
+      } else {
+        await new Promise((r) => setTimeout(r, 120));
+      }
+    }
+  }
+  try {
+    await fs.unlink(tmp).catch(() => undefined);
+  } catch { /* ignore */ }
   // Her yazımda hafif yedek (günde 1 kez tam yedek)
   await maybeDailyBackup().catch(() => undefined);
 }
@@ -220,39 +242,39 @@ async function maybeDailyBackup() {
 function seedAyarlar(today: string): Ayarlar {
   return {
     id: 1,
-    isletmeAdi: "Mavi Dükkan Defteri",
-    kiraTutari: 150000,
+    isletmeAdi: "My Shop",
+    kiraTutari: 1500,
     kiraPeriyodu: 6,
-    aylikKiraKarsiligi: 25000,
-    paraBirimi: "TL",
+    aylikKiraKarsiligi: 250,
+    paraBirimi: "USD",
     kiraSonrakiTarih: addMonths(today, 1).slice(0, 8) + "01",
-    acilisBakiyesi: 12500,
+    acilisBakiyesi: 125,
     aiMotor: "otomatik",
     ollamaModel: "gemma3:4b",
-    whatsappAlici: "0556102095",
+    whatsappAlici: "",
   };
 }
 
 function seedKayitlar(today: string): Kayit[] {
   const d = (offset: number) => addDays(today, offset);
   const ham: Array<[string, string, Kayit["kategori"], number, number, Kayit["odemeTipi"]]> = [
-    [d(-12), "Açılış nakit hizmet", "Hizmet", 8200, 0, "Nakit"],
-    [d(-12), "Kartlı hizmet", "Hizmet", 4650, 0, "Kart"],
-    [d(-11), "Market alışverişi", "Market", 0, 890, "Nakit"],
-    [d(-10), "Günlük hizmet", "Hizmet", 7100, 0, "Nakit"],
-    [d(-10), "Su faturası", "Su", 0, 420, "Kart"],
-    [d(-8), "Elektrik faturası", "Elektrik", 0, 1250, "Kart"],
-    [d(-7), "Hafta sonu hizmet", "Hizmet", 9800, 0, "Nakit"],
-    [d(-7), "Kartlı hizmet", "Hizmet", 5400, 0, "Kart"],
-    [d(-6), "Doğalgaz faturası", "Doğalgaz", 0, 1875, "Kart"],
-    [d(-5), "Dükkan temizlik malzemesi", "İş Yeri", 0, 340, "Nakit"],
-    [d(-4), "Günlük hizmet", "Hizmet", 6400, 0, "Nakit"],
-    [d(-3), "Ev market", "Ev", 0, 560, "Kart"],
-    [d(-2), "Günlük hizmet", "Hizmet", 7300, 0, "Nakit"],
-    [d(-2), "Kartlı hizmet", "Hizmet", 3900, 0, "Kart"],
-    [d(-1), "Elektrik ek ödeme", "Elektrik", 0, 380, "Nakit"],
-    [today, "Sabah nakit hizmet", "Hizmet", 2750, 0, "Nakit"],
-    [today, "Öğleden sonra kartlı hizmet", "Hizmet", 1680, 0, "Kart"],
+    [d(-12), "Opening cash service", "Service", 82, 0, "Nakit"],
+    [d(-12), "Card service", "Service", 46.5, 0, "Kart"],
+    [d(-11), "Supply store", "Groceries", 0, 8.9, "Nakit"],
+    [d(-10), "Daily service", "Service", 71, 0, "Nakit"],
+    [d(-10), "Water bill", "Water", 0, 4.2, "Kart"],
+    [d(-8), "Electricity bill", "Utilities", 0, 12.5, "Kart"],
+    [d(-7), "Weekend service", "Service", 98, 0, "Nakit"],
+    [d(-7), "Card service", "Service", 54, 0, "Kart"],
+    [d(-6), "Heating bill", "Heating", 0, 18.75, "Kart"],
+    [d(-5), "Shop cleaning supplies", "Workshop", 0, 3.4, "Nakit"],
+    [d(-4), "Daily service", "Service", 64, 0, "Nakit"],
+    [d(-3), "Home groceries", "Home", 0, 5.6, "Kart"],
+    [d(-2), "Daily service", "Service", 73, 0, "Nakit"],
+    [d(-2), "Card service", "Service", 39, 0, "Kart"],
+    [d(-1), "Extra electricity", "Utilities", 0, 3.8, "Nakit"],
+    [today, "Morning cash service", "Service", 27.5, 0, "Nakit"],
+    [today, "Afternoon card service", "Service", 16.8, 0, "Kart"],
   ];
   const now = new Date().toISOString();
   return ham.map(([tarih, aciklama, kategori, gelir, gider, odemeTipi]) => ({
@@ -274,7 +296,7 @@ function seedMesaj(): SohbetMesaji[] {
       id: crypto.randomUUID(),
       rol: "assistant",
       icerik:
-        "Merhaba, ben Defterdar — dijital muhasebeciniz. Deftere doğal dille kayıt girebilirim, gün sonu ve Z raporu hazırlarım.\n\nÖrnekler:\n• \"Bugün 5.000 TL nakit hizmet yaptım\"\n• \"12.03.2024 tarihinde 2.000 TL kart hizmet\" (geçmişe de yazabilirsiniz)\n• \"Elektrik faturası 1.250 TL kart ile ödedim\"\n• \"Bu ayın kar-zarar durumu ne?\"\n• \"1-15 arası Z raporu al\"",
+        "Hello, I'm LedgerAI — your shop assistant. Add entries in natural language, get day close and Z reports.\n\nExamples:\n• \"Today cash service $50\"\n• \"March 12 card service $20\"\n• \"Paid electricity $12.50 by card\"\n• \"This month's profit and loss?\"\n• \"Z report 1-15\"",
       olusturmaZamani: new Date().toISOString(),
     },
   ];
@@ -295,7 +317,12 @@ export async function fileGetAll(): Promise<{ kayitlar: Kayit[]; ayarlar: Ayarla
     // Eski dosyada yeni alanlar yoksa ezmeden tamamla.
     if (!ayarlar.aiMotor) ayarlar.aiMotor = "otomatik";
     if (!ayarlar.ollamaModel) ayarlar.ollamaModel = "gemma3:4b";
-    if (!ayarlar.whatsappAlici) ayarlar.whatsappAlici = "0556102095";
+    if (!ayarlar.whatsappAlici) ayarlar.whatsappAlici = "";
+    yaz = true;
+  }
+  // Eski Türkçe varsayılan işletme adı → İngilizce (kullanıcı ayarlardan değiştirebilir).
+  if (ayarlar.isletmeAdi === "Mavi Dükkan Defteri" || ayarlar.isletmeAdi === "Mavi Defter Dükkanı") {
+    ayarlar = { ...ayarlar, isletmeAdi: "My Shop" };
     yaz = true;
   }
   if (!kayitlar) {

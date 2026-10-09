@@ -1,8 +1,18 @@
-import { promises as fs } from "node:fs";
+﻿import { promises as fs } from "node:fs";
 import path from "node:path";
 import { jsPDF } from "jspdf";
 import type { Ayarlar, RaporOzet } from "./types";
-import { formatMoney, formatTRDate } from "./format";
+import { formatMoneyLocale, formatDate } from "./format";
+
+const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
+  tr: { intl: "tr-TR", currency: "TRY" },
+  en: { intl: "en-US", currency: "USD" },
+  de: { intl: "de-DE", currency: "EUR" },
+  fr: { intl: "fr-FR", currency: "EUR" },
+  es: { intl: "es-ES", currency: "EUR" },
+  ar: { intl: "ar-SA", currency: "SAR" },
+  ru: { intl: "ru-RU", currency: "RUB" },
+};
 
 /**
  * Sunucu tarafı vektör PDF: Türkçe sorunsuz (Arial gömülü), satır asla
@@ -48,7 +58,13 @@ export async function raporPdfUret(
   ayarlar: Ayarlar,
   baslik: string,
   damga: string,
+  opts?: { locale?: string; currency?: string },
 ): Promise<Buffer> {
+  const loc = opts?.locale ?? "en";
+  const intl = LOCALE_INTL[loc]?.intl ?? "en-US";
+  const currency = opts?.currency ?? LOCALE_INTL[loc]?.currency ?? "USD";
+  const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
+  const fd = (iso: string) => formatDate(iso, intl);
   const fontlar = await fontlariYukle();
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   doc.addFileToVFS("arial.ttf", fontlar.normal);
@@ -75,7 +91,7 @@ export async function raporPdfUret(
   doc.setFont("arial", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...SOLUK);
-  doc.text(`${baslik.toLocaleUpperCase("tr-TR")}  •  ${formatTRDate(rapor.baslangic)} — ${formatTRDate(rapor.bitis)}`, SOL, y);
+  doc.text(`${baslik.toLocaleUpperCase(intl)}  •  ${fd(rapor.baslangic)} — ${fd(rapor.bitis)}`, SOL, y);
   y += 4;
   doc.setDrawColor(...CIZGI);
   doc.setLineWidth(0.4);
@@ -84,18 +100,18 @@ export async function raporPdfUret(
 
   // Özet kutuları (4 sütun)
   const kutular: Array<[string, string, boolean?]> = [
-    ["Nakit Gelir", formatMoney(rapor.nakitGelir)],
-    ["Nakit Gider", formatMoney(rapor.nakitGider)],
-    ["Kart Gelir", formatMoney(rapor.kartGelir)],
-    ["Kart Gider", formatMoney(rapor.kartGider)],
-    ["Havale Gelir", formatMoney(rapor.havaleGelir)],
-    ["Havale Gider", formatMoney(rapor.havaleGider)],
-    ["Nakit Net", formatMoney(rapor.nakitNet), true],
-    ["Kart Net", formatMoney(rapor.kartNet), true],
-    ["Havale Net", formatMoney(rapor.havaleNet), true],
-    ["Toplam Gelir", formatMoney(rapor.gelir)],
-    ["Toplam Gider", formatMoney(rapor.gider)],
-    [`Kayıt (${rapor.adet})`, formatMoney(rapor.net, false)],
+    ["Nakit Gelir", fm(rapor.nakitGelir)],
+    ["Nakit Gider", fm(rapor.nakitGider)],
+    ["Kart Gelir", fm(rapor.kartGelir)],
+    ["Kart Gider", fm(rapor.kartGider)],
+    ["Havale Gelir", fm(rapor.havaleGelir)],
+    ["Havale Gider", fm(rapor.havaleGider)],
+    ["Nakit Net", fm(rapor.nakitNet), true],
+    ["Kart Net", fm(rapor.kartNet), true],
+    ["Havale Net", fm(rapor.havaleNet), true],
+    ["Toplam Gelir", fm(rapor.gelir)],
+    ["Toplam Gider", fm(rapor.gider)],
+    [`Kayıt (${rapor.adet})`, fm(rapor.net, false)],
   ];
   const sutun = 4;
   const kutuW = (GENIS - (sutun - 1) * 3) / sutun;
@@ -108,7 +124,7 @@ export async function raporPdfUret(
     doc.setFont("arial", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...SOLUK);
-    doc.text(etiket.toLocaleUpperCase("tr-TR"), cx + 2, cy + 5);
+    doc.text(etiket.toLocaleUpperCase(intl), cx + 2, cy + 5);
     doc.setFont("arial", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...(vurgu ? YESIL : INK));
@@ -118,9 +134,9 @@ export async function raporPdfUret(
 
   // Net şeridi
   const serit: Array<[string, string, [number, number, number]]> = [
-    ["GENEL NET", formatMoney(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
-    ["AÇILIŞ", formatMoney(rapor.acilisBakiyesi), INK],
-    ["KAPANIŞ", formatMoney(rapor.kapanisBakiyesi), LACI],
+    ["GENEL NET", fm(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
+    ["AÇILIŞ", fm(rapor.acilisBakiyesi), INK],
+    ["KAPANIŞ", fm(rapor.kapanisBakiyesi), LACI],
   ];
   {
     const sw = (GENIS - 6) / 3;
@@ -166,7 +182,7 @@ export async function raporPdfUret(
       doc.setFillColor(...LACI);
       doc.rect(barX, y - 3.4, Math.max(2, (barW * (k.gelir + k.gider)) / maxKat), 4.6, "F");
       doc.setFont("arial", "bold");
-      doc.text(formatMoney(k.net, false), barX + barW + 4, y);
+      doc.text(fm(k.net, false), barX + barW + 4, y);
       doc.setFont("arial", "normal");
       y += 7;
     }
@@ -188,7 +204,7 @@ export async function raporPdfUret(
     for (const g of gunler) {
       y = yeniSayfaGerekirse(doc, y, 7);
       doc.setTextColor(...SOLUK);
-      doc.text(formatTRDate(g.tarih).slice(0, 5), SOL, y);
+      doc.text(fd(g.tarih).slice(0, 5), SOL, y);
       const barX = SOL + 22;
       const barW = 110;
       doc.setFillColor(...BANT);
@@ -197,7 +213,7 @@ export async function raporPdfUret(
       doc.rect(barX, y - 3.2, Math.max(2, (barW * Math.abs(g.net)) / maxGun), 4.2, "F");
       doc.setFont("arial", "bold");
       doc.setTextColor(...INK);
-      doc.text(formatMoney(g.net, false), barX + barW + 4, y);
+      doc.text(fm(g.net, false), barX + barW + 4, y);
       doc.setFont("arial", "normal");
       y += 6.5;
     }
@@ -233,14 +249,14 @@ export async function raporPdfUret(
       doc.setFontSize(9);
     }
     doc.setTextColor(...SOLUK);
-    doc.text(formatTRDate(k.tarih), SOL, y);
+    doc.text(fd(k.tarih), SOL, y);
     doc.setTextColor(...INK);
     const aciklama = k.aciklama.length > 42 ? `${k.aciklama.slice(0, 41)}…` : k.aciklama;
     doc.text(aciklama, SOL + 24, y);
     doc.text(k.kategori, SOL + 108, y);
     doc.text(k.odemeTipi, SOL + 138, y);
     doc.setFont("arial", "bold");
-    doc.text(formatMoney(k.gelir || k.gider), SOL + 186, y, { align: "right" });
+    doc.text(fm(k.gelir || k.gider), SOL + 186, y, { align: "right" });
     doc.setFont("arial", "normal");
     y += 5.6;
   }
@@ -255,10 +271,10 @@ export async function raporPdfUret(
   doc.setFont("arial", "normal");
   doc.setFontSize(9.5);
   const toplamlar = [
-    `Nakit toplam: ${formatMoney(rapor.nakitNet)}   (gelir ${formatMoney(rapor.nakitGelir)} – gider ${formatMoney(rapor.nakitGider)})`,
-    `Kart toplamı: ${formatMoney(rapor.kartNet)}   (gelir ${formatMoney(rapor.kartGelir)} – gider ${formatMoney(rapor.kartGider)})`,
-    `Havale toplamı: ${formatMoney(rapor.havaleNet)}   (gelir ${formatMoney(rapor.havaleGelir)} – gider ${formatMoney(rapor.havaleGider)})`,
-    `GENEL TOPLAM: ${formatMoney(rapor.net)}`,
+    `Nakit toplam: ${fm(rapor.nakitNet)}   (gelir ${fm(rapor.nakitGelir)} – gider ${fm(rapor.nakitGider)})`,
+    `Kart toplamı: ${fm(rapor.kartNet)}   (gelir ${fm(rapor.kartGelir)} – gider ${fm(rapor.kartGider)})`,
+    `Havale toplamı: ${fm(rapor.havaleNet)}   (gelir ${fm(rapor.havaleGelir)} – gider ${fm(rapor.havaleGider)})`,
+    `GENEL TOPLAM: ${fm(rapor.net)}`,
   ];
   for (const satir of toplamlar) {
     doc.text(satir, SOL, y);
@@ -267,13 +283,13 @@ export async function raporPdfUret(
 
   // Altbilgi + sayfa numaraları
   const sayfaSayisi = doc.getNumberOfPages();
-  const simdi = new Date().toLocaleString("tr-TR");
+  const simdi = new Date().toLocaleString(intl);
   for (let i = 1; i <= sayfaSayisi; i += 1) {
     doc.setPage(i);
     doc.setFont("arial", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...SOLUK);
-    doc.text(`${ayarlar.isletmeAdi} · Defterdar ile hazırlandı · ${simdi}`, SOL, 290);
+    doc.text(`${ayarlar.isletmeAdi} · prepared with LedgerAI · ${simdi}`, SOL, 290);
     doc.text(`${i} / ${sayfaSayisi}`, SOL + GENIS, 290, { align: "right" });
   }
 

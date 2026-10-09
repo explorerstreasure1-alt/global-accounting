@@ -5,3 +5,6 @@ data/yedekler/
 .env.local
 .env
 *.log
+
+# bozuk adli klasor (sonunda bosluk)
+data\ 

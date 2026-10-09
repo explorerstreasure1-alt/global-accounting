@@ -3,25 +3,28 @@ import { KATEGORILER } from "./types";
 import { AYLAR, addMonths, duzeltAciklama, formatMoney, formatTRDate, formatTRDateLong, round2, toISODate } from "./format";
 import { buildRapor, computeUyarilar, monthRange } from "./reports";
 import { AY_ADLARI, AY_EKI, SAYISAL_TARIH_DESENI, detectKategori, findKayit, findKayitGevsekAdaylar, findKayitMatches, isQuestion, parseCommand, parseRange, type KayitAraligi, type NlpIntent } from "./nlp";
-import {
-  addMesaj,
-  createKayit,
-  deleteKayit,
-  getAyarlar,
-  getInitData,
-  listKayitlar,
-  restoreLatestBackup,
-  sifirlaTumu,
-  temizleSohbet,
-  updateAyarlar,
-  updateKayit,
-} from "./data";
+import type { TenantDb } from "./data-tenant";
+import { fileDb } from "./data-tenant";
 
 export type ChatResponse = {
   reply: string;
   data: InitData;
   action?: ChatAction;
 };
+
+export type ChatOpts = { locale?: string; currency?: string; db?: TenantDb };
+
+const LANG_NAME: Record<string, string> = {
+  tr: "Turkish", en: "English", de: "German", fr: "French", es: "Spanish", ar: "Arabic", ru: "Russian",
+};
+
+/** Model yanıt dili: tr ise Türkçe, değilse kullanıcının dili (asla Türkçe değil). */
+function langLine(locale?: string): string {
+  const loc = (locale ?? "en").toLowerCase();
+  if (loc === "tr") return "Cevaplarını Türkçe yaz. Rakamları Türk formatında söyle.";
+  const lang = LANG_NAME[loc] ?? "English";
+  return `Always respond in ${lang} (the user's language). Never respond in Turkish. Format numbers/dates for ${lang}.`;
+}
 
 function kayitOnay(k: Kayit): string {
   const tutar = k.gelir > 0 ? k.gelir : k.gider;
@@ -146,7 +149,7 @@ function raporMetni(tip: string, kayitlar: Kayit[], ayarlar: Ayarlar, baslangic:
   const donem = baslangic === bitis ? formatTRDate(baslangic) : `${formatTRDate(baslangic)} – ${formatTRDate(bitis)}`;
 
   if (tip === "kira") {
-    const kiraKayitlari = kayitlar.filter((k) => k.kategori === "Kira");
+    const kiraKayitlari = kayitlar.filter((k) => k.kategori === "Rent");
     const odenen = kiraKayitlari.reduce((s, k) => s + k.gider, 0);
     const kalanGun = ayarlar.kiraSonrakiTarih
       ? Math.round((new Date(ayarlar.kiraSonrakiTarih).getTime() - Date.now()) / 86400000)
@@ -277,7 +280,8 @@ function raporMetni(tip: string, kayitlar: Kayit[], ayarlar: Ayarlar, baslangic:
   ].join("\n");
 }
 
-async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayarlar): Promise<string> {
+async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayarlar, db?: TenantDb, locale = "en"): Promise<string> {
+  const D = db ?? await fileDb();
   const today = toISODate();
   const now = new Date();
   const thisMonth = monthRange(now.getFullYear(), now.getMonth() + 1);
@@ -312,10 +316,10 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
   if (intent.type === "ekle") {
     // Yazım denetimi: Excel'e düzgün açıklama girsin.
     intent.kayit.aciklama = duzeltAciklama(intent.kayit.aciklama) || intent.kayit.aciklama;
-    const kayit = await createKayit(intent.kayit);
-    if (intent.kayit.kategori === "Kira" && intent.kayit.gider > 0) {
+    const kayit = await D.createKayit(intent.kayit);
+    if (intent.kayit.kategori === "Rent" && intent.kayit.gider > 0) {
       const ay = ayarlar.kiraPeriyodu || 6;
-      await updateAyarlar({
+      await D.updateAyarlar({
         kiraTutari: intent.kayit.gider,
         kiraPeriyodu: ay,
         aylikKiraKarsiligi: round2(intent.kayit.gider / ay),
@@ -329,7 +333,7 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
     const eklenenler: Kayit[] = [];
     for (const girdi of intent.kayitlar) {
       girdi.aciklama = duzeltAciklama(girdi.aciklama) || girdi.aciklama;
-      eklenenler.push(await createKayit(girdi));
+      eklenenler.push(await D.createKayit(girdi));
     }
     const toplam = eklenenler.reduce((sum, kayit) => sum + kayit.gelir + kayit.gider, 0);
     const tarih = eklenenler[0]?.tarih;
@@ -356,7 +360,7 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
       }
     }
     if (!hedef) return "Aradığınız kaydı defterde bulamadım. Tarihi veya açıklamasını biraz daha tarif eder misiniz?";
-    const guncel = await updateKayit(hedef.id, {
+    const guncel = await D.updateKayit(hedef.id, {
       ...intent.patch,
       ...(intent.patch.aciklama ? { aciklama: duzeltAciklama(intent.patch.aciklama) || intent.patch.aciklama } : {}),
     });
@@ -379,7 +383,7 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
       }
     }
     if (!hedef) return "Sileceğim kaydı bulamadım. Tarihini veya açıklamasını biraz daha tarif eder misiniz?";
-    await deleteKayit(hedef.id);
+    await D.deleteKayit(hedef.id);
     return `Tamam, sildim 🗑️\n• ${formatTRDate(hedef.tarih)} – ${hedef.aciklama} – ${formatMoney(hedef.gelir || hedef.gider)}`;
   }
 
@@ -427,14 +431,14 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
         .join("\n");
     }
     for (const k of rows) {
-      await deleteKayit(k.id);
+      await D.deleteKayit(k.id);
     }
     return `Hallettim — ${rows.length} kaydı sildim 🗑️ (gelir ${formatMoney(gelir)} / gider ${formatMoney(gider)}).`;
   }
 
   if (intent.type === "temizle") {
-    await temizleSohbet();
-    return "🧹 Sohbet temizlendi. Yeni bir sayfa açtık, buyurun.";
+    await D.temizleSohbet(locale);
+    return locale === "tr" ? "🧹 Sohbet temizlendi. Yeni bir sayfa açtık, buyurun." : "🧹 Chat cleared. Fresh page ready.";
   }
 
   if (intent.type === "indir_yedek") {
@@ -449,7 +453,7 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
     if (!intent.confirm) {
       return "Son otomatik yedeği geri yüklersem mevcut defterin, ayarların ve sohbet geçmişin yedekteki hale döner. Devam etmek için şu cümleyi yazın: ‘Son yedeği geri yükle, onaylıyorum.’";
     }
-    const restored = await restoreLatestBackup();
+    const restored = await D.restoreLatestBackup();
     return restored
       ? `Son otomatik yedeği geri yükledim. Defterde ${restored.kayitlar.length} kayıt var.`
       : "Geri yükleyebileceğim bir otomatik yedek bulamadım.";
@@ -459,7 +463,7 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
     if (!intent.confirm) {
       return "Bu işlem tüm kayıtları siler ve açılış bakiyesiyle kira ayarlarını sıfırlar; geri alınamaz. Devam etmek için şu cümleyi aynen yazın: ‘Tüm verileri sıfırla, onaylıyorum.’";
     }
-    await sifirlaTumu();
+    await D.sifirlaTumu();
     return "Defteri sıfırladım. Kayıtlar, kira ve açılış bakiyesi temizlendi.";
   }
 
@@ -482,22 +486,22 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
   }
 
   if (intent.type === "bol_kira") {
-    const hedef = findKayit(kayitlar, { kategori: "Kira", sonMu: true });
+    const hedef = findKayit(kayitlar, { kategori: "Rent", sonMu: true });
     if (!hedef || hedef.gider <= 0) return "Bölünecek bir kira kaydı bulamadım.";
     const ay = Math.max(1, intent.ay);
     const parca = round2(hedef.gider / ay);
-    await deleteKayit(hedef.id);
+    await D.deleteKayit(hedef.id);
     for (let i = 0; i < ay; i += 1) {
-      await createKayit({
+      await D.createKayit({
         tarih: addMonths(hedef.tarih, i),
         aciklama: `${hedef.aciklama} (${i + 1}/${ay} aylık dilim)`,
-        kategori: "Kira",
+        kategori: "Rent",
         gelir: 0,
         gider: parca,
         odemeTipi: hedef.odemeTipi,
       });
     }
-    await updateAyarlar({
+    await D.updateAyarlar({
       kiraTutari: hedef.gider,
       kiraPeriyodu: ay,
       aylikKiraKarsiligi: parca,
@@ -506,7 +510,7 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
   }
 
   if (intent.type === "ayar") {
-    const guncel = await updateAyarlar(intent.patch);
+    const guncel = await D.updateAyarlar(intent.patch);
     const neler: string[] = [];
     if (intent.patch.isletmeAdi) neler.push(`işletme adı "${guncel.isletmeAdi}" oldu`);
     if (intent.patch.kiraTutari != null || intent.patch.kiraPeriyodu != null)
@@ -934,7 +938,7 @@ async function anlatimChat(
 }
 
 /** Saf sohbet (kayıt/rapor yok): araçsız, sıcak ve doğal Türkçe. */
-async function freeChat(message: string, history: SohbetMesaji[], ayarlar: Ayarlar): Promise<string | null> {
+async function freeChat(message: string, history: SohbetMesaji[], ayarlar: Ayarlar, locale = "en"): Promise<string | null> {
   const mb = cozMotor(ayarlar);
   if (!process.env.GROQ_API_KEY && mb.motor !== "ollama" && !OLLAMA_ANLATIM) return null;
   try {
@@ -943,7 +947,8 @@ async function freeChat(message: string, history: SohbetMesaji[], ayarlar: Ayarl
         {
           role: "system",
           content: `Sen Defterdar'sın — küçük bir işletmenin cana yakın dijital muhasebecisi. Kullanıcıyla gerçek bir insan gibi, doğal ve sıcak Türkçe konuş. Selamlaşmaya selamla karşılık ver, hatır sorana içten cevap ver, şakalaşmaya gülümseyerek katıl. Kendini insanmış gibi tanıtma, "dil modeli" nutukları atma. Robotik madde listeleri, kalıp açılışlar ("Bunu henüz deftere işlemedim") ve gereksiz emoji yağmuru yapma. Kısa yaz (1-3 cümle), sonunda kısaca nasıl yardım edebileceğini hissettir. İşletme: ${ayarlar.isletmeAdi}.
-YASAK: Senin kayıt ekleme/silme/düzeltme/listeleme yetkin YOK. Asla "kaydettim, ekledim, düzelttim, sildim, buldum, listeledim, kaydedeceğim, düzeltiyorum" gibi defter işlemi yaptığını/yapacağını SÖYLEME — bu yalandır. Kullanıcı işlem isterse ("ekle", "düzelt", tutarlı istek) şunu de: "Tam anlayamadım, tarih + tutar + ne olduğunu bir cümlede söyler misin?"`,
+YASAK: Senin kayıt ekleme/silme/düzeltme/listeleme yetkin YOK. Asla "kaydettim, ekledim, düzelttim, sildim, buldum, listeledim, kaydedeceğim, düzeltiyorum" gibi defter işlemi yaptığını/yapacağını SÖYLEME — bu yalandır. Kullanıcı işlem isterse ("ekle", "düzelt", tutarlı istek) şunu de: "Tam anlayamadım, tarih + tutar + ne olduğunu bir cümlede söyler misin?"
+${langLine(locale)}`,
         },
         ...history.slice(-10).map((item) => ({
           role: item.rol === "user" ? "user" : "assistant",
@@ -968,7 +973,7 @@ function humanizeGuvenli(metin: string | null | undefined, yedek: string): strin
   return t;
 }
 
-async function humanizeLocalReply(message: string, result: string, history: SohbetMesaji[], ayarlar: Ayarlar): Promise<string | null> {
+async function humanizeLocalReply(message: string, result: string, history: SohbetMesaji[], ayarlar: Ayarlar, locale = "en"): Promise<string | null> {
   const mb = cozMotor(ayarlar);
   if (!process.env.GROQ_API_KEY && mb.motor !== "ollama" && !OLLAMA_ANLATIM) return null;
   try {
@@ -977,7 +982,7 @@ async function humanizeLocalReply(message: string, result: string, history: Sohb
         {
           role: "system",
           content:
-            "Sen Defterdar'sın; küçük bir işletmenin muhasebecisi gibi kullanıcıyla doğal ve sakin konuş. Kullanıcının işlemi uygulama tarafından zaten tamamlandı; aşağıdaki sonuç tek doğruluk kaynağın. Sonucu sıcak ama ölçülü bir Türkçeyle, kısa ve konuşma dilinde anlat. Her yanıta aynı kalıpla başlama; gereksiz emoji, madde işareti ve resmi çağrı merkezi dili kullanma. Tarih, tutar, kategori, ödeme türü ve işlemin başarılı/başarısız oluşu dahil hiçbir bilgiyi değiştirme veya ekleme. Sonuçta bir onay ya da ek bilgi isteniyorsa bunu aynen koru. Araç çağırma; yalnızca kullanıcıya verilecek son yanıtı yaz.",
+            "Sen Defterdar'sın; küçük bir işletmenin muhasebecisi gibi kullanıcıyla doğal ve sakin konuş. Kullanıcının işlemi uygulama tarafından zaten tamamlandı; aşağıdaki sonuç tek doğruluk kaynağın. Sonucu sıcak ama ölçülü bir Türkçeyle, kısa ve konuşma dilinde anlat. Her yanıta aynı kalıpla başlama; gereksiz emoji, madde işareti ve resmi çağrı merkezi dili kullanma. Tarih, tutar, kategori, ödeme türü ve işlemin başarılı/başarısız oluşu dahil hiçbir bilgiyi değiştirme veya ekleme. Sonuçta bir onay ya da ek bilgi isteniyorsa bunu aynen koru. Araç çağırma; yalnızca kullanıcıya verilecek son yanıtı yaz. " + langLine(locale),
         },
         ...history.slice(-8).map((item) => ({
           role: item.rol === "user" ? "user" : "assistant",
@@ -1015,7 +1020,7 @@ function toolToIntent(name: string, args: Record<string, unknown>, today: string
   // ("satış yaptım" → Hizmet; model listede Satış göremeyip Diğer seçiyor).
   const cozKategori = (modelKat: unknown): Kategori | null => {
     const gecerli = (KATEGORILER as readonly string[]).includes(String(modelKat)) ? (modelKat as Kategori) : null;
-    if (gecerli && gecerli !== "Diğer") return gecerli;
+    if (gecerli && gecerli !== "Other") return gecerli;
     const yerel = detectKategori(message.toLocaleLowerCase("tr-TR"));
     return yerel ?? gecerli;
   };
@@ -1317,14 +1322,15 @@ export type GroqSonuc = {
   excel?: { tip: string; baslangic: string; bitis: string };
 };
 
-async function tryGroq(message: string, history: SohbetMesaji[], kayitlar: Kayit[], ayarlar: Ayarlar): Promise<GroqSonuc | null> {
+async function tryGroq(message: string, history: SohbetMesaji[], kayitlar: Kayit[], ayarlar: Ayarlar, locale = "en", db?: TenantDb): Promise<GroqSonuc | null> {
+  const D = db ?? await fileDb();
   if (!process.env.GROQ_API_KEY) return null;
   const today = toISODate();
   const system = `Sen Defterdar'sın, kullanıcının dijital muhasebecisi. Gerçek bir muhasebeci gibi düşün ve konuş.
 Tarih formatı GG.AA.YYYY, para birimi ₺.
 Bugün ${today}. İşletme: ${ayarlar.isletmeAdi}.
 Kira: ${ayarlar.kiraTutari} ₺ / ${ayarlar.kiraPeriyodu} ay, aylık karşılık ${ayarlar.aylikKiraKarsiligi} ₺.
-Kayıt eklerken kategori şunlardan biri olmalı: ${KATEGORILER.join(", ")}. Kullanıcı "satış/satis/ciro" derse Hizmet seç (eski adı).
+Kayıt eklerken kategori şunlardan biri olmalı: ${KATEGORILER.join(", ")}. Kullanıcı "satış/satis/ciro/service/sale" derse Service seç.
 Ödeme tipi Nakit, Kart veya banka transferi için Havale.
 Gelir için gelir alanını, gider için gider alanını doldur.
 Doğal dilden kayıt çıkar, rapor sorularında getir_rapor kullan.
@@ -1342,7 +1348,7 @@ TAM UYGULAMA KAPSAMI: Kayıt ekle/düzelt/sil/listele, tüm raporlar, işletme a
 SORU-CEVAP KURALI: Rakamları yalnızca güncel defter özetinden al, uydurma. Sorulan şeye önce doğrudan cevap ver; karşılaştırma ve öneriyi yalnızca yararlıysa ekle. Konuşmayı rapor şablonuna zorlama.
 SOHBET KURALI: Kullanıcı kayıt/rapor/sil/ayar istemiyor, sadece selamlaşıyor, hatır soruyor, teşekkür ediyor veya sohbet ediyorsa (merhaba, selam, naber, nasılsın, sağ ol, eyvallah, günaydın...) HİÇBİR araç çağırma ve muhasebe şablonu dayatma. Kısa (1-3 cümle), sıcak, doğal karşılık ver; gerekiyorsa sonunda kısaca "defter için buradayım" de. Asla "Bunu henüz deftere işlemedim" deme.
 ÜSLUP: Bu defteri gerçekten takip eden, işini bilen bir muhasebeci gibi konuş; önceki konuşmadaki ayrıntıları yerinde kullan. Doğal ve ölçülü ol, samimiyeti zorlama. Her yanıta "tamamdır/hallettim/buyurun" diye başlama; tek işlem onaylarında gereksiz madde ve emoji kullanma. Kullanıcıya "siz" diye hitap et. Bilmediğini uydurma; eksik bilgi varsa yalnızca gereken şeyi sor. Kendini insanmış gibi tanıtma ve "yapay zeka/dil modeli" açıklamalarına girme.
-Cevaplarını Türkçe yaz. Rakamları Türk formatında söyle.
+${langLine(locale)}
 Güncel defter özeti: ${ozetContext(kayitlar, ayarlar)}`;
 
   const msgs: { role: string; content: string | null; tool_calls?: GroqToolCall[]; tool_call_id?: string }[] = [
@@ -1382,9 +1388,16 @@ Güncel defter özeti: ${ozetContext(kayitlar, ayarlar)}`;
     const hamListeNiyet = intent.confidence >= 0.75 && (intent.type === "listele" ||
       (intent.type === "rapor" && (intent.tip === "aysonu" || intent.tip === "gunsonu" || intent.tip === "z")));
     if (hamListeNiyet) {
-      const freshKayitlar = await listKayitlar();
-      const freshAyarlar = await getAyarlar();
-      return { text: await executeIntent(intent, freshKayitlar, freshAyarlar) };
+      const freshKayitlar = await D.listKayitlar();
+      const freshAyarlar = await D.getAyarlar();
+      const ham = await executeIntent(intent, freshKayitlar, freshAyarlar, db, locale);
+      // Global: TR dışı dilde ham Türkçe döküm yerine modele anlattır (rakamlar korunur).
+      if (locale !== "tr") {
+        const anlatim = await humanizeLocalReply(message, ham, history, freshAyarlar, locale);
+        const guvenli = anlatim ? humanizeGuvenli(anlatim, ham) : ham;
+        return { text: guvenli };
+      }
+      return { text: ham };
     }
     const first = await groqChat(
       msgs,
@@ -1433,12 +1446,12 @@ Güncel defter özeti: ${ozetContext(kayitlar, ayarlar)}`;
           msgs.push({ role: "tool", tool_call_id: call.id, content: result });
           continue;
         }
-        const freshKayitlar = await listKayitlar();
-        const freshAyarlar = await getAyarlar();
+        const freshKayitlar = await D.listKayitlar();
+        const freshAyarlar = await D.getAyarlar();
         if (useIntent.type === "guncelle" || useIntent.type === "sil") {
           console.error(`[groq] araç OK: ${call.function.name} filtre=${JSON.stringify((useIntent as { filtre: unknown }).filtre)} args=${(call.function.arguments || "").slice(0, 200)}`);
         }
-        const result = await executeIntent(useIntent, freshKayitlar, freshAyarlar);
+        const result = await executeIntent(useIntent, freshKayitlar, freshAyarlar, db, locale);
         parts.push(result);
         msgs.push({ role: "tool", tool_call_id: call.id, content: result });
         // Dosya üretildiyse öne otomatik indirme emri iliştir.
@@ -1458,9 +1471,9 @@ Güncel defter özeti: ${ozetContext(kayitlar, ayarlar)}`;
     }
     // Zorunlu araç varken model araçsız cevap verirse yerel niyeti uygula (araçsız bırakma).
     if (requiredTool && allowWrite && first.content) {
-      const freshKayitlar = await listKayitlar();
-      const freshAyarlar = await getAyarlar();
-      const result = await executeIntent(intent, freshKayitlar, freshAyarlar);
+      const freshKayitlar = await D.listKayitlar();
+      const freshAyarlar = await D.getAyarlar();
+      const result = await executeIntent(intent, freshKayitlar, freshAyarlar, db, locale);
       const anlatim = await anlatimChat(
         [
           {
@@ -1482,20 +1495,114 @@ Güncel defter özeti: ${ozetContext(kayitlar, ayarlar)}`;
   return null;
 }
 
-export async function handleChat(message: string): Promise<ChatResponse> {
+const ACTION_REPLIES: Record<string, Record<string, string>> = {
+  en: {
+    download_excel: "Downloading your Excel file.",
+    download_backup: "Downloading your ledger backup.",
+    choose_backup_file: "Opening file picker for your backup.",
+    print_page: "Opening print dialog.",
+    open_tab_defter: "Switching to ledger tab.",
+    open_tab_asistan: "Switching to assistant tab.",
+    open_report: "Opening report window.",
+    open_settings: "Opening settings.",
+    open_calendar: "Opening calendar.",
+  },
+  tr: {
+    download_excel: "Excel dosyanızı indiriyorum.",
+    download_backup: "Defter yedeğinizi indiriyorum.",
+    choose_backup_file: "Yedek dosyasını seçmeniz için pencereyi açıyorum.",
+    print_page: "Yazdırma penceresini açıyorum.",
+    open_tab_defter: "Defter sekmesine geçiyorum.",
+    open_tab_asistan: "Asistan sekmesine geçiyorum.",
+    open_report: "Rapor penceresini açıyorum.",
+    open_settings: "Ayarları açıyorum.",
+    open_calendar: "Takvimi açıyorum.",
+  },
+  de: {
+    download_excel: "Excel wird geladen.",
+    download_backup: "Sicherung wird geladen.",
+    choose_backup_file: "Dateiauswahl wird geöffnet.",
+    print_page: "Druckdialog wird geöffnet.",
+    open_tab_defter: "Wechsel zum Kassenbuch.",
+    open_tab_asistan: "Wechsel zum Assistenten.",
+    open_report: "Bericht wird geöffnet.",
+    open_settings: "Einstellungen werden geöffnet.",
+    open_calendar: "Kalender wird geöffnet.",
+  },
+  fr: {
+    download_excel: "Téléchargement Excel.",
+    download_backup: "Téléchargement sauvegarde.",
+    choose_backup_file: "Ouverture du sélecteur.",
+    print_page: "Ouverture impression.",
+    open_tab_defter: "Onglet registre.",
+    open_tab_asistan: "Onglet assistant.",
+    open_report: "Ouverture rapport.",
+    open_settings: "Ouverture paramètres.",
+    open_calendar: "Ouverture calendrier.",
+  },
+  es: {
+    download_excel: "Descargando Excel.",
+    download_backup: "Descargando copia.",
+    choose_backup_file: "Abriendo selector.",
+    print_page: "Abriendo impresión.",
+    open_tab_defter: "Pestaña libro.",
+    open_tab_asistan: "Pestaña asistente.",
+    open_report: "Abriendo informe.",
+    open_settings: "Abriendo ajustes.",
+    open_calendar: "Abriendo calendario.",
+  },
+  ar: {
+    download_excel: "جارٍ تنزيل إكسل.",
+    download_backup: "جارٍ تنزيل النسخة.",
+    choose_backup_file: "فتح اختيار الملف.",
+    print_page: "فتح الطباعة.",
+    open_tab_defter: "الانتقال للدفتر.",
+    open_tab_asistan: "الانتقال للمساعد.",
+    open_report: "فتح التقرير.",
+    open_settings: "فتح الإعدادات.",
+    open_calendar: "فتح التقويم.",
+  },
+  ru: {
+    download_excel: "Скачиваю Excel.",
+    download_backup: "Скачиваю бэкап.",
+    choose_backup_file: "Открываю выбор файла.",
+    print_page: "Открываю печать.",
+    open_tab_defter: "Вкладка книги.",
+    open_tab_asistan: "Вкладка ассистента.",
+    open_report: "Открываю отчёт.",
+    open_settings: "Открываю настройки.",
+    open_calendar: "Открываю календарь.",
+  },
+};
+
+function actionReply(locale: string, action: ChatAction): string {
+  const m = ACTION_REPLIES[locale] ?? ACTION_REPLIES.en;
+  if (action.type === "download_excel") return m.download_excel;
+  if (action.type === "download_backup") return m.download_backup;
+  if (action.type === "choose_backup_file") return m.choose_backup_file;
+  if (action.type === "print_page") return m.print_page;
+  if (action.type === "open_tab") return action.tab === "defter" ? m.open_tab_defter : m.open_tab_asistan;
+  if (action.type === "open_report") return m.open_report;
+  if (action.type === "open_settings") return m.open_settings;
+  return m.open_calendar;
+}
+
+export async function handleChat(message: string, opts?: ChatOpts): Promise<ChatResponse> {
+  const D = opts?.db ?? await fileDb();
+  const locale = opts?.locale ?? "en";
   // Sohbet temizliği: kullanıcı mesajını kaydetmeden direkt temizle
   const ilkBakista = parseCommand(message);
   if (ilkBakista.type === "temizle" && ilkBakista.confidence >= 0.75) {
-    const selamlar = await temizleSohbet();
-    const taze = await getInitData();
+    const selamlar = await D.temizleSohbet(locale);
+    const taze = await D.getInitData();
     return {
-      reply: selamlar[0]?.icerik ?? "🧹 Sohbet temizlendi.",
+      reply: selamlar[0]?.icerik ?? "🧹",
       data: taze,
     };
   }
 
-  const data = await getInitData();
-  await addMesaj("user", message);
+  const data = await D.getInitData();
+  await D.addMesaj("user", message);
 
   let action = parseChatAction(message);
   const local = parseCommand(message);
@@ -1514,21 +1621,15 @@ export async function handleChat(message: string): Promise<ChatResponse> {
   };
 
   if (action) {
-    if (action.type === "download_excel") reply = "Excel dosyanızı indiriyorum.";
-    else if (action.type === "download_backup") reply = "Defter yedeğinizi indiriyorum.";
-    else if (action.type === "choose_backup_file") reply = "Yedek dosyasını seçmeniz için pencereyi açıyorum.";
-    else if (action.type === "print_page") reply = "Yazdırma penceresini açıyorum.";
-    else if (action.type === "open_tab") reply = action.tab === "defter" ? "Defter sekmesine geçiyorum." : "Asistan sekmesine geçiyorum.";
-    else if (action.type === "open_report") reply = "Rapor penceresini açıyorum.";
-    else reply = action.type === "open_settings" ? "Ayarları açıyorum." : "Takvimi açıyorum.";
+    reply = actionReply(locale, action);
   } else if (local.type === "sohbet") {
     // Saf sohbet: muhasebe şablonu dayatma, doğal konuş.
-    const g = await tryGroq(message, data.mesajlar, data.kayitlar, data.ayarlar);
+    const g = await tryGroq(message, data.mesajlar, data.kayitlar, data.ayarlar, locale, opts?.db);
     excelEylemi(g);
     reply = g?.text ?? null;
     if (!reply) {
       // Rakam soruluyorsa uydurma — defter özetinden gerçek cevabı üret.
-      const rakamSoruyor = /kasa|kaç|kac|ne kadar|toplam|kâr|kar|zarar|rapor|kay[ıi]t|defter|borç|borc|alacak|girdi|çıktı|cikti|bakiye/.test(
+      const rakamSoruyor = /kasa|kaç|kac|ne kadar|toplam|kâr|kar|zarar|rapor|kay[ıi]t|defter|borç|borc|alacak|girdi|çıktı|cikti|bakiye|cash|total|profit|loss|report|balance|how much/.test(
         message.toLocaleLowerCase("tr-TR"),
       );
       if (rakamSoruyor) {
@@ -1536,26 +1637,28 @@ export async function handleChat(message: string): Promise<ChatResponse> {
           { type: "rapor", tip: "ozet", confidence: 0.9 },
           data.kayitlar,
           data.ayarlar,
+          opts?.db,
+          locale,
         );
         // Ollama modunda rakamları yerelin kalemine bırakma — özeti aynen ver.
         if (cozMotor(data.ayarlar).motor === "ollama") {
           reply = ozet;
         } else {
-          const anlatim = await humanizeLocalReply(message, ozet, data.mesajlar, data.ayarlar);
+          const anlatim = await humanizeLocalReply(message, ozet, data.mesajlar, data.ayarlar, locale);
           reply = anlatim ? humanizeGuvenli(anlatim, ozet) : ozet;
         }
       } else {
-        reply = await freeChat(message, data.mesajlar, data.ayarlar);
+        reply = await freeChat(message, data.mesajlar, data.ayarlar, locale);
       }
     }
-    if (!reply) reply = "Buyur, seni dinliyorum. Nasılsın, bugün defter için ne yapalım?";
+    if (!reply) reply = locale === "tr" ? "Buyur, seni dinliyorum. Nasılsın, bugün defter için ne yapalım?" : "How can I help with your ledger today?";
   } else {
-    const g = await tryGroq(message, data.mesajlar, data.kayitlar, data.ayarlar);
+    const g = await tryGroq(message, data.mesajlar, data.kayitlar, data.ayarlar, locale, opts?.db);
     excelEylemi(g);
     reply = g?.text ?? null;
     if (!reply) {
       console.error(`[yerel] niyet: ${local.type} ${JSON.stringify(local).slice(0, 300)}`);
-      const result = await executeIntent(local, data.kayitlar, data.ayarlar);
+      const result = await executeIntent(local, data.kayitlar, data.ayarlar, opts?.db, locale);
       // Ollama modunda liste/rapor/netleştirme ham verilir: format zaten düzgün,
       // küçük modelin rakam uydurması engellenir. Kısa onaylar yerelde anlatılır.
       // Liste taşıyan raporlar her modda ham verilir (özetleyici satır yutmasın).
@@ -1564,18 +1667,24 @@ export async function handleChat(message: string): Promise<ChatResponse> {
       const hamListe = local.type === "listele" ||
         (local.type === "rapor" && local.tip !== undefined && (local.tip === "aysonu" || local.tip === "gunsonu" || local.tip === "z"));
       if (hamVer || hamListe) {
-        reply = result;
+        // Global: TR dışı dilde ham dökümü modele anlattır (satırlar korunur).
+        if (locale !== "tr") {
+          const anlatim = await humanizeLocalReply(message, result, data.mesajlar, data.ayarlar, locale);
+          reply = anlatim ? humanizeGuvenli(anlatim, result) : result;
+        } else {
+          reply = result;
+        }
       } else {
         const conversational = local.type === "netlestir" || local.type === "ekle_coklu"
-          ? null
-          : await humanizeLocalReply(message, result, data.mesajlar, data.ayarlar);
+          ? (locale !== "tr" ? await humanizeLocalReply(message, result, data.mesajlar, data.ayarlar, locale) : null)
+          : await humanizeLocalReply(message, result, data.mesajlar, data.ayarlar, locale);
         reply = conversational ? humanizeGuvenli(conversational, result) : result;
       }
     }
   }
 
-  const saved = await addMesaj("assistant", reply);
-  const next = await getInitData();
+  const saved = await D.addMesaj("assistant", reply);
+  const next = await D.getInitData();
   return {
     reply: saved.icerik,
     data: next,

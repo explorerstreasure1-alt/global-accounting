@@ -25,16 +25,28 @@ export function addMonths(iso: string, months: number): string {
   return toISODate(d);
 }
 
-export function formatTRDate(iso: string): string {
+export function formatDate(iso: string, intl = "tr-TR"): string {
   if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}.${m}.${y}`;
+  try {
+    const d = parseISODate(iso);
+    if (intl.startsWith("tr")) {
+      const [y, m, dd] = iso.split("-");
+      if (!y || !m || !dd) return iso;
+      return `${dd}.${m}.${y}`;
+    }
+    return d.toLocaleDateString(intl, { year: "numeric", month: "2-digit", day: "2-digit" });
+  } catch {
+    return iso;
+  }
 }
 
-export function formatTRDateLong(iso: string): string {
+export function formatTRDate(iso: string): string {
+  return formatDate(iso, "tr-TR");
+}
+
+export function formatDateLong(iso: string, intl = "tr-TR"): string {
   const d = parseISODate(iso);
-  return d.toLocaleDateString("tr-TR", {
+  return d.toLocaleDateString(intl, {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -42,13 +54,48 @@ export function formatTRDateLong(iso: string): string {
   });
 }
 
-export function monthLabel(year: number, month: number): string {
+export function formatTRDateLong(iso: string): string {
+  return formatDateLong(iso, "tr-TR");
+}
+
+export function monthLabel(year: number, month: number, intl = "tr-TR"): string {
   const d = new Date(year, month - 1, 1);
-  return d.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+  return d.toLocaleDateString(intl, { month: "long", year: "numeric" });
 }
 
 export function monthPrefix(year: number, month: number): string {
   return `${year}-${pad2(month)}`;
+}
+
+export const CURRENCIES = [
+  { code: "TRY", symbol: "₺", label: "TRY ₺" },
+  { code: "USD", symbol: "$", label: "USD $" },
+  { code: "EUR", symbol: "€", label: "EUR €" },
+  { code: "GBP", symbol: "£", label: "GBP £" },
+  { code: "SAR", symbol: "ر.س", label: "SAR ر.س" },
+  { code: "RUB", symbol: "₽", label: "RUB ₽" },
+  { code: "AED", symbol: "د.إ", label: "AED د.إ" },
+] as const;
+
+export function formatMoneyLocale(value: number, intl = "tr-TR", currency = "TRY", withSymbol = true): string {
+  const v = Number.isFinite(value) ? value : 0;
+  if (!withSymbol) {
+    return new Intl.NumberFormat(intl, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+  }
+  try {
+    return new Intl.NumberFormat(intl, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(v);
+  } catch {
+    const formatted = new Intl.NumberFormat(intl, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(v);
+    return `${formatted} ${currency}`;
+  }
 }
 
 export function formatMoney(value: number, withSymbol = true): string {
@@ -57,6 +104,13 @@ export function formatMoney(value: number, withSymbol = true): string {
     maximumFractionDigits: 2,
   }).format(Number.isFinite(value) ? value : 0);
   return withSymbol ? `${formatted} ₺` : formatted;
+}
+
+export function formatMoneySignedLocale(value: number, intl = "tr-TR", currency = "TRY"): string {
+  const abs = formatMoneyLocale(Math.abs(value), intl, currency);
+  if (value > 0) return `+${abs}`;
+  if (value < 0) return `−${abs}`;
+  return abs;
 }
 
 export function formatMoneySigned(value: number): string {
@@ -136,15 +190,15 @@ export function round2(n: number): number {
 }
 
 export const KATEGORI_RENK: Record<Kategori, string> = {
-  Kira: "#9a3412",
-  Elektrik: "#b45309",
-  Su: "#1d4ed8",
-  Doğalgaz: "#7c3aed",
-  Ev: "#be185d",
-  "İş Yeri": "#0f766e",
-  Hizmet: "#15803d",
-  Market: "#c2410c",
-  Diğer: "#334155",
+  Rent: "#9a3412",
+  Utilities: "#b45309",
+  Water: "#1d4ed8",
+  Heating: "#7c3aed",
+  Home: "#be185d",
+  Workshop: "#0f766e",
+  Service: "#15803d",
+  Groceries: "#c2410c",
+  Other: "#334155",
 };
 
 export const AYLAR = [
@@ -161,3 +215,26 @@ export const AYLAR = [
   "kasım",
   "aralık",
 ];
+
+export function getMonthNames(intl = "tr-TR"): string[] {
+  try {
+    const fmt = new Intl.DateTimeFormat(intl, { month: "long" });
+    return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2024, i, 1)).toLocaleLowerCase(intl));
+  } catch {
+    return AYLAR;
+  }
+}
+
+export function getWeekdayNames(intl = "tr-TR", short = true): string[] {
+  try {
+    const base = new Date(2024, 0, 1);
+    const fmt = new Intl.DateTimeFormat(intl, { weekday: short ? "short" : "long" });
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      return fmt.format(d);
+    });
+  } catch {
+    return ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+  }
+}
