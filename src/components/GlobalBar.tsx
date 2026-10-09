@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { LOCALES, THEMES, CURRENCIES, getLocale, getTheme, setLocale, setTheme, getCurrency, setCurrency, type LocaleCode, type ThemeId } from "@/lib/i18n";
 import { I } from "./ui-icon";
 
-/** Dil + para birimi + tema seçici. Header'a gömülür, localStorage'da saklanır. */
-export function GlobalBar() {
+/** Dil + para birimi + tema seçici. Header'a gömülür, localStorage'da saklanır. compact: sadece dil (landing için). */
+export function GlobalBar({ compact = false }: { compact?: boolean }) {
   const [locale, setLoc] = useState<LocaleCode>("en");
   const [theme, setTh] = useState<ThemeId>("notebook");
   const [currency, setCur] = useState<string>("USD");
@@ -41,6 +41,7 @@ export function GlobalBar() {
           ))}
         </select>
       </label>
+      {!compact ? (
       <label className="flex items-center gap-1 text-xs">
         <I name="palette" size={13} />
         <select
@@ -60,6 +61,8 @@ export function GlobalBar() {
           ))}
         </select>
       </label>
+      ) : null}
+      {!compact ? (
       <label className="flex items-center gap-1 text-xs">
         <span>💱</span>
         <select
@@ -78,7 +81,10 @@ export function GlobalBar() {
           ))}
         </select>
       </label>
+      ) : null}
+      {!compact ? (
       <span className="text-[11px] text-amber-100/60">7 languages · RTL ready · Pro themes</span>
+      ) : null}
     </div>
   );
 }

@@ -54,9 +54,9 @@ export function Pricing() {
         <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">{t("free_plan")}</p>
         <p className="mt-2 text-4xl font-bold">$0</p>
         <ul className="mt-4 space-y-2 text-sm text-slate-600">
-          <li className="flex items-center gap-2"><I name="check" size={14} /> Ledger + day/month close</li>
-          <li className="flex items-center gap-2"><I name="check" size={14} /> Excel + backup</li>
-          <li className="flex items-center gap-2"><I name="check" size={14} /> 7 languages</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_s1")}</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_s2")}</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_s3")}</li>
         </ul>
         <a
           href="/app"
@@ -71,9 +71,9 @@ export function Pricing() {
           $3<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
         </p>
         <ul className="mt-4 space-y-2 text-sm text-slate-200">
-          <li className="flex items-center gap-2"><I name="check" size={14} /> Everything in Starter</li>
-          <li className="flex items-center gap-2"><I name="check" size={14} /> Word reports + priority support</li>
-          <li className="flex items-center gap-2"><I name="check" size={14} /> Priority support for small businesses</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_p1")}</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_p2")}</li>
+          <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_p3")}</li>
         </ul>
         <button
           onClick={() => void goPro()}
