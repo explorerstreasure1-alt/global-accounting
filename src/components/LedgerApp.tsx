@@ -13,7 +13,7 @@ import { TakvimPanel } from "./TakvimPanel";
 import { KlavuzPaneli } from "./KlavuzPaneli";
 import { ProBanner } from "./ProBanner";
 
-export function LedgerApp({ initial, trial }: { initial: InitData; trial?: { gun: number; email: string } }) {
+export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: { gun: number; email: string }; sub?: { plan: string; gun: number; email: string } }) {
   const { t, intl, currency, locale } = useT();
   const fm = (v: number) => formatMoneyLocale(v, intl, currency);
   const monthNames = getMonthNames(intl);
@@ -426,6 +426,7 @@ export function LedgerApp({ initial, trial }: { initial: InitData; trial?: { gun
         onYedekYukle={() => fileInput.current?.click()}
         onSifirla={sifirlaHepsi}
         onKiraBol={kiraBol}
+        sub={sub}
       />
       <TelefonModal open={telefonOpen} onClose={() => setTelefonOpen(false)} />
       <TakvimPanel

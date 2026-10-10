@@ -409,7 +409,37 @@ type SettingsProps = {
   onYedekYukle: () => void;
   onSifirla: () => void;
   onKiraBol: (ay: number) => Promise<boolean>;
+  sub?: { plan: string; gun: number; email: string };
 };
+
+export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; email: string } }) {
+  const { t } = useT();
+  if (!sub) return null;
+  const pro = sub.plan === "pro";
+  return (
+    <div className="rounded-2xl bg-slate-900 p-4 text-slate-100">
+      <p className="font-hand text-2xl text-teal-200">{t("sub_title")}</p>
+      <p className="mt-1 text-sm">
+        {pro ? (
+          <span className="font-semibold text-teal-300">✓ {t("sub_pro")}</span>
+        ) : (
+          <span>{t("sub_free")} · {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
+        )}
+      </p>
+      <p className="mt-1 text-[11px] text-slate-400">{sub.email}</p>
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => window.open("https://app.lemonsqueezy.com/", "_blank", "noopener")}
+          className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500"
+        >
+          {pro ? t("sub_manage") : t("sub_go")}
+        </button>
+        <p className="mt-1 text-[11px] text-slate-400">{t("sub_hint")}</p>
+      </div>
+    </div>
+  );
+}
 
 function KiraBolBolumu({ varsayilanAy, onKiraBol }: { varsayilanAy: number; onKiraBol: (ay: number) => Promise<boolean> }) {
   const { t } = useT();
@@ -571,7 +601,7 @@ function HafizaBolumu({
   );
 }
 
-export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, onYedekYukle, onSifirla, onKiraBol }: SettingsProps) {
+export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, onYedekYukle, onSifirla, onKiraBol, sub }: SettingsProps) {
   const { t, currency } = useT();
   if (!open) return null;
   return (
@@ -629,6 +659,7 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             <input name="whatsappAlici" defaultValue={ayarlar.whatsappAlici} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
         </div>
+        <AbonelikBolumu sub={sub} />
         <HafizaBolumu onYedekIndir={onYedekIndir} onYedekYukle={onYedekYukle} onSifirla={onSifirla} />
         <div className="sticky bottom-0 mt-5 flex justify-end gap-2 bg-[#fbf6ea] py-3">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm">

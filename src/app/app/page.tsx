@@ -31,5 +31,6 @@ export default async function AppPage() {
     ctx.business.plan === "pro"
       ? undefined
       : { gun: ctx.trialLeft, email: ctx.user.email };
-  return <LedgerApp initial={initial} trial={trial} />;
+  const sub = { plan: ctx.business.plan, gun: ctx.trialLeft, email: ctx.user.email };
+  return <LedgerApp initial={initial} trial={trial} sub={sub} />;
 }
