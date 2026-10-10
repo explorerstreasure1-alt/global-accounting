@@ -12,6 +12,7 @@ import { ReportModal, SettingsModal, TelefonModal } from "./ReportModals";
 import { TakvimPanel } from "./TakvimPanel";
 import { KlavuzPaneli } from "./KlavuzPaneli";
 import { ProBanner } from "./ProBanner";
+import { PwaInstallBtn } from "./PwaInstallBtn";
 
 export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: { gun: number; email: string }; sub?: { plan: string; gun: number; email: string } }) {
   const { t, intl, currency, locale } = useT();
@@ -330,6 +331,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
           </div>
 
           <div className="scroll-thin flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+            <PwaInstallBtn onRehber={() => setTelefonOpen(true)} />
             <ToolBtn onClick={() => setTakvimOpen(true)}><I name="calendar" /> {t("calendar")}</ToolBtn>
             <ToolBtn onClick={() => setGunOpen(true)}><I name="day" /> {t("day_end")}</ToolBtn>
             <ToolBtn onClick={() => setAyOpen(true)}><I name="month" /> {t("month_end")}</ToolBtn>

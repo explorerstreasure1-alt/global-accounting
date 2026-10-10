@@ -818,6 +818,16 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
             </button>
           </>
         ) : null}
+        {kurabilir ? (
+          <button
+            type="button"
+            onClick={() => void kur()}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-emerald-500"
+          >
+            <I name="download" size={16} /> {t("install_app")}
+          </button>
+        ) : null}
+        {kuruldu ? <p className="mt-2 text-xs text-slate-600">{kuruldu}</p> : null}
         <button type="button" onClick={onClose} className="mt-4 rounded-lg px-4 py-2 text-sm text-slate-600">
           {t("phone_close")}
         </button>

@@ -41,6 +41,7 @@ const MAP = {
   report: ReceiptText,
   excel: FileSpreadsheet,
   backup: Download,
+  download: Download,
   print: Printer,
   settings: Settings,
   phone: Smartphone,
