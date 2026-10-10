@@ -414,8 +414,29 @@ type SettingsProps = {
 
 export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; email: string } }) {
   const { t } = useT();
+  const [kurulu, setKurulu] = useState(false);
+  const [yapiliyor, setYapiliyor] = useState(false);
+  const [sonuc, setSonuc] = useState<string | null>(null);
   if (!sub) return null;
   const pro = sub.plan === "pro";
+
+  async function iptalEt() {
+    setYapiliyor(true);
+    setSonuc(null);
+    try {
+      const res = await fetch("/api/billing/cancel", { method: "POST" });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) throw new Error(json.error || "cancel failed");
+      setSonuc(t("sub_cancel_ok"));
+      setKurulu(false);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch {
+      setSonuc(t("sub_cancel_fail"));
+    } finally {
+      setYapiliyor(false);
+    }
+  }
+
   return (
     <div className="rounded-2xl bg-slate-900 p-4 text-slate-100">
       <p className="font-hand text-2xl text-teal-200">{t("sub_title")}</p>
@@ -428,13 +449,47 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
       </p>
       <p className="mt-1 text-[11px] text-slate-400">{sub.email}</p>
       <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => window.open("https://app.lemonsqueezy.com/", "_blank", "noopener")}
-          className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500"
-        >
-          {pro ? t("sub_manage") : t("sub_go")}
-        </button>
+        {pro ? (
+          !kurulu ? (
+            <button
+              type="button"
+              onClick={() => { setKurulu(true); setSonuc(null); }}
+              className="w-full rounded-lg border border-rose-400/60 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/10"
+            >
+              {t("sub_cancel")}
+            </button>
+          ) : (
+            <div className="rounded-xl border border-rose-500/40 p-3">
+              <p className="text-xs text-rose-200">{t("sub_cancel_emin")}</p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  disabled={yapiliyor}
+                  onClick={() => void iptalEt()}
+                  className="flex-1 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  {yapiliyor ? "…" : t("sub_cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setKurulu(false)}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-sm"
+                >
+                  {t("rep_giveUp")}
+                </button>
+              </div>
+            </div>
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={() => window.open("https://app.lemonsqueezy.com/", "_blank", "noopener")}
+            className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500"
+          >
+            {t("sub_go")}
+          </button>
+        )}
+        {sonuc ? <p className="mt-2 text-xs text-amber-200">{sonuc}</p> : null}
         <p className="mt-1 text-[11px] text-slate-400">{t("sub_hint")}</p>
       </div>
     </div>

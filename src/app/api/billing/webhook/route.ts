@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   if (ownerId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const supa = await createServiceClient();
-      if (name === "subscription_created" || name === "subscription_updated" || name === "order_created") {
+      if (name === "subscription_created" || name === "subscription_updated" || name === "subscription_resumed" || name === "subscription_unpaused" || name === "order_created") {
         await supa.from("businesses").update({
           plan: "pro",
           lemon_customer_id: custId,
