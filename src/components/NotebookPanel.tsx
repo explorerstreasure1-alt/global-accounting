@@ -100,7 +100,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
         ))}
       </div>
 
-      <div className="relative pl-12 pr-4 pt-5 pb-4">
+      <div className="relative pl-10 pr-3 pt-5 pb-4 sm:pl-12 sm:pr-4">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="font-hand text-4xl leading-none text-[var(--ink)]">{t("ledger")}</p>
@@ -200,7 +200,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                   ) : (
                     <article
                       key={k.id}
-                      className="notebook-row grid grid-cols-1 items-center gap-x-2 gap-y-1 border-b border-transparent px-1 py-1 text-sm min-[480px]:grid-cols-2 xl:grid-cols-[148px_minmax(0,1fr)_118px_100px_100px_110px_110px_52px]"
+                      className="notebook-row grid grid-cols-1 items-center gap-x-2 gap-y-1 border-b border-transparent px-1 py-2 sm:py-1 text-sm min-[480px]:grid-cols-2 xl:grid-cols-[148px_minmax(0,1fr)_118px_100px_100px_110px_110px_52px]"
                     >
                       <span className="font-book text-[13px] text-slate-600 min-[480px]:col-span-2 xl:col-span-1">{fd(k.tarih)}</span>
                       <span className="font-book break-words text-[15px] text-[var(--ink)] min-[480px]:col-span-2 xl:col-span-1 min-w-0">{k.aciklama}</span>
@@ -222,7 +222,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                       <span className="text-right tabular-nums text-[var(--ink-soft)]">{fms(k.kasaEtkisi)}</span>
                       <span className="flex justify-end gap-1">
                         <button
-                          className="text-xs"
+                          className="rounded-lg p-2 text-xs hover:bg-white/40"
                           onClick={() => {
                             setEditing(k.id);
                             setEditDraft({
@@ -240,7 +240,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                           <I name="edit" size={14} />
                         </button>
                         <button
-                          className="text-xs"
+                          className="rounded-lg p-2 text-xs hover:bg-white/40"
                           onClick={() => setConfirmId(k.id)}
                           title={t("delete")}
                           aria-label={`${k.aciklama}`}
@@ -326,14 +326,14 @@ function RowEditor({
         min="2015-01-01"
         max="2035-12-31"
         onChange={(e) => onChange({ ...value, tarih: e.target.value })}
-        className="ink-input col-span-1 min-w-0 rounded px-1 py-1 text-sm tabular-nums min-[480px]:col-span-2 xl:col-span-1"
+        className="ink-input col-span-1 min-w-0 rounded px-1 py-2 sm:py-1 text-sm tabular-nums min-[480px]:col-span-2 xl:col-span-1"
         title={t("date")}
       />
       <input
         value={value.aciklama}
         onChange={(e) => onChange({ ...value, aciklama: e.target.value })}
         placeholder={t("description")}
-        className="ink-input min-w-0 rounded px-1 py-1 font-book text-[15px] min-[480px]:col-span-2 xl:col-span-1"
+        className="ink-input min-w-0 rounded px-1 py-2 sm:py-1 font-book text-[15px] min-[480px]:col-span-2 xl:col-span-1"
         onKeyDown={(e) => {
           if (e.key === "Enter") void onSave();
         }}
@@ -341,7 +341,7 @@ function RowEditor({
       <select
         value={value.kategori}
         onChange={(e) => onChange({ ...value, kategori: e.target.value as Kategori })}
-        className="ink-input min-w-0 rounded px-1 py-1 text-sm"
+        className="ink-input min-w-0 rounded px-1 py-2 sm:py-1 text-sm"
       >
         {KATEGORILER.map((k) => (
           <option key={k} value={k}>{catLabel(k, locale)}</option>
@@ -354,7 +354,7 @@ function RowEditor({
         value={value.gelir || ""}
         onChange={(e) => onChange({ ...value, gelir: Number(e.target.value || 0), gider: Number(e.target.value || 0) ? 0 : value.gider })}
         placeholder={t("nb_incomePh")}
-        className="ink-input min-w-0 rounded px-1 py-1 text-right tabular-nums"
+        className="ink-input min-w-0 rounded px-1 py-2 sm:py-1 text-right tabular-nums"
       />
       <input
         type="number"
@@ -363,7 +363,7 @@ function RowEditor({
         value={value.gider || ""}
         onChange={(e) => onChange({ ...value, gider: Number(e.target.value || 0), gelir: Number(e.target.value || 0) ? 0 : value.gider })}
         placeholder={t("nb_expensePh")}
-        className="ink-input min-w-0 rounded px-1 py-1 text-right tabular-nums"
+        className="ink-input min-w-0 rounded px-1 py-2 sm:py-1 text-right tabular-nums"
       />
       <div className="flex min-w-0 flex-wrap gap-1">
         <PayChip
@@ -392,12 +392,12 @@ function RowEditor({
         <button
           disabled={saving}
           onClick={() => void onSave()}
-          className="rounded-lg bg-[var(--ink)] px-2 py-1 text-[11px] text-white"
+          className="rounded-lg bg-[var(--ink)] px-3 py-2 text-xs text-white sm:px-2 sm:py-1 sm:text-[11px]"
         >
           {saveText}
         </button>
         {onCancel ? (
-          <button onClick={onCancel} className="rounded-lg px-2 py-1 text-[11px]">
+          <button onClick={onCancel} className="rounded-lg px-3 py-2 text-xs sm:px-2 sm:py-1 sm:text-[11px]">
             {t("nb_cancel")}
           </button>
         ) : null}
@@ -472,9 +472,9 @@ export function TotalsStrip({
 
 function TotalCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl bg-[var(--paper)]/90 px-3 py-2 shadow-sm ring-1 ring-amber-950/10">
+    <div className="rounded-2xl bg-[var(--paper)]/90 px-3 py-2 shadow-sm ring-1 ring-amber-950/10 min-w-0 overflow-hidden">
       <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="font-semibold tabular-nums text-[var(--ink)]">{value}</p>
+      <p className="font-semibold tabular-nums text-[var(--ink)] break-words">{value}</p>
       {hint ? <p className="text-[10px] text-slate-500">{hint}</p> : null}
     </div>
   );

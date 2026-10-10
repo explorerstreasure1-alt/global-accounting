@@ -232,7 +232,7 @@ export function ReportModal({
                 <Stat label={t("rep_totalExpense")} value={fm(rapor.gider)} />
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
                 <Stat label={t("rep_grandNet")} value={fm(rapor.net)} big />
                 <Stat label={t("rep_opening")} value={fm(rapor.acilisBakiyesi)} />
                 <Stat label={t("rep_closing")} value={fm(rapor.kapanisBakiyesi)} big />
@@ -241,7 +241,8 @@ export function ReportModal({
               <GrafikCubuklari rapor={rapor} />
 
               <h3 className="mt-8 font-hand text-2xl">{t("rep_dailyBreak")}</h3>
-              <table className="mt-2 w-full border-collapse text-sm">
+              <div className="scroll-thin -mx-1 overflow-x-auto px-1">
+              <table className="mt-2 w-full min-w-[560px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wider text-slate-500">
                     <th className="py-2">{t("nb_thDate")}</th>
@@ -274,6 +275,7 @@ export function ReportModal({
                   ) : null}
                 </tbody>
               </table>
+              </div>
 
               <h3 className="mt-8 font-hand text-2xl">{t("rep_categories")}</h3>
               <div className="mt-2 grid gap-2 md:grid-cols-2">
@@ -286,7 +288,8 @@ export function ReportModal({
               </div>
 
               <h3 className="mt-8 font-hand text-2xl">{t("rep_receipts")}</h3>
-              <table className="mt-2 w-full border-collapse text-sm">
+              <div className="scroll-thin -mx-1 overflow-x-auto px-1">
+              <table className="mt-2 w-full min-w-[560px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-300 text-left text-xs uppercase tracking-wider text-slate-500">
                     <th className="py-2">{t("nb_thDate")}</th>
@@ -310,6 +313,7 @@ export function ReportModal({
                   ))}
                 </tbody>
               </table>
+              </div>
 
               <p className="mt-8 text-right text-xs text-slate-500">
                 {ayarlar.isletmeAdi} · {formatDateLong(rapor.bitis, intl)}

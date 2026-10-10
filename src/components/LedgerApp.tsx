@@ -35,6 +35,10 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [toast, setToast] = useState<string | null>(null);
   const [takvimOpen, setTakvimOpen] = useState(false);
   const [kilavuzOpen, setKilavuzOpen] = useState(true);
+  // Telefonda kılavuz paneli defterin altında kalmasın diye kapalı gelsin (hydration sonrası kapatılır, kayma olmaz)
+  useEffect(() => {
+    if (window.innerWidth < 1280) setKilavuzOpen(false);
+  }, []);
   const [yazilacakTarih, setYazilacakTarih] = useState<string | null>(null);
   const [hafizaMod, setHafizaMod] = useState<string>("dosya");
   const fileInput = useRef<HTMLInputElement>(null);
@@ -271,9 +275,9 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         </div>
         {trial ? <ProBanner gun={trial.gun} email={trial.email} /> : null}
         <header className="no-print mb-3 flex flex-wrap items-center gap-3 rounded-[24px] bg-black/25 px-3 py-2 text-amber-50 backdrop-blur-md">
-          <img src="/images/logo.svg" alt="Shop Ledger" className="h-12 w-12 rounded-full object-cover ring-2 ring-amber-200/40" />
+          <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-amber-200/40 sm:h-12 sm:w-12" />
           <div className="min-w-0">
-            <p className="font-hand text-3xl leading-none md:text-4xl">{ayarlar.isletmeAdi}</p>
+            <p className="font-hand text-2xl leading-none sm:text-3xl md:text-4xl">{ayarlar.isletmeAdi}</p>
             <p className="text-[11px] uppercase tracking-[0.16em] text-amber-100/70">{t("app_sub")}</p>
           </div>
 
@@ -325,7 +329,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
             <HeaderStat label={t("monthly_rent")} value={fm(ayarlar.aylikKiraKarsiligi)} />
           </div>
 
-          <div className="flex flex-wrap gap-1">
+          <div className="scroll-thin flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
             <ToolBtn onClick={() => setTakvimOpen(true)}><I name="calendar" /> {t("calendar")}</ToolBtn>
             <ToolBtn onClick={() => setGunOpen(true)}><I name="day" /> {t("day_end")}</ToolBtn>
             <ToolBtn onClick={() => setAyOpen(true)}><I name="month" /> {t("month_end")}</ToolBtn>
@@ -509,7 +513,7 @@ function ToolBtn({ children, onClick }: { children: ReactNode; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/95 px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-white"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50/95 px-3 py-2 text-xs font-medium text-slate-800 shadow-sm hover:bg-white sm:py-1.5"
     >
       {children}
     </button>

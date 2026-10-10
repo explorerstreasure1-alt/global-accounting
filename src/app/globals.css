@@ -319,3 +319,20 @@ textarea {
 [data-theme='pro-dark'] .notebook input,[data-theme='pro-dark'] .notebook select,[data-theme='pro-dark'] .notebook textarea { color:#e2e8f0; }
 [data-theme='pro-dark'] .ink-input { color:#e2e8f0; }
 [dir='rtl'] .notebook::before { inset:0 0 0 auto; }
+
+/* === Mobil dokunuş (telefon): iOS odak-zoom engeli + dar ekran sigortası === */
+@media (max-width: 639px) {
+  /* iOS Safari 16px altı inputa odakta sayfayı büyütür; telefonda bunu engelle (masaüstü aynen kalır) */
+  .desk-app input,
+  .desk-app select,
+  .desk-app textarea,
+  .notebook input,
+  .notebook select,
+  .notebook textarea {
+    font-size: 16px;
+  }
+  /* Defter satırları dar ekranda nefes alsın */
+  .notebook-row {
+    row-gap: 6px;
+  }
+}
