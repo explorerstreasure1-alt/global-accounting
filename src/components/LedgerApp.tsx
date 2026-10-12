@@ -175,11 +175,21 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   }
 
   async function saveAyarlar(patch: Partial<Ayarlar>) {
-    const res = await fetch("/api/ayarlar", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/ayarlar", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+    } catch {
+      setToast(t("toast_saveFailed"));
+      throw new Error("ayarlar-kayit-hatasi");
+    }
+    if (!res.ok) {
+      setToast(t("toast_saveFailed"));
+      throw new Error(`ayarlar-kayit-hatasi:${res.status}`);
+    }
     const json = (await res.json()) as { ayarlar: Ayarlar };
     setAyarlar(json.ayarlar);
     setToast(t("toast_settingsSaved"));

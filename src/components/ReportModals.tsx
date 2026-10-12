@@ -7,6 +7,53 @@ import { gonderRapor, raporCanvas, raporJpgIndir, type GonderFormati } from "@/l
 import { I } from "./ui-icon";
 import { useT, catLabel } from "@/lib/i18n";
 
+/** Gönderici numarası ülke kodları (ISO ile, dil bağımsız). */
+const ULKE_KODLARI: Array<{ kod: string; etiket: string }> = [
+  { kod: "90", etiket: "+90 TR" },
+  { kod: "1", etiket: "+1 US" },
+  { kod: "44", etiket: "+44 GB" },
+  { kod: "49", etiket: "+49 DE" },
+  { kod: "33", etiket: "+33 FR" },
+  { kod: "34", etiket: "+34 ES" },
+  { kod: "39", etiket: "+39 IT" },
+  { kod: "31", etiket: "+31 NL" },
+  { kod: "30", etiket: "+30 GR" },
+  { kod: "359", etiket: "+359 BG" },
+  { kod: "7", etiket: "+7 RU" },
+  { kod: "380", etiket: "+380 UA" },
+  { kod: "994", etiket: "+994 AZ" },
+  { kod: "995", etiket: "+995 GE" },
+  { kod: "998", etiket: "+998 UZ" },
+  { kod: "98", etiket: "+98 IR" },
+  { kod: "964", etiket: "+964 IQ" },
+  { kod: "963", etiket: "+963 SY" },
+  { kod: "962", etiket: "+962 JO" },
+  { kod: "961", etiket: "+961 LB" },
+  { kod: "966", etiket: "+966 SA" },
+  { kod: "971", etiket: "+971 AE" },
+  { kod: "20", etiket: "+20 EG" },
+  { kod: "", etiket: "···" },
+];
+
+/** Kayıtlı numarayı kod + yerel parçaya ayır (eşleşmezse +90 varsayılır). */
+function kodAyir(ham: string): [string, string] {
+  const d = String(ham ?? "").replace(/\D/g, "");
+  const sirali = [...ULKE_KODLARI].filter((u) => u.kod).sort((a, b) => b.kod.length - a.kod.length);
+  for (const u of sirali) {
+    if (d.startsWith(u.kod) && d.length > u.kod.length) return [u.kod, d.slice(u.kod.length)];
+  }
+  return ["90", d.replace(/^0+/, "")];
+}
+
+/** Kod + yazılanı tek uluslararası numarada birleştir (çift kod yazılmaz). */
+function kodBirlestir(kod: string, ham: string): string {
+  if (!kod) return String(ham ?? "").trim().slice(0, 30);
+  let d = String(ham ?? "").replace(/\D/g, "").replace(/^0+/, "");
+  if (!d) return "";
+  if (d.startsWith(kod)) return `+${d}`.slice(0, 31);
+  return `+${kod}${d}`.slice(0, 31);
+}
+
 type Props = {
   open: boolean;
   title: string;
@@ -681,7 +728,7 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             aylikKiraKarsiligi: kiraPeriyodu ? kiraTutari / kiraPeriyodu : 0,
             kiraSonrakiTarih: String(data.get("kiraSonrakiTarih") || "") || null,
             acilisBakiyesi: Number(data.get("acilisBakiyesi") || 0),
-            whatsappIsletme: String(data.get("whatsappIsletme") || "").trim().slice(0, 30),
+            whatsappIsletme: kodBirlestir(String(data.get("waUlkeKod") ?? ""), String(data.get("whatsappIsletme") || "")),
             waSablonAlindi: String(data.get("waSablonAlindi") || "").slice(0, 500),
             waSablonHazir: String(data.get("waSablonHazir") || "").slice(0, 500),
             googleYorumLink: String(data.get("googleYorumLink") || "").trim().slice(0, 300),
@@ -719,7 +766,21 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
           <KiraBolBolumu varsayilanAy={ayarlar.kiraPeriyodu} onKiraBol={onKiraBol} />
           <label className="text-sm">
             {t("set_waIsletme")}
-            <input name="whatsappIsletme" defaultValue={ayarlar.whatsappIsletme} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <span className="mt-1 flex gap-2">
+              {(() => {
+                const [varsayilanKod, varsayilanNo] = kodAyir(ayarlar.whatsappIsletme);
+                return (
+                  <>
+                    <select name="waUlkeKod" defaultValue={varsayilanKod} dir="ltr" className="w-28 shrink-0 rounded-lg border border-amber-300 bg-white px-2 py-2">
+                      {ULKE_KODLARI.map((u) => (
+                        <option key={u.etiket} value={u.kod}>{u.etiket}</option>
+                      ))}
+                    </select>
+                    <input name="whatsappIsletme" defaultValue={varsayilanNo} placeholder="555 123 45 67" inputMode="tel" dir="ltr" className="min-w-0 flex-1 rounded-lg border border-amber-300 bg-white px-3 py-2" />
+                  </>
+                );
+              })()}
+            </span>
           </label>
           <label className="text-sm">
             {t("set_googleYorum")}
