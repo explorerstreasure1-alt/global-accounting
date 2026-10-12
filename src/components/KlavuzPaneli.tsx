@@ -17,6 +17,7 @@ const IKON_SATIRLARI: Array<{ icon: IconName; key: string }> = [
   { icon: "print", key: "g2_print" },
   { icon: "backup", key: "g2_backup" },
   { icon: "phone", key: "g2_phone" },
+  { icon: "scissors", key: "g2_musteri" },
   { icon: "settings", key: "g2_settings" },
 ];
 

@@ -140,3 +140,45 @@ export type Uyari = {
   baslik: string;
   mesaj: string;
 };
+
+/** Ziyaret durumu: hazırlanıyor → hazır → teslim edildi */
+export type ZiyaretDurum = "hazirlaniyor" | "hazir" | "teslim";
+
+export type Musteri = {
+  id: string;
+  ad: string;
+  soyad: string;
+  telefon: string;
+  not: string;
+  ziyaretSayisi: number;
+  toplamHarcama: number;
+  sonZiyaret: string | null;
+  silindi: boolean;
+  olusturmaZamani: string;
+};
+
+export type MusteriGirdi = {
+  ad: string;
+  soyad: string;
+  telefon: string;
+  not: string;
+};
+
+export type Ziyaret = {
+  id: string;
+  musteriId: string;
+  hizmet: string;
+  tutar: number;
+  tarih: string;
+  not: string;
+  durum: ZiyaretDurum;
+  olusturmaZamani: string;
+};
+
+export type ZiyaretGirdi = {
+  musteriId: string;
+  hizmet: string;
+  tutar: number;
+  tarih: string;
+  not: string;
+};

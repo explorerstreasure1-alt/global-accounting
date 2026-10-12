@@ -1,7 +1,9 @@
 ﻿import { desc, eq } from "drizzle-orm";
-import { db, hasDatabase } from "@/db";
-import { ayarlar, kayitlar, sohbetMesajlari } from "@/db/schema";
-import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, OdemeTipi, SohbetMesaji } from "./types";
+import { promises as nodeFs } from "node:fs";
+import path from "node:path";
+import { db, hasDatabase, pool } from "@/db";
+import { ayarlar, kayitlar, musteriler, sohbetMesajlari, ziyaretler } from "@/db/schema";
+import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, OdemeTipi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
 import { addDays, addMonths, num, round2, toISODate } from "./format";
 import { KATEGORILER, KATEGORI_ESKI } from "./types";
 import {
@@ -10,6 +12,7 @@ import {
   fileSaveAyarlar,
   fileSaveKayitlar,
   fileSaveMesajlar,
+  getDataDir,
   getLatestBackup,
   mirrorToFile,
 } from "./file-store";
@@ -599,4 +602,309 @@ export async function restoreSnapshot(snapshot: InitData): Promise<InitData> {
 }
 
 export type { OdemeTipi };
+
+/* ================= MÜŞTERİLER + ZİYARETLER (EGZEL ARYA modülü) ================= */
+
+const DURUMLAR: ZiyaretDurum[] = ["hazirlaniyor", "hazir", "teslim"];
+
+function gecerliDurum(d: unknown): ZiyaretDurum {
+  return DURUMLAR.includes(d as ZiyaretDurum) ? (d as ZiyaretDurum) : "hazirlaniyor";
+}
+
+function kisa(s: unknown, enFazla: number): string {
+  return String(s ?? "").trim().slice(0, enFazla);
+}
+
+function mapZiyaret(row: typeof ziyaretler.$inferSelect): Ziyaret {
+  return {
+    id: row.id,
+    musteriId: row.musteriId,
+    hizmet: row.hizmet,
+    tutar: num(row.tutar),
+    tarih: row.tarih,
+    not: row.not,
+    durum: gecerliDurum(row.durum),
+    olusturmaZamani: row.olusturmaZamani.toISOString(),
+  };
+}
+
+function mapMusteri(row: typeof musteriler.$inferSelect, tumZiyaretler: Ziyaret[]): Musteri {
+  const zs = tumZiyaretler
+    .filter((z) => z.musteriId === row.id)
+    .sort((a, b) => b.tarih.localeCompare(a.tarih));
+  return {
+    id: row.id,
+    ad: row.ad,
+    soyad: row.soyad,
+    telefon: row.telefon,
+    not: row.not,
+    ziyaretSayisi: zs.length,
+    toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)),
+    sonZiyaret: zs.length ? zs[0].tarih : null,
+    silindi: row.silindiAt !== null,
+    olusturmaZamani: row.olusturmaZamani.toISOString(),
+  };
+}
+
+let musteriTabloHazir = false;
+
+/** Yerel Postgres'te müşteri tablolarını idempotent kur (drizzle-kit gerektirmez). */
+async function ensureMusteriTables(): Promise<void> {
+  if (musteriTabloHazir || !hasDatabase || !pool) return;
+  await pool.query(`
+    create table if not exists musteriler (
+      id uuid primary key,
+      ad text not null,
+      soyad text not null default '',
+      telefon text not null default '',
+      not text not null default '',
+      silindi_at timestamp,
+      olusturma_zamani timestamp not null
+    );
+    create table if not exists ziyaretler (
+      id uuid primary key,
+      musteri_id uuid not null,
+      hizmet text not null default '',
+      tutar numeric(14,2) not null default '0',
+      tarih date not null,
+      not text not null default '',
+      durum varchar(20) not null default 'hazirlaniyor',
+      olusturma_zamani timestamp not null
+    );
+    create index if not exists musteriler_telefon_idx on musteriler (telefon);
+    create index if not exists ziyaretler_musteri_idx on ziyaretler (musteri_id);
+  `);
+  musteriTabloHazir = true;
+}
+
+type MusteriDosya = { musteriler: Musteri[]; ziyaretler: Ziyaret[] };
+
+async function musteriDosyaOku(): Promise<MusteriDosya> {
+  try {
+    const raw = await nodeFs.readFile(path.join(getDataDir(), "musteriler.json"), "utf-8");
+    const j = JSON.parse(raw) as Partial<MusteriDosya>;
+    return {
+      musteriler: Array.isArray(j.musteriler) ? j.musteriler : [],
+      ziyaretler: Array.isArray(j.ziyaretler) ? j.ziyaretler : [],
+    };
+  } catch {
+    return { musteriler: [], ziyaretler: [] };
+  }
+}
+
+async function musteriDosyaYaz(d: MusteriDosya): Promise<void> {
+  await nodeFs.mkdir(getDataDir(), { recursive: true });
+  await nodeFs.writeFile(path.join(getDataDir(), "musteriler.json"), JSON.stringify(d), "utf-8");
+}
+
+function musteriSuz(musteriler: Musteri[], q?: string, silinmis = false): Musteri[] {
+  let ms = silinmis ? musteriler : musteriler.filter((m) => !m.silindi);
+  if (q) {
+    const t = q.toLocaleLowerCase("tr");
+    ms = ms.filter((m) => `${m.ad} ${m.soyad} ${m.telefon}`.toLocaleLowerCase("tr").includes(t));
+  }
+  return ms.sort((a, b) => `${a.ad} ${a.soyad}`.localeCompare(`${b.ad} ${b.soyad}`, "tr"));
+}
+
+export async function listMusteriler(q?: string, silinmis = false): Promise<Musteri[]> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const [mRows, zRows] = await Promise.all([db!.select().from(musteriler), db!.select().from(ziyaretler)]);
+      const zs = zRows.map(mapZiyaret);
+      return musteriSuz(mRows.map((r) => mapMusteri(r, zs)), q, silinmis);
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      return musteriSuz(d.musteriler, q, silinmis);
+    },
+  );
+}
+
+export async function getMusteri(id: string): Promise<(Musteri & { ziyaretler: Ziyaret[] }) | null> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const mRows = await db!.select().from(musteriler).where(eq(musteriler.id, id)).limit(1);
+      if (!mRows.length) return null;
+      const zRows = await db!.select().from(ziyaretler).where(eq(ziyaretler.musteriId, id));
+      const zs = zRows.map(mapZiyaret).sort((a, b) => b.tarih.localeCompare(a.tarih));
+      return { ...mapMusteri(mRows[0], zs), ziyaretler: zs };
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      const m = d.musteriler.find((x) => x.id === id);
+      if (!m) return null;
+      const zs = d.ziyaretler.filter((z) => z.musteriId === id).sort((a, b) => b.tarih.localeCompare(a.tarih));
+      return { ...m, ziyaretSayisi: zs.length, toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)), sonZiyaret: zs.length ? zs[0].tarih : null, ziyaretler: zs };
+    },
+  );
+}
+
+export async function createMusteri(input: MusteriGirdi): Promise<Musteri> {
+  const ad = kisa(input.ad, 60) || "İsimsiz";
+  const soyad = kisa(input.soyad, 60);
+  const telefon = kisa(input.telefon, 30);
+  const not = kisa(input.not, 500);
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const row = { id: crypto.randomUUID(), ad, soyad, telefon, not, silindiAt: null as Date | null, olusturmaZamani: new Date() };
+      await db!.insert(musteriler).values(row);
+      return mapMusteri({ ...row }, []);
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      const m: Musteri = { id: crypto.randomUUID(), ad, soyad, telefon, not, ziyaretSayisi: 0, toplamHarcama: 0, sonZiyaret: null, silindi: false, olusturmaZamani: new Date().toISOString() };
+      d.musteriler.push(m);
+      await musteriDosyaYaz(d);
+      return m;
+    },
+  );
+}
+
+export async function updateMusteri(id: string, patch: Partial<MusteriGirdi>): Promise<Musteri | null> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const cur = await db!.select().from(musteriler).where(eq(musteriler.id, id)).limit(1);
+      if (!cur.length) return null;
+      const next = {
+        ad: patch.ad !== undefined ? kisa(patch.ad, 60) || cur[0].ad : cur[0].ad,
+        soyad: patch.soyad !== undefined ? kisa(patch.soyad, 60) : cur[0].soyad,
+        telefon: patch.telefon !== undefined ? kisa(patch.telefon, 30) : cur[0].telefon,
+        not: patch.not !== undefined ? kisa(patch.not, 500) : cur[0].not,
+      };
+      await db!.update(musteriler).set(next).where(eq(musteriler.id, id));
+      const zRows = await db!.select().from(ziyaretler).where(eq(ziyaretler.musteriId, id));
+      return mapMusteri({ ...cur[0], ...next }, zRows.map(mapZiyaret));
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      const m = d.musteriler.find((x) => x.id === id);
+      if (!m) return null;
+      if (patch.ad !== undefined) m.ad = kisa(patch.ad, 60) || m.ad;
+      if (patch.soyad !== undefined) m.soyad = kisa(patch.soyad, 60);
+      if (patch.telefon !== undefined) m.telefon = kisa(patch.telefon, 30);
+      if (patch.not !== undefined) m.not = kisa(patch.not, 500);
+      await musteriDosyaYaz(d);
+      return getMusteri(id).then((g) => (g ? { ...g, ziyaretler: undefined as never } as Musteri : null));
+    },
+  );
+}
+
+async function setMusteriSilindi(id: string, silindi: boolean): Promise<boolean> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const r = await db!.update(musteriler).set({ silindiAt: silindi ? new Date() : null }).where(eq(musteriler.id, id)).returning({ id: musteriler.id });
+      return r.length > 0;
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      const m = d.musteriler.find((x) => x.id === id);
+      if (!m) return false;
+      m.silindi = silindi;
+      await musteriDosyaYaz(d);
+      return true;
+    },
+  );
+}
+
+export async function deleteMusteri(id: string): Promise<boolean> {
+  return setMusteriSilindi(id, true);
+}
+
+export async function restoreMusteri(id: string): Promise<boolean> {
+  return setMusteriSilindi(id, false);
+}
+
+export async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
+  const hizmet = kisa(input.hizmet, 80);
+  const tutar = round2(Math.max(0, Number(input.tutar) || 0));
+  const tarih = gecerliTarih(input.tarih);
+  const not = kisa(input.not, 500);
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const row = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar: tutar.toFixed(2), tarih, not, durum: "hazirlaniyor", olusturmaZamani: new Date() };
+      await db!.insert(ziyaretler).values(row);
+      return mapZiyaret({ ...row });
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      const z: Ziyaret = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar, tarih, not, durum: "hazirlaniyor", olusturmaZamani: new Date().toISOString() };
+      d.ziyaretler.push(z);
+      const m = d.musteriler.find((x) => x.id === input.musteriId);
+      if (m) {
+        const zs = d.ziyaretler.filter((x) => x.musteriId === m.id).sort((a, b) => b.tarih.localeCompare(a.tarih));
+        m.ziyaretSayisi = zs.length;
+        m.toplamHarcama = round2(zs.reduce((s, x) => s + x.tutar, 0));
+        m.sonZiyaret = zs.length ? zs[0].tarih : null;
+      }
+      await musteriDosyaYaz(d);
+      return z;
+    },
+  );
+}
+
+export async function updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null> {
+  const d = gecerliDurum(durum);
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const r = await db!.update(ziyaretler).set({ durum: d }).where(eq(ziyaretler.id, id)).returning();
+      if (!r.length) return null;
+      return mapZiyaret(r[0]);
+    },
+    async () => {
+      const dosya = await musteriDosyaOku();
+      const z = dosya.ziyaretler.find((x) => x.id === id);
+      if (!z) return null;
+      z.durum = d;
+      await musteriDosyaYaz(dosya);
+      return z;
+    },
+  );
+}
+
+export async function deleteZiyaret(id: string): Promise<boolean> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const r = await db!.delete(ziyaretler).where(eq(ziyaretler.id, id)).returning({ id: ziyaretler.id });
+      return r.length > 0;
+    },
+    async () => {
+      const dosya = await musteriDosyaOku();
+      const once = dosya.ziyaretler.length;
+      dosya.ziyaretler = dosya.ziyaretler.filter((x) => x.id !== id);
+      if (dosya.ziyaretler.length === once) return false;
+      await musteriDosyaYaz(dosya);
+      return true;
+    },
+  );
+}
+
+/** Hızlı ekleme: telefon/adla eşleşen müşteriyi bul ya da aç, ziyareti işle. */
+export async function hizliMusteriEkle(input: MusteriGirdi & { hizmet?: string; tutar?: number; tarih?: string; musteriId?: string }): Promise<{ musteri: Musteri; ziyaret: Ziyaret | null; eslesti: boolean }> {
+  const tum = await listMusteriler(undefined, true);
+  const tel = kisa(input.telefon, 30);
+  let m: Musteri | undefined;
+  if (input.musteriId) m = tum.find((x) => x.id === input.musteriId && !x.silindi);
+  if (!m && tel) m = tum.find((x) => !x.silindi && x.telefon === tel);
+  if (!m) {
+    const adKucuk = kisa(input.ad, 60).toLocaleLowerCase("tr");
+    const soyKucuk = kisa(input.soyad, 60).toLocaleLowerCase("tr");
+    if (adKucuk) m = tum.find((x) => !x.silindi && x.ad.toLocaleLowerCase("tr") === adKucuk && x.soyad.toLocaleLowerCase("tr") === soyKucuk);
+  }
+  const eslesti = Boolean(m);
+  const musteri = m ?? (await createMusteri(input));
+  let ziyaret: Ziyaret | null = null;
+  if (kisa(input.hizmet, 80) || Number(input.tutar) > 0) {
+    ziyaret = await addZiyaret({ musteriId: musteri.id, hizmet: kisa(input.hizmet, 80), tutar: Number(input.tutar) || 0, tarih: input.tarih || toISODate(), not: "" });
+  }
+  const guncel = await getMusteri(musteri.id);
+  return { musteri: guncel ? { ...guncel, ziyaretler: undefined as never } as Musteri : musteri, ziyaret, eslesti };
+}
 

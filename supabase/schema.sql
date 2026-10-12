@@ -154,3 +154,55 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
+
+-- ============================================================
+-- 7) MÜŞTERİLER + ZİYARETLER (EGZEL ARYA modülü, işletme başına izole)
+-- Supabase SQL editor'e yukarıdakilerle birlikte yapıştır
+-- ============================================================
+create table if not exists musteriler (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  ad text not null default '',
+  soyad text not null default '',
+  telefon text not null default '',
+  not text not null default '',
+  silindi_at timestamptz,
+  olusturma_zamani timestamptz not null default now()
+);
+
+create table if not exists ziyaretler (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  musteri_id uuid not null references musteriler(id) on delete cascade,
+  hizmet text not null default '',
+  tutar numeric(14,2) not null default 0,
+  tarih date not null default CURRENT_DATE,
+  not text not null default '',
+  durum varchar(20) not null default 'hazirlaniyor',
+  olusturma_zamani timestamptz not null default now()
+);
+
+create index if not exists musteriler_business_idx on musteriler(business_id);
+create index if not exists musteriler_telefon_idx on musteriler(telefon);
+create index if not exists ziyaretler_business_idx on ziyaretler(business_id);
+create index if not exists ziyaretler_musteri_idx on ziyaretler(musteri_id);
+create index if not exists ziyaretler_durum_idx on ziyaretler(durum);
+
+alter table musteriler enable row level security;
+alter table ziyaretler enable row level security;
+
+drop policy if exists "own musteriler" on musteriler;
+create policy "own musteriler" on musteriler
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );
+
+drop policy if exists "own ziyaretler" on ziyaretler;
+create policy "own ziyaretler" on ziyaretler
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );

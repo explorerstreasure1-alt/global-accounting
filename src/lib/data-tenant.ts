@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, SohbetMesaji } from "./types";
+import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
 import { KATEGORILER, KATEGORI_ESKI } from "./types";
 import { addMonths, num, round2, toISODate } from "./format";
 
@@ -57,12 +57,57 @@ function mapMesaj(row: Row): SohbetMesaji {
   };
 }
 
+const ZDURUM: ZiyaretDurum[] = ["hazirlaniyor", "hazir", "teslim"];
+
+function mapZiyaret(row: Row): Ziyaret {
+  const d = String(row.durum ?? "hazirlaniyor");
+  const oz = row.olusturma_zamani;
+  return {
+    id: String(row.id),
+    musteriId: String(row.musteri_id ?? ""),
+    hizmet: String(row.hizmet ?? ""),
+    tutar: num(row.tutar as string | number | null | undefined),
+    tarih: String(row.tarih ?? ""),
+    not: String(row.not ?? ""),
+    durum: (ZDURUM as string[]).includes(d) ? (d as ZiyaretDurum) : "hazirlaniyor",
+    olusturmaZamani: oz ? new Date(oz as string).toISOString() : new Date().toISOString(),
+  };
+}
+
+function musteriOzet(row: Row, tum: Ziyaret[]): Musteri {
+  const zs = tum
+    .filter((z) => z.musteriId === String(row.id))
+    .sort((a, b) => b.tarih.localeCompare(a.tarih));
+  const oz = row.olusturma_zamani;
+  return {
+    id: String(row.id),
+    ad: String(row.ad ?? ""),
+    soyad: String(row.soyad ?? ""),
+    telefon: String(row.telefon ?? ""),
+    not: String(row.not ?? ""),
+    ziyaretSayisi: zs.length,
+    toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)),
+    sonZiyaret: zs.length ? zs[0].tarih : null,
+    silindi: row.silindi_at !== null && row.silindi_at !== undefined,
+    olusturmaZamani: oz ? new Date(oz as string).toISOString() : new Date().toISOString(),
+  };
+}
+
 export type TenantDb = {
   listKayitlar(): Promise<Kayit[]>;
   getAyarlar(): Promise<Ayarlar>;
   createKayit(input: KayitGirdi): Promise<Kayit>;
   updateKayit(id: string, patch: Partial<KayitGirdi>): Promise<Kayit | null>;
   deleteKayit(id: string): Promise<boolean>;
+  listMusteriler(q?: string, silinmis?: boolean): Promise<Musteri[]>;
+  getMusteri(id: string): Promise<(Musteri & { ziyaretler: Ziyaret[] }) | null>;
+  createMusteri(input: MusteriGirdi): Promise<Musteri>;
+  updateMusteri(id: string, patch: Partial<MusteriGirdi>): Promise<Musteri | null>;
+  deleteMusteri(id: string): Promise<boolean>;
+  restoreMusteri(id: string): Promise<boolean>;
+  addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret>;
+  updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null>;
+  deleteZiyaret(id: string): Promise<boolean>;
   updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar>;
   addMesaj(rol: "user" | "assistant", icerik: string): Promise<SohbetMesaji>;
   temizleSohbet(locale?: string): Promise<SohbetMesaji[]>;
@@ -277,7 +322,125 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     return getInitData();
   }
 
-  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData };
+  async function tumZiyaretler(): Promise<Ziyaret[]> {
+    const { data, error } = await supa.from("ziyaretler").select("*").eq("business_id", businessId);
+    if (error) throw error;
+    return ((data ?? []) as Row[]).map(mapZiyaret);
+  }
+
+  function suzMusteri(ms: Musteri[], q?: string, silinmis = false): Musteri[] {
+    let out = silinmis ? ms : ms.filter((m) => !m.silindi);
+    if (q) {
+      const t = q.toLocaleLowerCase();
+      out = out.filter((m) => `${m.ad} ${m.soyad} ${m.telefon}`.toLocaleLowerCase().includes(t));
+    }
+    return out.sort((a, b) => `${a.ad} ${a.soyad}`.localeCompare(`${b.ad} ${b.soyad}`));
+  }
+
+  async function listMusteriler(q?: string, silinmis = false): Promise<Musteri[]> {
+    const { data, error } = await supa.from("musteriler").select("*").eq("business_id", businessId);
+    if (error) throw error;
+    const zs = await tumZiyaretler();
+    return suzMusteri(((data ?? []) as Row[]).map((r) => musteriOzet(r, zs)), q, silinmis);
+  }
+
+  async function getMusteri(id: string): Promise<(Musteri & { ziyaretler: Ziyaret[] }) | null> {
+    const cur = await supa.from("musteriler").select("*").eq("id", id).eq("business_id", businessId).limit(1).maybeSingle();
+    if (cur.error || !cur.data) return null;
+    const z = await supa.from("ziyaretler").select("*").eq("musteri_id", id).eq("business_id", businessId).order("tarih", { ascending: false });
+    if (z.error) throw z.error;
+    const zs = ((z.data ?? []) as Row[]).map(mapZiyaret);
+    return { ...musteriOzet(cur.data as Row, zs), ziyaretler: zs };
+  }
+
+  async function createMusteri(input: MusteriGirdi): Promise<Musteri> {
+    const { data, error } = await supa
+      .from("musteriler")
+      .insert({
+        ad: String(input.ad || "").trim().slice(0, 60) || "İsimsiz",
+        soyad: String(input.soyad || "").trim().slice(0, 60),
+        telefon: String(input.telefon || "").trim().slice(0, 30),
+        not: String(input.not || "").trim().slice(0, 500),
+        business_id: businessId,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return musteriOzet(data as Row, []);
+  }
+
+  async function updateMusteri(id: string, patch: Partial<MusteriGirdi>): Promise<Musteri | null> {
+    const cur = await getMusteri(id);
+    if (!cur) return null;
+    const next = {
+      ad: patch.ad !== undefined ? String(patch.ad).trim().slice(0, 60) || cur.ad : cur.ad,
+      soyad: patch.soyad !== undefined ? String(patch.soyad).trim().slice(0, 60) : cur.soyad,
+      telefon: patch.telefon !== undefined ? String(patch.telefon).trim().slice(0, 30) : cur.telefon,
+      not: patch.not !== undefined ? String(patch.not).trim().slice(0, 500) : cur.not,
+    };
+    const { error } = await supa.from("musteriler").update(next).eq("id", id).eq("business_id", businessId);
+    if (error) throw error;
+    return getMusteri(id).then((g) => (g ? { ...g, ziyaretler: undefined as never } as Musteri : null));
+  }
+
+  async function setSilindi(id: string, silindi: boolean): Promise<boolean> {
+    const { error, count } = await supa
+      .from("musteriler")
+      .update({ silindi_at: silindi ? new Date().toISOString() : null }, { count: "exact" })
+      .eq("id", id)
+      .eq("business_id", businessId);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  }
+
+  async function deleteMusteri(id: string): Promise<boolean> {
+    return setSilindi(id, true);
+  }
+
+  async function restoreMusteri(id: string): Promise<boolean> {
+    return setSilindi(id, false);
+  }
+
+  async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
+    const tutar = round2(Math.max(0, Number(input.tutar) || 0));
+    const { data, error } = await supa
+      .from("ziyaretler")
+      .insert({
+        musteri_id: input.musteriId,
+        hizmet: String(input.hizmet || "").trim().slice(0, 80),
+        tutar,
+        tarih: /^\d{4}-\d{2}-\d{2}$/.test(String(input.tarih || "")) ? input.tarih : toISODate(),
+        not: String(input.not || "").trim().slice(0, 500),
+        durum: "hazirlaniyor",
+        business_id: businessId,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return mapZiyaret(data as Row);
+  }
+
+  async function updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null> {
+    const d = (["hazirlaniyor", "hazir", "teslim"] as string[]).includes(durum) ? durum : "hazirlaniyor";
+    const { data, error } = await supa
+      .from("ziyaretler")
+      .update({ durum: d })
+      .eq("id", id)
+      .eq("business_id", businessId)
+      .select("*");
+    if (error) throw error;
+    const rows = (data ?? []) as Row[];
+    if (!rows.length) return null;
+    return mapZiyaret(rows[0]);
+  }
+
+  async function deleteZiyaret(id: string): Promise<boolean> {
+    const { error, count } = await supa.from("ziyaretler").delete({ count: "exact" }).eq("id", id).eq("business_id", businessId);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  }
+
+  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaretDurum, deleteZiyaret };
 }
 
 /** Dosya/tek-kullanıcı modu için aynı arayüz (mevcut davranış birebir). */
@@ -296,5 +459,14 @@ export async function fileDb(): Promise<TenantDb> {
     restoreSnapshot: d.restoreSnapshot,
     restoreLatestBackup: d.restoreLatestBackup,
     getInitData: d.getInitData,
+    listMusteriler: d.listMusteriler,
+    getMusteri: d.getMusteri,
+    createMusteri: d.createMusteri,
+    updateMusteri: d.updateMusteri,
+    deleteMusteri: d.deleteMusteri,
+    restoreMusteri: d.restoreMusteri,
+    addZiyaret: d.addZiyaret,
+    updateZiyaretDurum: d.updateZiyaretDurum,
+    deleteZiyaret: d.deleteZiyaret,
   };
 }

@@ -41,3 +41,26 @@ export const sohbetMesajlari = pgTable("sohbet_mesajlari", {
   icerik: text("icerik").notNull(),
   olusturmaZamani: timestamp("olusturma_zamani", { mode: "date" }).notNull(),
 });
+
+/** Müşteri kartı (EGZEL ARYA'dan taşındı, tek kiracılı yerelde business yok). */
+export const musteriler = pgTable("musteriler", {
+  id: uuid("id").primaryKey(),
+  ad: text("ad").notNull(),
+  soyad: text("soyad").notNull().default(""),
+  telefon: text("telefon").notNull().default(""),
+  not: text("not").notNull().default(""),
+  silindiAt: timestamp("silindi_at", { mode: "date" }),
+  olusturmaZamani: timestamp("olusturma_zamani", { mode: "date" }).notNull(),
+});
+
+/** Ziyaret/sipariş satırı — müşterinin her gelişi. */
+export const ziyaretler = pgTable("ziyaretler", {
+  id: uuid("id").primaryKey(),
+  musteriId: uuid("musteri_id").notNull(),
+  hizmet: text("hizmet").notNull().default(""),
+  tutar: numeric("tutar", { precision: 14, scale: 2 }).notNull().default("0"),
+  tarih: date("tarih", { mode: "string" }).notNull(),
+  not: text("not").notNull().default(""),
+  durum: varchar("durum", { length: 20 }).notNull().default("hazirlaniyor"),
+  olusturmaZamani: timestamp("olusturma_zamani", { mode: "date" }).notNull(),
+});

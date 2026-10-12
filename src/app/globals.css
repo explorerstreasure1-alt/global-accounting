@@ -336,3 +336,59 @@ textarea {
     row-gap: 6px;
   }
 }
+
+/* === 60x40 müşteri etiketi (ekranda önizleme + baskıda tam ölçü) === */
+.etiket-sayfa {
+  position: relative;
+  width: 480px;
+  height: 320px;
+  flex: none;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  container-type: size;
+}
+.etiket-sayfa > span {
+  position: absolute;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+}
+.etk-kose { width: 4.2%; height: 6.4%; border: 0 solid rgba(255, 255, 255, 0.7); }
+.etk-kose-tl { top: 3%; left: 2%; border-top-width: 1px; border-left-width: 1px; }
+.etk-kose-tr { top: 3%; right: 2%; border-top-width: 1px; border-right-width: 1px; }
+.etk-kose-bl { bottom: 3%; left: 2%; border-bottom-width: 1px; border-left-width: 1px; }
+.etk-kose-br { bottom: 3%; right: 2%; border-bottom-width: 1px; border-right-width: 1px; }
+.etk-dukkan { left: 5.8%; top: 6%; width: 56%; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 4.2cqw; letter-spacing: 0.2em; opacity: 0.95; }
+.etk-alt { left: 5.8%; top: 15.5%; width: 56%; font-family: system-ui, sans-serif; font-weight: 700; font-size: 2.7cqw; letter-spacing: 0.14em; opacity: 0.7; }
+.etk-qr { position: absolute; left: 3.3%; top: 30%; width: 25%; aspect-ratio: 1; }
+.etk-ad { left: 32.5%; top: 24%; width: 63%; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 6cqw; letter-spacing: 0.15em; }
+.etk-tel { left: 32.5%; top: 42%; width: 63%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 6cqw; }
+.etk-sip { left: 32.5%; top: 58.5%; width: 31%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 4.6cqw; }
+.etk-kod { left: 65%; top: 58.5%; width: 31%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 4.6cqw; }
+.etk-sira { left: 32.5%; top: 71%; width: 63%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 6.2cqw; }
+.etk-tarih { left: 40%; top: 84%; width: 53%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 3.4cqw; text-align: right; }
+.etk-durum { left: 68%; top: 4.5%; width: 28%; font-family: system-ui, sans-serif; font-weight: 700; font-size: 3cqw; letter-spacing: 0.1em; text-align: right; }
+
+@media (max-width: 540px) {
+  .etiket-sayfa {
+    transform: scale(0.72);
+    transform-origin: top center;
+  }
+}
+
+@media print {
+  .etiket-modal {
+    position: static !important;
+    display: block !important;
+    background: #fff !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .etiket-sayfa {
+    transform: none !important;
+    width: 60mm !important;
+    height: 40mm !important;
+  }
+}
