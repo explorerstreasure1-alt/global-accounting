@@ -150,9 +150,9 @@ export function ReportModal({
 
         {gonderSec ? (
           <div className="no-print border-b border-amber-200 bg-sky-50 px-5 py-3">
-            <p className="text-sm font-semibold text-slate-800">
-              {t("rep_sendAs")} <span className="font-normal text-slate-500">({ayarlar.whatsappAlici || t("noDate")})</span>
-            </p>
+              <p className="text-sm font-semibold text-slate-800">
+                {t("rep_sendAs")} <span className="font-normal text-slate-500">({ayarlar.whatsappIsletme || ayarlar.whatsappAlici || t("noDate")})</span>
+              </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {(["pdf", "jpg", "excel"] as GonderFormati[]).map((f) => (
                 <button
@@ -172,7 +172,8 @@ export function ReportModal({
                         tip: pdfTip ?? "z",
                         baslangic,
                         bitis,
-                        alici: ayarlar.whatsappAlici,
+                        // Alıcı alanı kalktı: rapor işletmenin kendi numarasına gider.
+                        alici: ayarlar.whatsappIsletme || ayarlar.whatsappAlici,
                       });
                       setGonderDurum(
                         sonuc === "whatsapp-acildi"
@@ -680,7 +681,6 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             aylikKiraKarsiligi: kiraPeriyodu ? kiraTutari / kiraPeriyodu : 0,
             kiraSonrakiTarih: String(data.get("kiraSonrakiTarih") || "") || null,
             acilisBakiyesi: Number(data.get("acilisBakiyesi") || 0),
-            whatsappAlici: String(data.get("whatsappAlici") || "").trim() || "",
             whatsappIsletme: String(data.get("whatsappIsletme") || "").trim().slice(0, 30),
             waSablonAlindi: String(data.get("waSablonAlindi") || "").slice(0, 500),
             waSablonHazir: String(data.get("waSablonHazir") || "").slice(0, 500),
@@ -717,10 +717,6 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             <input name="acilisBakiyesi" type="number" step="0.01" defaultValue={ayarlar.acilisBakiyesi} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
           <KiraBolBolumu varsayilanAy={ayarlar.kiraPeriyodu} onKiraBol={onKiraBol} />
-          <label className="text-sm">
-            {t("set_waNumber")}
-            <input name="whatsappAlici" defaultValue={ayarlar.whatsappAlici} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
-          </label>
           <label className="text-sm">
             {t("set_waIsletme")}
             <input name="whatsappIsletme" defaultValue={ayarlar.whatsappIsletme} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
