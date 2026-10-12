@@ -62,6 +62,14 @@ export type Ayarlar = {
   ollamaModel: string;
   /** WhatsApp rapor alıcısı (örn. 0556102095). */
   whatsappAlici: string;
+  /** İşletmenin WhatsApp numarası (mesajlar bu hesaptan gider). */
+  whatsappIsletme: string;
+  /** Otomatik WA mesajı: sipariş alındı (boşsa dil varsayılanı). */
+  waSablonAlindi: string;
+  /** Otomatik WA mesajı: hazır (boşsa dil varsayılanı). */
+  waSablonHazir: string;
+  /** Google yorum linki (yıldız düğmesi için). */
+  googleYorumLink: string;
 };
 
 export type SohbetMesaji = {
@@ -153,6 +161,8 @@ export type Musteri = {
   ziyaretSayisi: number;
   toplamHarcama: number;
   sonZiyaret: string | null;
+  sonHizmet: string | null;
+  sonTutar: number | null;
   silindi: boolean;
   olusturmaZamani: string;
 };
@@ -181,4 +191,11 @@ export type ZiyaretGirdi = {
   tutar: number;
   tarih: string;
   not: string;
+};
+
+/** Aktif iş: teslim edilmemiş ziyaret + müşteri kimliği. */
+export type AktifZiyaret = Ziyaret & {
+  ad: string;
+  soyad: string;
+  telefon: string;
 };

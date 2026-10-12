@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
+import type { Ayarlar, AktifZiyaret, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
 import { KATEGORILER, KATEGORI_ESKI } from "./types";
 import { addMonths, num, round2, toISODate } from "./format";
 
@@ -44,6 +44,10 @@ function mapAyarlar(row: Row): Ayarlar {
     aiMotor: row.ai_motor === "groq" || row.ai_motor === "ollama" ? (row.ai_motor as Ayarlar["aiMotor"]) : "otomatik",
     ollamaModel: String(row.ollama_model ?? "gemma3:4b"),
     whatsappAlici: String(row.whatsapp_alici ?? ""),
+    whatsappIsletme: String(row.whatsapp_isletme ?? ""),
+    waSablonAlindi: String(row.wa_sablon_alindi ?? ""),
+    waSablonHazir: String(row.wa_sablon_hazir ?? ""),
+    googleYorumLink: String(row.google_yorum_link ?? ""),
   };
 }
 
@@ -88,6 +92,8 @@ function musteriOzet(row: Row, tum: Ziyaret[]): Musteri {
     ziyaretSayisi: zs.length,
     toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)),
     sonZiyaret: zs.length ? zs[0].tarih : null,
+    sonHizmet: zs.length ? zs[0].hizmet : null,
+    sonTutar: zs.length ? zs[0].tutar : null,
     silindi: row.silindi_at !== null && row.silindi_at !== undefined,
     olusturmaZamani: oz ? new Date(oz as string).toISOString() : new Date().toISOString(),
   };
@@ -108,6 +114,7 @@ export type TenantDb = {
   addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret>;
   updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null>;
   deleteZiyaret(id: string): Promise<boolean>;
+  listAktifZiyaretler(): Promise<AktifZiyaret[]>;
   updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar>;
   addMesaj(rol: "user" | "assistant", icerik: string): Promise<SohbetMesaji>;
   temizleSohbet(locale?: string): Promise<SohbetMesaji[]>;
@@ -226,6 +233,10 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
       ai_motor: patch.aiMotor ?? current.aiMotor,
       ollama_model: patch.ollamaModel ?? current.ollamaModel,
       whatsapp_alici: patch.whatsappAlici ?? current.whatsappAlici,
+      whatsapp_isletme: patch.whatsappIsletme !== undefined ? patch.whatsappIsletme.trim().slice(0, 30) : current.whatsappIsletme,
+      wa_sablon_alindi: patch.waSablonAlindi !== undefined ? patch.waSablonAlindi.slice(0, 500) : current.waSablonAlindi,
+      wa_sablon_hazir: patch.waSablonHazir !== undefined ? patch.waSablonHazir.slice(0, 500) : current.waSablonHazir,
+      google_yorum_link: patch.googleYorumLink !== undefined ? patch.googleYorumLink.trim().slice(0, 300) : current.googleYorumLink,
     };
     const { error } = await supa.from("ayarlar").update(next).eq("business_id", businessId);
     if (error) throw error;
@@ -440,7 +451,28 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     return (count ?? 0) > 0;
   }
 
-  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaretDurum, deleteZiyaret };
+  async function listAktifZiyaretler(): Promise<AktifZiyaret[]> {
+    const [z, m] = await Promise.all([
+      supa.from("ziyaretler").select("*").eq("business_id", businessId).neq("durum", "teslim"),
+      supa.from("musteriler").select("*").eq("business_id", businessId),
+    ]);
+    if (z.error) throw z.error;
+    if (m.error) throw m.error;
+    const adlar = new Map(((m.data ?? []) as Row[]).map((r) => [String(r.id), r]));
+    const silinmis = new Set(
+      ((m.data ?? []) as Row[]).filter((r) => r.silindi_at !== null && r.silindi_at !== undefined).map((r) => String(r.id)),
+    );
+    return ((z.data ?? []) as Row[])
+      .map(mapZiyaret)
+      .filter((x) => !silinmis.has(x.musteriId))
+      .map((x) => {
+        const r = adlar.get(x.musteriId);
+        return { ...x, ad: String(r?.ad ?? ""), soyad: String(r?.soyad ?? ""), telefon: String(r?.telefon ?? "") };
+      })
+      .sort((a, b) => a.tarih.localeCompare(b.tarih));
+  }
+
+  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaretDurum, deleteZiyaret, listAktifZiyaretler };
 }
 
 /** Dosya/tek-kullanıcı modu için aynı arayüz (mevcut davranış birebir). */
@@ -468,5 +500,6 @@ export async function fileDb(): Promise<TenantDb> {
     addZiyaret: d.addZiyaret,
     updateZiyaretDurum: d.updateZiyaretDurum,
     deleteZiyaret: d.deleteZiyaret,
+    listAktifZiyaretler: d.listAktifZiyaretler,
   };
 }

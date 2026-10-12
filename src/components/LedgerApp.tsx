@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import type { Ayarlar, InitData, Kayit, KayitGirdi, RaporOzet, SohbetMesaji, Uyari } from "@/lib/types";
 import { formatMoneyLocale, formatDate, monthLabel, toISODate, getMonthNames } from "@/lib/format";
 import { buildRapor, computeUyarilar, monthRange } from "@/lib/reports";
@@ -13,8 +14,6 @@ import { TakvimPanel } from "./TakvimPanel";
 import { KlavuzPaneli } from "./KlavuzPaneli";
 import { ProBanner } from "./ProBanner";
 import { PwaInstallBtn } from "./PwaInstallBtn";
-import { MusteriPaneli } from "./MusteriPaneli";
-import { EtiketModal, type EtiketVeri } from "./EtiketModal";
 
 export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: { gun: number; email: string }; sub?: { plan: string; gun: number; email: string } }) {
   const { t, intl, currency, locale } = useT();
@@ -27,8 +26,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [telefonOpen, setTelefonOpen] = useState(false);
-  const [musteriOpen, setMusteriOpen] = useState(false);
-  const [etiket, setEtiket] = useState<EtiketVeri | null>(null);
+  const router = useRouter();
   const [zOpen, setZOpen] = useState(false);
   const [gunOpen, setGunOpen] = useState(false);
   const [zBas, setZBas] = useState(monthRange(now.getFullYear(), now.getMonth() + 1).baslangic);
@@ -274,7 +272,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
 
   return (
     <div className="desk-app min-h-screen">
-      <div className={`mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4 ${zOpen || gunOpen || etiket ? "no-print" : ""}`}>
+      <div className={`mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4 ${zOpen || gunOpen ? "no-print" : ""}`}>
         <div className="mb-2">
           <GlobalBar />
         </div>
@@ -336,7 +334,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
 
           <div className="scroll-thin flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
             <PwaInstallBtn onRehber={() => setTelefonOpen(true)} />
-            <ToolBtn onClick={() => setMusteriOpen(true)}><I name="scissors" /> {t("mus_title")}</ToolBtn>
+            <ToolBtn onClick={() => router.push("/app/musteriler")}><I name="scissors" /> {t("mus_title")}</ToolBtn>
             <ToolBtn onClick={() => setTakvimOpen(true)}><I name="calendar" /> {t("calendar")}</ToolBtn>
             <ToolBtn onClick={() => setGunOpen(true)}><I name="day" /> {t("day_end")}</ToolBtn>
             <ToolBtn onClick={() => setAyOpen(true)}><I name="month" /> {t("month_end")}</ToolBtn>
@@ -358,7 +356,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
             >
               <I name="print" /> {t("print")}
             </ToolBtn>
-            <ToolBtn onClick={() => setSettingsOpen(true)}><I name="settings" /></ToolBtn>
+            <ToolBtn onClick={() => setSettingsOpen(true)}><span title={t("set_title")} className="inline-flex"><I name="settings" /></span></ToolBtn>
             <ToolBtn onClick={() => setTelefonOpen(true)}><I name="phone" /> {t("phone")}</ToolBtn>
             <ToolBtn onClick={() => setKilavuzOpen((v) => !v)}><I name="book" /> {t("guide_toggle")}</ToolBtn>
           </div>
@@ -440,8 +438,6 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         sub={sub}
       />
       <TelefonModal open={telefonOpen} onClose={() => setTelefonOpen(false)} />
-      <MusteriPaneli open={musteriOpen} onClose={() => setMusteriOpen(false)} onEtiket={(m, z, n) => setEtiket({ musteri: m, ziyaret: z, siraNo: n, dukkan: ayarlar.isletmeAdi })} />
-      <EtiketModal veri={etiket} onClose={() => setEtiket(null)} />
       <TakvimPanel
         open={takvimOpen}
         kayitlar={kayitlar}

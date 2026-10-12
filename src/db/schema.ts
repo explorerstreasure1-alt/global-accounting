@@ -33,6 +33,10 @@ export const ayarlar = pgTable("ayarlar", {
   aiMotor: varchar("ai_motor", { length: 20 }).notNull().default("otomatik"),
   ollamaModel: varchar("ollama_model", { length: 100 }).notNull().default("gemma3:4b"),
   whatsappAlici: varchar("whatsapp_alici", { length: 30 }).notNull().default(""),
+  whatsappIsletme: varchar("whatsapp_isletme", { length: 30 }).notNull().default(""),
+  waSablonAlindi: text("wa_sablon_alindi").notNull().default(""),
+  waSablonHazir: text("wa_sablon_hazir").notNull().default(""),
+  googleYorumLink: text("google_yorum_link").notNull().default(""),
 });
 
 export const sohbetMesajlari = pgTable("sohbet_mesajlari", {

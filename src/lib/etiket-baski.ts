@@ -189,7 +189,7 @@ export async function etiketCanvasCiz(a: EtiketAlan): Promise<HTMLCanvasElement>
 }
 
 /** Siyah-beyaz canvas'tan D520 TSPL baskı baytı üretir. */
-export function tsplKur(bw: HTMLCanvasElement, kopya = 1): Uint8Array {
+export function tsplKur(bw: HTMLCanvasElement, kopya = 1, yogunlukSeviye = 2, boslukMm = ETIKET_BOSLUK_MM, genisMm = ETIKET_GENIS_MM, yuksekMm = ETIKET_YUKSEK_MM): Uint8Array {
   const W = bw.width;
   const H = bw.height;
   const ctx = bw.getContext("2d");
@@ -202,11 +202,13 @@ export function tsplKur(bw: HTMLCanvasElement, kopya = 1): Uint8Array {
     }
   }
   const enc = new TextEncoder();
+  const yogunluklar = [3, 8, 12, 15];
+  const yogunluk = yogunluklar[Math.max(0, Math.min(3, yogunlukSeviye - 1))];
   const baslik = enc.encode(
-    `SIZE ${ETIKET_GENIS_MM} mm, ${ETIKET_YUKSEK_MM} mm\r\n` +
-      `GAP ${ETIKET_BOSLUK_MM.toFixed(2)} mm, 0 mm\r\n` +
+    `SIZE ${genisMm} mm, ${yuksekMm} mm\r\n` +
+      `GAP ${boslukMm.toFixed(2)} mm, 0 mm\r\n` +
       `SPEED ${ETIKET_HIZ}\r\n` +
-      `DENSITY ${ETIKET_YOGUNLUK}\r\n` +
+      `DENSITY ${yogunluk}\r\n` +
       `DIRECTION 1,0\r\n` +
       `REFERENCE 0,0\r\n` +
       `SET TEAR ON\r\n` +

@@ -3,7 +3,7 @@ import { promises as nodeFs } from "node:fs";
 import path from "node:path";
 import { db, hasDatabase, pool } from "@/db";
 import { ayarlar, kayitlar, musteriler, sohbetMesajlari, ziyaretler } from "@/db/schema";
-import type { Ayarlar, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, OdemeTipi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
+import type { Ayarlar, AktifZiyaret, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, OdemeTipi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
 import { addDays, addMonths, num, round2, toISODate } from "./format";
 import { KATEGORILER, KATEGORI_ESKI } from "./types";
 import {
@@ -49,6 +49,31 @@ function mapAyarlar(row: typeof ayarlar.$inferSelect): Ayarlar {
     aiMotor: raw.aiMotor === "groq" || raw.aiMotor === "ollama" ? raw.aiMotor : "otomatik",
     ollamaModel: typeof raw.ollamaModel === "string" && raw.ollamaModel.trim() ? raw.ollamaModel.trim() : "gemma3:4b",
     whatsappAlici: typeof raw.whatsappAlici === "string" && raw.whatsappAlici.trim() ? raw.whatsappAlici.trim() : "",
+    whatsappIsletme: typeof raw.whatsappIsletme === "string" ? raw.whatsappIsletme.trim().slice(0, 30) : "",
+    waSablonAlindi: typeof raw.waSablonAlindi === "string" ? raw.waSablonAlindi.slice(0, 500) : "",
+    waSablonHazir: typeof raw.waSablonHazir === "string" ? raw.waSablonHazir.slice(0, 500) : "",
+    googleYorumLink: typeof raw.googleYorumLink === "string" ? raw.googleYorumLink.trim().slice(0, 300) : "",
+  };
+}
+
+/** Eski dosya/DB satırlarını yeni alanlarla doldur (eksik alan = boş). */
+function normalAyarlar(a: Partial<Ayarlar>): Ayarlar {
+  return {
+    id: Number(a.id ?? 1),
+    isletmeAdi: String(a.isletmeAdi ?? "My Shop"),
+    kiraTutari: Number(a.kiraTutari ?? 0),
+    kiraPeriyodu: Number(a.kiraPeriyodu ?? 6),
+    aylikKiraKarsiligi: Number(a.aylikKiraKarsiligi ?? 0),
+    paraBirimi: String(a.paraBirimi ?? "USD"),
+    kiraSonrakiTarih: (a.kiraSonrakiTarih ?? null) as string | null,
+    acilisBakiyesi: Number(a.acilisBakiyesi ?? 0),
+    aiMotor: a.aiMotor === "groq" || a.aiMotor === "ollama" ? a.aiMotor : "otomatik",
+    ollamaModel: a.ollamaModel?.trim() ? a.ollamaModel.trim() : "gemma3:4b",
+    whatsappAlici: a.whatsappAlici?.trim() ? a.whatsappAlici.trim() : "",
+    whatsappIsletme: a.whatsappIsletme?.trim() ? a.whatsappIsletme.trim().slice(0, 30) : "",
+    waSablonAlindi: typeof a.waSablonAlindi === "string" ? a.waSablonAlindi.slice(0, 500) : "",
+    waSablonHazir: typeof a.waSablonHazir === "string" ? a.waSablonHazir.slice(0, 500) : "",
+    googleYorumLink: a.googleYorumLink?.trim() ? a.googleYorumLink.trim().slice(0, 300) : "",
   };
 }
 
@@ -98,6 +123,7 @@ async function withDb<T>(fn: () => Promise<T>, fallback: () => Promise<T>): Prom
 export async function ensureDefaults(): Promise<void> {
   // Dosya katmanı her zaman hazır olsun (çift katman)
   await fileGetAll().catch(() => undefined);
+  await ensureAyarlarWa().catch(() => undefined);
   await withDb(
     async () => {
       const existing = await db!.select().from(ayarlar).limit(1);
@@ -113,9 +139,13 @@ export async function ensureDefaults(): Promise<void> {
         paraBirimi: "USD",
         kiraSonrakiTarih: addMonths(today, 1).slice(0, 8) + "01",
         acilisBakiyesi: "125.00",
-        aiMotor: "otomatik",
+    aiMotor: "otomatik",
         ollamaModel: "gemma3:4b",
         whatsappAlici: "",
+        whatsappIsletme: "",
+        waSablonAlindi: "",
+        waSablonHazir: "",
+        googleYorumLink: "",
       });
 
       const now = new Date();
@@ -189,7 +219,7 @@ export async function getAyarlar(): Promise<Ayarlar> {
       void fileSaveAyarlar(a).catch(() => undefined);
       return a;
     },
-    async () => (await fileGetAll()).ayarlar,
+    async () => normalAyarlar(await fileGetAll().then((f) => f.ayarlar)),
   );
 }
 
@@ -349,6 +379,22 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
       patch.whatsappAlici !== undefined
         ? patch.whatsappAlici.trim() || ""
         : (current.whatsappAlici || ""),
+    whatsappIsletme:
+      patch.whatsappIsletme !== undefined
+        ? patch.whatsappIsletme.trim().slice(0, 30)
+        : (current.whatsappIsletme || ""),
+    waSablonAlindi:
+      patch.waSablonAlindi !== undefined
+        ? patch.waSablonAlindi.slice(0, 500)
+        : (current.waSablonAlindi || ""),
+    waSablonHazir:
+      patch.waSablonHazir !== undefined
+        ? patch.waSablonHazir.slice(0, 500)
+        : (current.waSablonHazir || ""),
+    googleYorumLink:
+      patch.googleYorumLink !== undefined
+        ? patch.googleYorumLink.trim().slice(0, 300)
+        : (current.googleYorumLink || ""),
   };
   return withDb(
     async () => {
@@ -363,6 +409,10 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
         aiMotor: nextAyar.aiMotor,
         ollamaModel: nextAyar.ollamaModel,
         whatsappAlici: nextAyar.whatsappAlici,
+        whatsappIsletme: nextAyar.whatsappIsletme,
+        waSablonAlindi: nextAyar.waSablonAlindi,
+        waSablonHazir: nextAyar.waSablonHazir,
+        googleYorumLink: nextAyar.googleYorumLink,
       };
       await db!.update(ayarlar).set(next).where(eq(ayarlar.id, 1));
       void fileSaveAyarlar(nextAyar).catch(() => undefined);
@@ -641,9 +691,25 @@ function mapMusteri(row: typeof musteriler.$inferSelect, tumZiyaretler: Ziyaret[
     ziyaretSayisi: zs.length,
     toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)),
     sonZiyaret: zs.length ? zs[0].tarih : null,
+    sonHizmet: zs.length ? zs[0].hizmet : null,
+    sonTutar: zs.length ? zs[0].tutar : null,
     silindi: row.silindiAt !== null,
     olusturmaZamani: row.olusturmaZamani.toISOString(),
   };
+}
+
+let ayarTabloHazir = false;
+
+/** Mevcut yerel ayarlar tablosuna WA alanlarını idempotent ekle. */
+async function ensureAyarlarWa(): Promise<void> {
+  if (ayarTabloHazir || !hasDatabase || !pool) return;
+  await pool.query(`
+    alter table ayarlar add column if not exists whatsapp_isletme varchar(30) not null default '';
+    alter table ayarlar add column if not exists wa_sablon_alindi text not null default '';
+    alter table ayarlar add column if not exists wa_sablon_hazir text not null default '';
+    alter table ayarlar add column if not exists google_yorum_link text not null default '';
+  `);
+  ayarTabloHazir = true;
 }
 
 let musteriTabloHazir = false;
@@ -683,10 +749,10 @@ async function musteriDosyaOku(): Promise<MusteriDosya> {
   try {
     const raw = await nodeFs.readFile(path.join(getDataDir(), "musteriler.json"), "utf-8");
     const j = JSON.parse(raw) as Partial<MusteriDosya>;
-    return {
+    return dosyaZenginlestir({
       musteriler: Array.isArray(j.musteriler) ? j.musteriler : [],
       ziyaretler: Array.isArray(j.ziyaretler) ? j.ziyaretler : [],
-    };
+    });
   } catch {
     return { musteriler: [], ziyaretler: [] };
   }
@@ -695,6 +761,18 @@ async function musteriDosyaOku(): Promise<MusteriDosya> {
 async function musteriDosyaYaz(d: MusteriDosya): Promise<void> {
   await nodeFs.mkdir(getDataDir(), { recursive: true });
   await nodeFs.writeFile(path.join(getDataDir(), "musteriler.json"), JSON.stringify(d), "utf-8");
+}
+
+/** Eski dosyalarda olmayan sonHizmet/sonTutar'ı ziyaretlerden türet. */
+function dosyaZenginlestir(d: MusteriDosya): MusteriDosya {
+  for (const m of d.musteriler) {
+    if (m.sonHizmet === undefined || m.sonTutar === undefined) {
+      const zs = d.ziyaretler.filter((z) => z.musteriId === m.id).sort((a, b) => b.tarih.localeCompare(a.tarih));
+      m.sonHizmet = zs.length ? zs[0].hizmet : null;
+      m.sonTutar = zs.length ? zs[0].tutar : null;
+    }
+  }
+  return d;
 }
 
 function musteriSuz(musteriler: Musteri[], q?: string, silinmis = false): Musteri[] {
@@ -736,7 +814,7 @@ export async function getMusteri(id: string): Promise<(Musteri & { ziyaretler: Z
       const m = d.musteriler.find((x) => x.id === id);
       if (!m) return null;
       const zs = d.ziyaretler.filter((z) => z.musteriId === id).sort((a, b) => b.tarih.localeCompare(a.tarih));
-      return { ...m, ziyaretSayisi: zs.length, toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)), sonZiyaret: zs.length ? zs[0].tarih : null, ziyaretler: zs };
+      return { ...m, ziyaretSayisi: zs.length, toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)), sonZiyaret: zs.length ? zs[0].tarih : null, sonHizmet: zs.length ? zs[0].hizmet : null, sonTutar: zs.length ? zs[0].tutar : null, ziyaretler: zs };
     },
   );
 }
@@ -755,7 +833,7 @@ export async function createMusteri(input: MusteriGirdi): Promise<Musteri> {
     },
     async () => {
       const d = await musteriDosyaOku();
-      const m: Musteri = { id: crypto.randomUUID(), ad, soyad, telefon, not, ziyaretSayisi: 0, toplamHarcama: 0, sonZiyaret: null, silindi: false, olusturmaZamani: new Date().toISOString() };
+      const m: Musteri = { id: crypto.randomUUID(), ad, soyad, telefon, not, ziyaretSayisi: 0, toplamHarcama: 0, sonZiyaret: null, sonHizmet: null, sonTutar: null, silindi: false, olusturmaZamani: new Date().toISOString() };
       d.musteriler.push(m);
       await musteriDosyaYaz(d);
       return m;
@@ -841,6 +919,8 @@ export async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
         m.ziyaretSayisi = zs.length;
         m.toplamHarcama = round2(zs.reduce((s, x) => s + x.tutar, 0));
         m.sonZiyaret = zs.length ? zs[0].tarih : null;
+        m.sonHizmet = zs.length ? zs[0].hizmet : null;
+        m.sonTutar = zs.length ? zs[0].tutar : null;
       }
       await musteriDosyaYaz(d);
       return z;
@@ -906,5 +986,39 @@ export async function hizliMusteriEkle(input: MusteriGirdi & { hizmet?: string; 
   }
   const guncel = await getMusteri(musteri.id);
   return { musteri: guncel ? { ...guncel, ziyaretler: undefined as never } as Musteri : musteri, ziyaret, eslesti };
+}
+
+/** Teslim edilmemiş tüm ziyaretler + müşteri kimliği (işlemler paneli için). */
+export async function listAktifZiyaretler(): Promise<AktifZiyaret[]> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const [zRows, mRows] = await Promise.all([db!.select().from(ziyaretler), db!.select().from(musteriler)]);
+      const adlar = new Map(mRows.map((m) => [m.id, m]));
+      return zRows
+        .map(mapZiyaret)
+        .filter((z) => z.durum !== "teslim")
+        .map((z) => {
+          const m = adlar.get(z.musteriId);
+          return { ...z, ad: m?.ad ?? "", soyad: m?.soyad ?? "", telefon: m?.telefon ?? "" };
+        })
+        .filter((z) => {
+          const m = adlar.get(z.musteriId);
+          return !m || m.silindiAt === null;
+        })
+        .sort((a, b) => a.tarih.localeCompare(b.tarih));
+    },
+    async () => {
+      const d = await musteriDosyaOku();
+      const silinmis = new Set(d.musteriler.filter((m) => m.silindi).map((m) => m.id));
+      return d.ziyaretler
+        .filter((z) => z.durum !== "teslim" && !silinmis.has(z.musteriId))
+        .map((z) => {
+          const m = d.musteriler.find((x) => x.id === z.musteriId);
+          return { ...z, ad: m?.ad ?? "", soyad: m?.soyad ?? "", telefon: m?.telefon ?? "" };
+        })
+        .sort((a, b) => a.tarih.localeCompare(b.tarih));
+    },
+  );
 }
 

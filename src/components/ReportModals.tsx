@@ -681,6 +681,10 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             kiraSonrakiTarih: String(data.get("kiraSonrakiTarih") || "") || null,
             acilisBakiyesi: Number(data.get("acilisBakiyesi") || 0),
             whatsappAlici: String(data.get("whatsappAlici") || "").trim() || "",
+            whatsappIsletme: String(data.get("whatsappIsletme") || "").trim().slice(0, 30),
+            waSablonAlindi: String(data.get("waSablonAlindi") || "").slice(0, 500),
+            waSablonHazir: String(data.get("waSablonHazir") || "").slice(0, 500),
+            googleYorumLink: String(data.get("googleYorumLink") || "").trim().slice(0, 300),
           });
           onClose();
         }}
@@ -717,6 +721,23 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             {t("set_waNumber")}
             <input name="whatsappAlici" defaultValue={ayarlar.whatsappAlici} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
           </label>
+          <label className="text-sm">
+            {t("set_waIsletme")}
+            <input name="whatsappIsletme" defaultValue={ayarlar.whatsappIsletme} placeholder="" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+          </label>
+          <label className="text-sm">
+            {t("set_googleYorum")}
+            <input name="googleYorumLink" defaultValue={ayarlar.googleYorumLink} placeholder="https://" dir="ltr" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+          </label>
+          <label className="text-sm">
+            {t("set_waSablonAlindi")}
+            <textarea name="waSablonAlindi" defaultValue={ayarlar.waSablonAlindi} rows={2} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+          </label>
+          <label className="text-sm">
+            {t("set_waSablonHazir")}
+            <textarea name="waSablonHazir" defaultValue={ayarlar.waSablonHazir} rows={2} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+          </label>
+          <p className="text-xs text-slate-600">{t("set_waSablonHint")}</p>
         </div>
         <AbonelikBolumu sub={sub} />
         <HafizaBolumu onYedekIndir={onYedekIndir} onYedekYukle={onYedekYukle} onSifirla={onSifirla} />

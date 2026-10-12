@@ -5,6 +5,14 @@ import { resolveDb } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
+/** Aktif işler: teslim edilmemiş ziyaretler + müşteri kimliği. */
+export async function GET() {
+  const { db, gate } = await resolveDb();
+  if (gate) return gate;
+  const aktif = await db.listAktifZiyaretler();
+  return NextResponse.json({ aktif });
+}
+
 /** Yeni ziyaret/sipariş satırı. */
 export async function POST(request: Request) {
   const { db, gate } = await resolveDb();

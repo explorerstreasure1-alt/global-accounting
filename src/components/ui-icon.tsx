@@ -30,6 +30,9 @@ import {
   TriangleAlert,
   Check,
   Scissors,
+  Star,
+  RefreshCw,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 
@@ -65,6 +68,9 @@ const MAP = {
   warn: TriangleAlert,
   check: Check,
   scissors: Scissors,
+  star: Star,
+  refresh: RefreshCw,
+  external: ExternalLink,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof MAP;

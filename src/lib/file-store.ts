@@ -252,6 +252,10 @@ function seedAyarlar(today: string): Ayarlar {
     aiMotor: "otomatik",
     ollamaModel: "gemma3:4b",
     whatsappAlici: "",
+    whatsappIsletme: "",
+    waSablonAlindi: "",
+    waSablonHazir: "",
+    googleYorumLink: "",
   };
 }
 
