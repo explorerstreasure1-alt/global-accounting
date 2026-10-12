@@ -200,10 +200,25 @@ export function MusteriSayfasi() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: a.id, durum: "hazir" }),
       });
-      const link = waLink(
-        a.telefon,
-        waMesajKur("hazir", { ad: `${a.ad} ${a.soyad}`.trim(), hizmet: a.hizmet, dukkan: wa.dukkan, kod: "" }, locale, wa.hazir),
-      );
+      // Vitrin numarası yıldızlıdır; mesaj karttaki tam numaraya gider.
+      let tel = a.telefon;
+      let adSoyad = `${a.ad} ${a.soyad}`.trim();
+      try {
+        const r = await fetch(`/api/musteriler/${a.musteriId}`);
+        const j = await r.json();
+        if (j.musteri && String(j.musteri.telefon ?? "").replace(/\D/g, "").length >= 10) {
+          tel = j.musteri.telefon;
+          adSoyad = `${j.musteri.ad} ${j.musteri.soyad}`.trim() || adSoyad;
+        }
+      } catch {
+        /* vitrin verisiyle devam */
+      }
+      const link = tel.replace(/\D/g, "").length >= 10
+        ? waLink(
+            tel,
+            waMesajKur("hazir", { ad: adSoyad, hizmet: a.hizmet, dukkan: wa.dukkan, kod: "" }, locale, wa.hazir),
+          )
+        : null;
       await yukle();
       if (link) window.open(link, "_blank", "noopener");
     } finally {
