@@ -73,6 +73,20 @@ export function EtiketStudyosu() {
   const [qrOzel, setQrOzel] = useState("");
   const [vurgu, setVurgu] = useState<string | null>(null);
   const [duzenId, setDuzenId] = useState<string | null>(null);
+  const [kayitBilgi, setKayitBilgi] = useState("");
+  /** Etiket başlığı varsayılanı: kullanıcı Kaydet'e basar, bu cihazda kalır, her açılışta hazır gelir. */
+  const [varsayilan] = useState<{ dukkan: string; dukkanAlt: string } | null>(() => {
+    try {
+      if (typeof window === "undefined") return null;
+      const ham = window.localStorage.getItem("etiket-varsayilan-v1");
+      if (!ham) return null;
+      const j = JSON.parse(ham) as { dukkan?: string; dukkanAlt?: string };
+      if (!j.dukkan && !j.dukkanAlt) return null;
+      return { dukkan: j.dukkan ?? "", dukkanAlt: j.dukkanAlt ?? "" };
+    } catch {
+      return null;
+    }
+  });
   const alanRef = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null>>({});
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -119,8 +133,9 @@ export function EtiketStudyosu() {
       tarih: bilgi.ziyaret.tarih.split("-").reverse().join("."),
       durum: dk === "teslim" ? t("mus_delivered") : dk === "hazir" ? t("mus_ready") : t("mus_processing"),
       durumRenk: "#4a9b6f",
-      dukkan: bilgi.dukkan,
-      dukkanAlt: t("etiket_service"),
+      // Kaydedilmiş başlık varsa o gelir (tekrar yazmaya gerek yok), yoksa Ayarlar'daki işletme adı.
+      dukkan: varsayilan?.dukkan || bilgi.dukkan,
+      dukkanAlt: varsayilan?.dukkanAlt || t("etiket_service"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bilgi]);
@@ -188,6 +203,18 @@ export function EtiketStudyosu() {
 
   function alanYaz<K extends keyof EtiketAlan>(k: K, v: EtiketAlan[K]) {
     setAlan((a) => (a ? { ...a, [k]: v } : a));
+  }
+
+  /** Başlığı bu cihaza kaydet: sonraki etiketler hazır gelir, tekrar yazmaya gerek yok. */
+  function baslikKaydet() {
+    if (!alan) return;
+    try {
+      window.localStorage.setItem("etiket-varsayilan-v1", JSON.stringify({ dukkan: alan.dukkan, dukkanAlt: alan.dukkanAlt }));
+      setKayitBilgi(t("toast_settingsSaved"));
+      setTimeout(() => setKayitBilgi(""), 2500);
+    } catch {
+      /* yoksay */
+    }
   }
 
   const girisKls = "w-full min-w-0 rounded-lg bg-white/10 px-2 py-1.5 text-sm text-white outline-none";
@@ -437,6 +464,14 @@ export function EtiketStudyosu() {
                     />
                   ))}
                   {!qrOzel.trim() ? <p className="truncate px-2 font-mono text-[10px] text-amber-100/40">{qrEfektif().slice(0, 48)}…</p> : null}
+                  <button
+                    type="button"
+                    onClick={baslikKaydet}
+                    className="w-full rounded-lg bg-amber-200/20 px-3 py-2 text-xs font-bold text-amber-100 ring-1 ring-amber-300/40 hover:bg-amber-200/30"
+                  >
+                    💾 {t("cm_kaydet")} · {t("set_shop")}
+                  </button>
+                  {kayitBilgi ? <p className="px-2 text-[11px] text-emerald-300">{kayitBilgi}</p> : null}
                 </div>
               </>
             ) : null}
