@@ -368,7 +368,7 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
     kiraPeriyodu,
     aylikKiraKarsiligi: aylik,
     paraBirimi: patch.paraBirimi ?? current.paraBirimi,
-    kiraSonrakiTarih: patch.kiraSonrakiTarih === undefined ? current.kiraSonrakiTarih : patch.kiraSonrakiTarih,
+    kiraSonrakiTarih: patch.kiraSonrakiTarih === undefined ? current.kiraSonrakiTarih : (patch.kiraSonrakiTarih || null),
     acilisBakiyesi: patch.acilisBakiyesi ?? current.acilisBakiyesi,
     aiMotor: patch.aiMotor === "groq" || patch.aiMotor === "ollama" || patch.aiMotor === "otomatik" ? patch.aiMotor : current.aiMotor,
     ollamaModel:

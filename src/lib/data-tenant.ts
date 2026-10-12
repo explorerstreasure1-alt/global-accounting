@@ -228,7 +228,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
       isletme_adi: patch.isletmeAdi ?? current.isletmeAdi,
       kira_tutari: kiraTutari, kira_periyodu: kiraPeriyodu, aylik_kira_karsiligi: aylik,
       para_birimi: patch.paraBirimi ?? current.paraBirimi,
-      kira_sonraki_tarih: patch.kiraSonrakiTarih === undefined ? current.kiraSonrakiTarih : patch.kiraSonrakiTarih,
+      kira_sonraki_tarih: patch.kiraSonrakiTarih === undefined ? current.kiraSonrakiTarih : (patch.kiraSonrakiTarih || null),
       acilis_bakiyesi: patch.acilisBakiyesi ?? current.acilisBakiyesi,
       ai_motor: patch.aiMotor ?? current.aiMotor,
       ollama_model: patch.ollamaModel ?? current.ollamaModel,
