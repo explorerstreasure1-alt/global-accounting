@@ -1,6 +1,6 @@
 /** Müşteri WhatsApp mesajları: duruma göre otomatik şablon, seçili dilde, wa.me linki. */
 
-export type WaKind = "alindi" | "hazir" | "teslim" | "yorum";
+export type WaKind = "alindi" | "azkaldi" | "hazir" | "teslim" | "yorum" | "bilgi";
 
 export type WaVars = {
   ad: string;
@@ -15,45 +15,59 @@ const BOS_VARS: WaVars = { ad: "", hizmet: "", dukkan: "", kod: "", link: "" };
 /** Dil varsayılanları — {ad} {hizmet} {dukkan} {kod} {link} yazılabilir. */
 const SBLN: Record<string, Record<WaKind, string>> = {
   tr: {
-    alindi: "Merhaba {ad}, {hizmet} işleminiz alındı. Bitince size haber vereceğiz. {dukkan}",
+    alindi: "Merhaba {ad}, {hizmet} işleminiz alındı (işleme alındı). Bitince size haber vereceğiz. {dukkan}",
+    azkaldi: "Merhaba {ad}, {hizmet} ürününüz tamamlanmak üzere. Birazdan hazır olacak. {dukkan}",
     hazir: "Merhaba {ad}, {hizmet} işleminiz hazır. Gelip alabilirsiniz. {dukkan}",
-    teslim: "Merhaba {ad}, bizi tercih ettiğiniz için teşekkürler. {dukkan}",
+    teslim: "Merhaba {ad}, {hizmet} işleminiz tamamlandı / teslim edildi. Bizi tercih ettiğiniz için teşekkürler. {dukkan}",
+    bilgi: "Merhaba {ad}, kaydınız: {hizmet}. {dukkan}",
     yorum: "Merhaba {ad}, {dukkan}'yı tercih ettiğiniz için teşekkürler. Memnun kaldıysanız kısa bir Google yorumu bizim için çok değerli: {link}",
   },
   en: {
-    alindi: "Hello {ad}, your {hizmet} order is received. We'll let you know when it's done. {dukkan}",
+    alindi: "Hello {ad}, your {hizmet} order is received (in progress). We'll let you know when it's done. {dukkan}",
+    azkaldi: "Hello {ad}, your {hizmet} item is almost ready. It will be done very soon. {dukkan}",
     hazir: "Hello {ad}, your {hizmet} order is ready. You can come pick it up. {dukkan}",
-    teslim: "Hello {ad}, thanks for choosing us. {dukkan}",
+    teslim: "Hello {ad}, your {hizmet} order is completed / delivered. Thanks for choosing us. {dukkan}",
+    bilgi: "Hello {ad}, your record: {hizmet}. {dukkan}",
     yorum: "Hello {ad}, thanks for choosing {dukkan}. If you're happy, a short Google review means a lot to us: {link}",
   },
   de: {
-    alindi: "Hallo {ad}, Ihr Auftrag ({hizmet}) ist eingegangen. Wir melden uns, sobald er fertig ist. {dukkan}",
+    alindi: "Hallo {ad}, Ihr Auftrag ({hizmet}) ist eingegangen (in Arbeit). Wir melden uns, sobald er fertig ist. {dukkan}",
+    azkaldi: "Hallo {ad}, Ihr Artikel ({hizmet}) ist fast fertig. Gleich geschafft. {dukkan}",
     hazir: "Hallo {ad}, Ihr Auftrag ({hizmet}) ist fertig. Sie können ihn abholen. {dukkan}",
-    teslim: "Hallo {ad}, danke für Ihr Vertrauen. {dukkan}",
+    teslim: "Hallo {ad}, Ihr Auftrag ({hizmet}) ist abgeschlossen / abgeholt. Danke für Ihr Vertrauen. {dukkan}",
+    bilgi: "Hallo {ad}, Ihr Eintrag: {hizmet}. {dukkan}",
     yorum: "Hallo {ad}, danke, dass Sie {dukkan} gewählt haben. Über eine kurze Google-Bewertung freuen wir uns sehr: {link}",
   },
   fr: {
-    alindi: "Bonjour {ad}, votre commande ({hizmet}) est bien reçue. Nous vous préviendrons dès qu'elle sera prête. {dukkan}",
+    alindi: "Bonjour {ad}, votre commande ({hizmet}) est bien reçue (en cours). Nous vous préviendrons dès qu'elle sera prête. {dukkan}",
+    azkaldi: "Bonjour {ad}, votre article ({hizmet}) est presque terminé. Encore un petit moment. {dukkan}",
     hazir: "Bonjour {ad}, votre commande ({hizmet}) est prête. Vous pouvez passer la récupérer. {dukkan}",
-    teslim: "Bonjour {ad}, merci de votre confiance. {dukkan}",
+    teslim: "Bonjour {ad}, votre commande ({hizmet}) est terminée / livrée. Merci de votre confiance. {dukkan}",
+    bilgi: "Bonjour {ad}, votre fiche : {hizmet}. {dukkan}",
     yorum: "Bonjour {ad}, merci d'avoir choisi {dukkan}. Un court avis Google nous aiderait énormément : {link}",
   },
   es: {
-    alindi: "Hola {ad}, tu pedido ({hizmet}) está recibido. Te avisaremos cuando esté listo. {dukkan}",
+    alindi: "Hola {ad}, tu pedido ({hizmet}) está recibido (en proceso). Te avisaremos cuando esté listo. {dukkan}",
+    azkaldi: "Hola {ad}, tu prenda ({hizmet}) está casi lista. Enseguida terminamos. {dukkan}",
     hazir: "Hola {ad}, tu pedido ({hizmet}) está listo. Puedes pasar a recogerlo. {dukkan}",
-    teslim: "Hola {ad}, gracias por tu confianza. {dukkan}",
+    teslim: "Hola {ad}, tu pedido ({hizmet}) está completado / entregado. Gracias por tu confianza. {dukkan}",
+    bilgi: "Hola {ad}, tu registro: {hizmet}. {dukkan}",
     yorum: "Hola {ad}, gracias por elegir {dukkan}. Una breve reseña en Google nos ayuda mucho: {link}",
   },
   ar: {
-    alindi: "مرحباً {ad}، تم استلام طلبك ({hizmet}). سنخبرك عند الانتهاء. {dukkan}",
+    alindi: "مرحباً {ad}، تم استلام طلبك ({hizmet}) وهو قيد التنفيذ. سنخبرك عند الانتهاء. {dukkan}",
+    azkaldi: "مرحباً {ad}، قطعتك ({hizmet}) على وشك الانتهاء. لحظات وتكون جاهزة. {dukkan}",
     hazir: "مرحباً {ad}، طلبك ({hizmet}) جاهز. يمكنك الحضور لاستلامه. {dukkan}",
-    teslim: "مرحباً {ad}، شكراً لثقتك. {dukkan}",
+    teslim: "مرحباً {ad}، طلبك ({hizmet}) مكتمل / تم تسليمه. شكراً لثقتك. {dukkan}",
+    bilgi: "مرحباً {ad}، سجلك: {hizmet}. {dukkan}",
     yorum: "مرحباً {ad}، شكراً لاختيارك {dukkan}. تقييم قصير على Google يعني لنا الكثير: {link}",
   },
   ru: {
-    alindi: "Здравствуйте, {ad}, ваш заказ ({hizmet}) принят. Сообщим, как будет готово. {dukkan}",
+    alindi: "Здравствуйте, {ad}, ваш заказ ({hizmet}) принят (в работе). Сообщим, как будет готово. {dukkan}",
+    azkaldi: "Здравствуйте, {ad}, ваша вещь ({hizmet}) почти готова. Осталось совсем немного. {dukkan}",
     hazir: "Здравствуйте, {ad}, ваш заказ ({hizmet}) готов. Можете забирать. {dukkan}",
-    teslim: "Здравствуйте, {ad}, спасибо за доверие. {dukkan}",
+    teslim: "Здравствуйте, {ad}, ваш заказ ({hizmet}) завершён / выдан. Спасибо за доверие. {dukkan}",
+    bilgi: "Здравствуйте, {ad}, ваша запись: {hizmet}. {dukkan}",
     yorum: "Здравствуйте, {ad}, спасибо, что выбрали {dukkan}. Короткий отзыв в Google очень нам поможет: {link}",
   },
 };

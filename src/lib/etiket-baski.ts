@@ -112,7 +112,8 @@ export type EtiketAlan = {
   durumRenk: string;
   dukkan: string;
   dukkanAlt: string;
-  qrIcerik: string;
+  /** QR içeriği (boşsa "-" yazılır; stüdyo otomatik kurar). */
+  qrIcerik?: string;
 };
 
 /** 60×40mm etiketi 203 DPI siyah-beyaz canvas'a çizer (480×320). */

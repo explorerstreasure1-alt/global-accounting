@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
 import type { ZiyaretDurum } from "@/lib/types";
 import { toISODate } from "@/lib/format";
+import { maskAktif } from "@/lib/gizlilik";
 import { resolveDb } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
+
+/** Liste vitrini maskelidir, diskte önbelleklenmez. */
+const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 /** Aktif işler: teslim edilmemiş ziyaretler + müşteri kimliği. */
 export async function GET() {
   const { db, gate } = await resolveDb();
   if (gate) return gate;
-  const aktif = await db.listAktifZiyaretler();
-  return NextResponse.json({ aktif });
+  const aktif = (await db.listAktifZiyaretler()).map(maskAktif);
+  return NextResponse.json({ aktif }, { headers: NO_STORE });
 }
 
 /** Yeni ziyaret/sipariş satırı. */
