@@ -72,6 +72,16 @@ alter table ayarlar
 create unique index if not exists ayarlar_business_uidx on ayarlar(business_id)
   where business_id is not null;
 
+-- Sonradan eklenen ayar alanları (eski tablolarda eksikse tamamlanır)
+alter table ayarlar
+  add column if not exists whatsapp_isletme varchar(30) not null default '';
+alter table ayarlar
+  add column if not exists wa_sablon_alindi text not null default '';
+alter table ayarlar
+  add column if not exists wa_sablon_hazir text not null default '';
+alter table ayarlar
+  add column if not exists google_yorum_link text not null default '';
+
 create index if not exists kayitlar_business_idx on kayitlar(business_id);
 create index if not exists sohbet_business_idx on "sohbetMesajlari"(business_id);
 
