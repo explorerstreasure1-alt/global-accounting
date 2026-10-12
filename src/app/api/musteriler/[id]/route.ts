@@ -3,13 +3,16 @@ import { resolveDb } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
+/** Kart detayı bilinçli tekil erişimdir: tam veri verir, diskte önbelleklenmez. */
+const NO_STORE = { "Cache-Control": "no-store" } as const;
+
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { db, gate } = await resolveDb();
   if (gate) return gate;
   const { id } = await params;
   const musteri = await db.getMusteri(id);
   if (!musteri) return NextResponse.json({ error: "not-found" }, { status: 404 });
-  return NextResponse.json({ musteri });
+  return NextResponse.json({ musteri }, { headers: NO_STORE });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

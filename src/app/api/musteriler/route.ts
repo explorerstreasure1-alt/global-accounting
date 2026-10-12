@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { toISODate } from "@/lib/format";
+import { maskMusteri, maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { resolveDb } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
+
+/** Liste vitrini maskelidir (ad/telefon gizli, veri DB'de de maskeli). Diskte önbelleklenmez. */
+const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 /** Müşteri listesi (arama + silinmişler anahtarı). */
 export async function GET(request: Request) {
@@ -11,8 +15,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") ?? undefined;
   const silinmis = searchParams.get("silinmis") === "1";
-  const musteriler = await db.listMusteriler(q, silinmis);
-  return NextResponse.json({ musteriler });
+  const musteriler = (await db.listMusteriler(q, silinmis)).map(maskMusteri);
+  return NextResponse.json({ musteriler }, { headers: NO_STORE });
 }
 
 /** Hızlı ekleme: eşleşen müşteriyi bul ya da aç, ziyareti işle (EGZEL ARYA QuickAdd). */
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
     musteri = tum.find((x) => !x.silindi && x.ad.toLocaleLowerCase() === a && x.soyad.toLocaleLowerCase() === s);
   }
   const eslesti = Boolean(musteri);
-  if (!musteri) musteri = await db.createMusteri({ ad: ad || "İsimsiz", soyad, telefon, not });
+  if (!musteri) musteri = await db.createMusteri({ ad: maskAd(ad || "İsimsiz"), soyad: maskSoyad(soyad), telefon: maskTelefon(telefon), not });
 
   let ziyaret = null;
   if (hizmet || tutar > 0) {

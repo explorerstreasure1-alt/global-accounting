@@ -6,6 +6,7 @@ import type { AktifZiyaret, Musteri, Ziyaret } from "@/lib/types";
 import { formatDate, formatMoneyLocale, toISODate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { waLink, waMesajKur, ziyaretKodu } from "@/lib/wa-mesaj";
+import { maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
 
@@ -34,11 +35,13 @@ export function MusteriSayfasi() {
   const [filtre, setFiltre] = useState<Filtre>("tum");
   const [copte, setCopte] = useState(false);
   const [detayId, setDetayId] = useState<string | null>(null);
+  const [detayDuzenle, setDetayDuzenle] = useState(false);
   const [mesgul, setMesgul] = useState(false);
   const [silKurulu, setSilKurulu] = useState<string | null>(null);
   const [wa, setWa] = useState<WaAyar>({ dukkan: "", alindi: "", hazir: "", yorumLink: "" });
 
   const [ad, setAd] = useState("");
+  const [soyad, setSoyad] = useState("");
   const [telefon, setTelefon] = useState("");
   const [hizmet, setHizmet] = useState("");
   const [tutar, setTutar] = useState("");
@@ -107,9 +110,10 @@ export function MusteriSayfasi() {
       await fetch("/api/musteriler", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ad, telefon, hizmet, tutar: Number(tutar) || 0 }),
+        body: JSON.stringify({ ad: maskAd(ad), soyad: maskSoyad(soyad), telefon: maskTelefon(telefon), hizmet, tutar: Number(tutar) || 0 }),
       });
       setAd("");
+      setSoyad("");
       setTelefon("");
       setHizmet("");
       setTutar("");
@@ -194,6 +198,24 @@ export function MusteriSayfasi() {
     await yukle();
   }
 
+  async function etiketAcListe(musteriId: string) {
+    try {
+      const r = await fetch(`/api/musteriler/${musteriId}`);
+      const j = await r.json();
+      const zs: Ziyaret[] = ((j.musteri?.ziyaretler ?? []) as Ziyaret[]).slice().sort((x, y) => x.tarih.localeCompare(y.tarih));
+      const z = zs[zs.length - 1];
+      if (!z) return;
+      router.push(`/app/etiket?m=${musteriId}&z=${z.id}&n=${zs.length}`);
+    } catch {
+      /* yoksay */
+    }
+  }
+
+  function kartAc(id: string, duzenle = false) {
+    setDetayDuzenle(duzenle);
+    setDetayId(id);
+  }
+
   async function etiketAc(musteriId: string, z: AktifZiyaret) {
     try {
       const r = await fetch(`/api/musteriler/${musteriId}`);
@@ -252,14 +274,13 @@ export function MusteriSayfasi() {
         <div className="no-print mb-3 grid grid-cols-2 gap-2 rounded-2xl bg-black/20 p-3 min-[480px]:grid-cols-4">
           <p className="col-span-2 text-sm font-semibold text-amber-100 min-[480px]:col-span-4">{t("cm_hizliEkle")}</p>
           <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+          <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
           <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
           <input value={hizmet} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-          <div className="flex gap-1.5">
-            <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="w-full min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-            <button type="button" disabled={mesgul} onClick={() => void hizliEkle()} className="shrink-0 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white disabled:opacity-50">
-              {t("mus_add")}
-            </button>
-          </div>
+          <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+          <button type="button" disabled={mesgul} onClick={() => void hizliEkle()} className="col-span-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white disabled:opacity-50 min-[480px]:col-span-2">
+            {t("mus_add")}
+          </button>
         </div>
 
         <div className="no-print mb-3 flex flex-wrap items-center gap-1.5">
@@ -281,7 +302,7 @@ export function MusteriSayfasi() {
         <div className="grid min-h-0 flex-1 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="notebook relative min-w-0 overflow-hidden rounded-[28px]">
             <div className="relative px-4 pt-4 pb-4">
-              <div className="hidden gap-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 lg:grid lg:grid-cols-[28px_minmax(0,1.4fr)_minmax(0,1fr)_90px_70px_110px_110px_minmax(0,150px)]">
+              <div className="hidden gap-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 lg:grid lg:grid-cols-[28px_minmax(0,1.4fr)_minmax(0,1fr)_90px_70px_110px_110px_minmax(0,200px)]">
                 <span>#</span>
                 <span>{t("mus_title")}</span>
                 <span>{t("cm_sonHizmet")}</span>
@@ -295,8 +316,8 @@ export function MusteriSayfasi() {
                 {suzulmus.map((m, i) => (
                   <div key={m.id}>
                     <div
-                      onClick={() => setDetayId(m.id)}
-                      className="hidden cursor-pointer items-center gap-2 rounded-xl px-1 py-1.5 text-sm hover:bg-white/30 lg:grid lg:grid-cols-[28px_minmax(0,1.4fr)_minmax(0,1fr)_90px_70px_110px_110px_minmax(0,150px)]"
+                      onClick={() => kartAc(m.id)}
+                      className="hidden cursor-pointer items-center gap-2 rounded-xl px-1 py-1.5 text-sm hover:bg-white/30 lg:grid lg:grid-cols-[28px_minmax(0,1.4fr)_minmax(0,1fr)_90px_70px_110px_110px_minmax(0,200px)]"
                     >
                       <span className="tabular-nums text-slate-400">{i + 1}</span>
                       <span className="flex min-w-0 items-center gap-2">
@@ -304,8 +325,8 @@ export function MusteriSayfasi() {
                           {(m.ad || "?").slice(0, 1).toLocaleUpperCase()}
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate font-semibold text-[var(--ink)]">{m.ad} {m.soyad}</span>
-                          <span className="block truncate text-xs text-slate-500">{m.telefon}</span>
+                          <span className="block truncate font-semibold text-[var(--ink)]">{maskAd(m.ad)} {maskSoyad(m.soyad)}</span>
+                          <span className="block truncate text-xs text-slate-500">{maskTelefon(m.telefon)}</span>
                         </span>
                       </span>
                       <span className="truncate text-slate-600">{m.sonHizmet || "—"}</span>
@@ -315,14 +336,14 @@ export function MusteriSayfasi() {
                       <span className="text-right font-semibold tabular-nums">{fm(m.toplamHarcama)}</span>
                       <SatirIslem m={m} />
                     </div>
-                    <div onClick={() => setDetayId(m.id)} className="cursor-pointer rounded-xl px-2 py-2 hover:bg-white/30 lg:hidden">
+                    <div onClick={() => kartAc(m.id)} className="cursor-pointer rounded-xl px-2 py-2 hover:bg-white/30 lg:hidden">
                       <div className="flex items-center gap-2">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-900 text-sm font-bold text-white">
                           {(m.ad || "?").slice(0, 1).toLocaleUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-[var(--ink)]">{m.ad} {m.soyad}</span>
-                          <span className="block truncate text-xs text-slate-500">{m.telefon} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}</span>
+                          <span className="block truncate text-sm font-semibold text-[var(--ink)]">{maskAd(m.ad)} {maskSoyad(m.soyad)}</span>
+                          <span className="block truncate text-xs text-slate-500">{maskTelefon(m.telefon)} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}</span>
                         </span>
                       </div>
                       <div className="mt-1.5 flex justify-end" onClick={(e) => e.stopPropagation()}>
@@ -347,7 +368,7 @@ export function MusteriSayfasi() {
             <div className="max-h-[30vh] space-y-1.5 overflow-y-auto scroll-thin pr-1">
               {islemde.map((a) => (
                 <div key={a.id} className="rounded-xl bg-white/5 px-2.5 py-2 ring-1 ring-white/10">
-                  <p className="truncate text-sm font-semibold">{a.ad} {a.soyad}</p>
+                  <p className="truncate text-sm font-semibold">{maskAd(a.ad)} {maskSoyad(a.soyad)}</p>
                   <p className="truncate text-xs text-amber-50/70">{a.hizmet} · {fm(a.tutar)}</p>
                   <div className="mt-1.5 flex gap-1.5">
                     <button
@@ -375,7 +396,7 @@ export function MusteriSayfasi() {
             <div className="max-h-[30vh] space-y-1.5 overflow-y-auto scroll-thin pr-1">
               {hazirlar.map((a) => (
                 <div key={a.id} className="rounded-xl bg-white/5 px-2.5 py-2 ring-1 ring-white/10">
-                  <p className="truncate text-sm font-semibold">{a.ad} {a.soyad}</p>
+                  <p className="truncate text-sm font-semibold">{maskAd(a.ad)} {maskSoyad(a.soyad)}</p>
                   <p className="truncate text-xs text-amber-50/70">{a.hizmet} · {fm(a.tutar)}</p>
                   <p className="mt-0.5 text-[11px] text-amber-300">{t("cm_gunBekliyor").split("{n}").join(String(Math.max(0, gunFarki(a.tarih))))}</p>
                   <div className="mt-1.5 flex gap-1.5">
@@ -408,8 +429,10 @@ export function MusteriSayfasi() {
           id={detayId}
           wa={wa}
           locale={locale}
+          duzenleAc={detayDuzenle}
           onKapat={() => {
             setDetayId(null);
+            setDetayDuzenle(false);
             void yukle();
           }}
         />
@@ -418,37 +441,80 @@ export function MusteriSayfasi() {
   );
 
   function SatirIslem({ m }: { m: Musteri }) {
+    const adSoyad = `${m.ad} ${m.soyad}`.trim();
+    const bilgiMetni = `${adSoyad} · ${m.telefon || "—"} · Son: ${m.sonHizmet || "—"}${m.sonTutar ? ` (${fm(m.sonTutar)})` : ""} · ${m.ziyaretSayisi}× · Toplam ${fm(m.toplamHarcama)}`;
+    const hrefAlindi = waLink(
+      m.telefon,
+      waMesajKur("alindi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.alindi),
+    );
+    const hrefHazir = waLink(
+      m.telefon,
+      waMesajKur("hazir", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.hazir),
+    );
+    const hrefAzKaldi = waLink(
+      m.telefon,
+      waMesajKur("azkaldi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale),
+    );
+    const hrefTeslim = waLink(
+      m.telefon,
+      waMesajKur("teslim", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale),
+    );
+    const hrefBilgi = waLink(
+      m.telefon,
+      waMesajKur("bilgi", { ad: adSoyad, hizmet: bilgiMetni, dukkan: wa.dukkan, kod: "" }, locale),
+    );
+    const hrefYorum = wa.yorumLink && m.telefon.replace(/\D/g, "")
+      ? waLink(m.telefon, waMesajKur("yorum", { ad: adSoyad, dukkan: wa.dukkan, link: wa.yorumLink }, locale))
+      : null;
     return (
-      <span className="flex shrink-0 items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-        {(() => {
-          const h = waLink(
-            m.telefon,
-            waMesajKur("alindi", { ad: `${m.ad} ${m.soyad}`.trim(), hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.alindi),
-          );
-          return h ? (
-            <a href={h} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100" title={t("mus_waSend")}>
-              <span className="text-[10px] font-black leading-none">WA</span>
-            </a>
-          ) : null;
-        })()}
-        {(() => {
-          const yh =
-            wa.yorumLink && m.telefon.replace(/\D/g, "")
-              ? waLink(m.telefon, waMesajKur("yorum", { ad: `${m.ad} ${m.soyad}`.trim(), dukkan: wa.dukkan, link: wa.yorumLink }, locale))
-              : null;
-          return yh ? (
-            <a href={yh} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
-              <I name="star" size={13} />
-            </a>
-          ) : null;
-        })()}
+      <span className="flex max-w-[190px] shrink-0 flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+        {hrefAlindi ? (
+          <a href={hrefAlindi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100" title={`${t("mus_waSend")} · ${t("mus_waAlindi")}`}>
+            <span className="text-[10px] font-black leading-none">WA</span>
+          </a>
+        ) : null}
+        {hrefHazir ? (
+          <a href={hrefHazir} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-sky-200 bg-sky-50 p-2 text-sky-700 hover:bg-sky-100" title={`${t("mus_waSend")} · ${t("mus_waHazir")}`}>
+            <I name="check" size={13} />
+          </a>
+        ) : null}
+        {hrefAzKaldi ? (
+          <a href={hrefAzKaldi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-600 hover:bg-amber-100" title={`${t("mus_waSend")} · ${t("mus_waAzKaldi")}`}>
+            <I name="clock" size={13} />
+          </a>
+        ) : null}
+        {hrefTeslim ? (
+          <a href={hrefTeslim} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-teal-200 bg-teal-50 p-2 text-teal-700 hover:bg-teal-100" title={`${t("mus_waSend")} · ${t("mus_waTeslim")}`}>
+            <I name="send" size={13} />
+          </a>
+        ) : null}
+        {hrefBilgi ? (
+          <a href={hrefBilgi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-700 hover:bg-indigo-100" title={`${t("mus_waSend")} · ${t("mus_waBilgi")}`}>
+            <I name="phone" size={13} />
+          </a>
+        ) : null}
+        {hrefYorum ? (
+          <a href={hrefYorum} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
+            <I name="star" size={13} />
+          </a>
+        ) : (
+          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-amber-100 bg-white p-2 text-amber-200" title={t("mus_yorum")}>
+            <I name="star" size={13} />
+          </span>
+        )}
+        <button type="button" onClick={() => void etiketAcListe(m.id)} className="grid place-items-center rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-100" title={t("etiket_print")}>
+          <I name="print" size={13} />
+        </button>
+        <button type="button" onClick={() => kartAc(m.id)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100" title={t("mus_kart")}>
+          <I name="card" size={13} />
+        </button>
         {m.sonHizmet ? (
           <button type="button" disabled={mesgul} onClick={() => void tekrarla(m.id, m.sonHizmet, m.sonTutar)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100 disabled:opacity-50" title={t("mus_repeat")}>
             <I name="refresh" size={13} />
           </button>
         ) : null}
-        <button type="button" onClick={() => setDetayId(m.id)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100" title={t("mus_openCard")}>
-          <I name="external" size={13} />
+        <button type="button" onClick={() => kartAc(m.id, true)} className="grid place-items-center rounded-lg border border-violet-200 bg-white p-2 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
+          <I name="edit" size={13} />
         </button>
         <button
           type="button"
@@ -463,17 +529,18 @@ export function MusteriSayfasi() {
   }
 }
 
-function MusteriDetay({ id, wa, locale, onKapat }: {
+function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
   id: string;
   wa: { dukkan: string; alindi: string; hazir: string; yorumLink: string };
   locale: string;
   onKapat: () => void;
+  duzenleAc?: boolean;
 }) {
   const { t, intl, currency } = useT();
   const router = useRouter();
   const fm = (v: number) => formatMoneyLocale(v, intl, currency);
   const [musteri, setMusteri] = useState<(Musteri & { ziyaretler: import("@/lib/types").Ziyaret[] }) | null>(null);
-  const [duzenle, setDuzenle] = useState(false);
+  const [duzenle, setDuzenle] = useState(duzenleAc ?? false);
   const [fAd, setFAd] = useState("");
   const [fSoyad, setFSoyad] = useState("");
   const [fTel, setFTel] = useState("");
@@ -512,7 +579,7 @@ function MusteriDetay({ id, wa, locale, onKapat }: {
       await fetch(`/api/musteriler/${musteri.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ad: fAd, soyad: fSoyad, telefon: fTel, not: fNot }),
+        body: JSON.stringify({ ad: maskAd(fAd), soyad: maskSoyad(fSoyad), telefon: maskTelefon(fTel), not: fNot }),
       });
       setDuzenle(false);
       await yukle();
@@ -539,12 +606,33 @@ function MusteriDetay({ id, wa, locale, onKapat }: {
   }
 
   async function durumDegis(zid: string, durum: import("@/lib/types").ZiyaretDurum) {
-    await fetch("/api/ziyaretler", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: zid, durum }),
-    });
-    await yukle();
+    setMesgul(true);
+    try {
+      await fetch("/api/ziyaretler", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: zid, durum }),
+      });
+      // Hazır olunca WhatsApp ile haber ver (PC/mobil uygulamayı, yoksa wa.me webi açar)
+      if (durum === "hazir" && musteri) {
+        const z = musteri.ziyaretler.find((x) => x.id === zid);
+        const href = waLink(
+          musteri.telefon,
+          waMesajKur(
+            "hazir",
+            { ad: `${musteri.ad} ${musteri.soyad}`.trim(), hizmet: z?.hizmet ?? "", dukkan: wa.dukkan, kod: "" },
+            locale,
+            wa.hazir,
+          ),
+        );
+        await yukle();
+        if (href) window.open(href, "_blank", "noopener");
+        return;
+      }
+      await yukle();
+    } finally {
+      setMesgul(false);
+    }
   }
 
   function waHref(z: import("@/lib/types").Ziyaret, zi: number, toplam: number): string | null {
@@ -606,11 +694,13 @@ function MusteriDetay({ id, wa, locale, onKapat }: {
               <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">📞 {musteri.telefon || "—"}</span>
               <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">{musteri.ziyaretSayisi} {t("mus_visitCount")}</span>
               <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">{t("mus_totalSpent")}: {fm(musteri.toplamHarcama)}</span>
-              {(() => { const yh = yorumHref(); return yh ? (
-                <a href={yh} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-amber-800 ring-1 ring-amber-300">
-                  <I name="spark" size={13} /> {t("mus_yorum")}
-                </a>
-              ) : null; })()}
+              {(() => {
+                const yh = yorumHref(); return yh ? (
+                  <a href={yh} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-amber-800 ring-1 ring-amber-300">
+                    <I name="spark" size={13} /> {t("mus_yorum")}
+                  </a>
+                ) : null;
+              })()}
             </div>
           )}
           <p className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">{t("mus_newVisit")}</p>
@@ -640,11 +730,13 @@ function MusteriDetay({ id, wa, locale, onKapat }: {
                     {t("mus_markDelivered")}
                   </button>
                 ) : null}
-                {(() => { const yh = yorumHref(); return yh ? (
-                  <a href={yh} target="_blank" rel="noreferrer" className="grid shrink-0 place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
-                    <I name="star" size={13} />
-                  </a>
-                ) : null; })()}
+                {(() => {
+                  const yh = yorumHref(); return yh ? (
+                    <a href={yh} target="_blank" rel="noreferrer" className="grid shrink-0 place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
+                      <I name="star" size={13} />
+                    </a>
+                  ) : null;
+                })()}
                 <button
                   type="button"
                   disabled={mesgul}
@@ -661,11 +753,13 @@ function MusteriDetay({ id, wa, locale, onKapat }: {
                 >
                   <I name="refresh" size={13} />
                 </button>
-                {(() => { const href = waHref(z, zi, musteri.ziyaretler.length); return href ? (
-                  <a href={href} target="_blank" rel="noreferrer" className="grid shrink-0 place-items-center rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-500" title={t("mus_waSend")}>
-                    <I name="send" size={14} />
-                  </a>
-                ) : null; })()}
+                {(() => {
+                  const href = waHref(z, zi, musteri.ziyaretler.length); return href ? (
+                    <a href={href} target="_blank" rel="noreferrer" className="grid shrink-0 place-items-center rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-500" title={t("mus_waSend")}>
+                      <I name="send" size={14} />
+                    </a>
+                  ) : null;
+                })()}
                 <button type="button" onClick={() => router.push(`/app/etiket?m=${musteri.id}&z=${z.id}&n=${musteri.ziyaretler.length - zi}`)} className="grid shrink-0 place-items-center rounded-lg p-2 text-slate-500 hover:bg-slate-100" title={t("etiket_print")}>
                   <I name="print" size={14} />
                 </button>
