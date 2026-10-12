@@ -10,41 +10,46 @@ import type { AktifZiyaret, Musteri } from "./types";
 
 const YILDIZ = "*";
 
-/** İsim: ilk 3 harf görünür, kalanı gizli. "Ahmet" → "Ahm**" */
+/** İsim: ilk 2 harf görünür, kalanı silinip harf başına yıldız. "Taner" → "TA***" */
 export function maskAd(ad: string): string {
   const a = (ad ?? "").trim();
   if (!a) return "";
-  if (a.length <= 3) return a;
-  return `${a.slice(0, 3)}${YILDIZ.repeat(a.length - 3)}`;
+  if (a.length <= 2) return a;
+  return `${a.slice(0, 2)}${YILDIZ.repeat(a.length - 2)}`;
 }
 
-/** Soyisim: ilk 1 harf görünür, kalanı gizli. "Gündoğan" → "G******" */
+/** Soyisim: ilk 2 harf görünür, kalanı silinip harf başına yıldız. "Gülbaş" → "GÜ****" */
 export function maskSoyad(soyad: string): string {
   const s = (soyad ?? "").trim();
   if (!s) return "";
-  if (s.length <= 1) return s;
-  return `${s.slice(0, 1)}${YILDIZ.repeat(s.length - 1)}`;
+  if (s.length <= 2) return s;
+  return `${s.slice(0, 2)}${YILDIZ.repeat(s.length - 2)}`;
 }
 
 /**
- * Telefon: SADECE son 4 rakam görünür, kalanı gizli, veri SİLİNMEZ.
- * Orijinal biçim (boşluk/ayraç) korunur. "05522678192" → "*******8192"
+ * Telefon: SADECE son 4 rakam görünür, öncesi ful silinip yıldızlanır
+ * (boşluk/ayraç dahil her karakter yıldız olur, veri SİLİNMEZ).
+ * "05522678192" → "*******8192", "0552 267 81 92" → "*********81 92"
  */
 export function maskTelefon(tel: string): string {
   const t = String(tel ?? "");
   const rakamlar = t.replace(/\D/g, "");
   if (!rakamlar) return "";
   if (rakamlar.length <= 4) return `${YILDIZ.repeat(3)}${rakamlar}`;
+  // Sondan 4. rakamın başladığı yeri bul, öncesini ful yıldızla, kuyruğu aynen bırak.
+  const hedef = 4;
   let gorulen = 0;
-  const gizlenecek = rakamlar.length - 4;
-  return t
-    .split("")
-    .map((ch) => {
-      if (!/\d/.test(ch)) return ch;
+  let kesim = t.length;
+  for (let i = t.length - 1; i >= 0; i--) {
+    if (/\d/.test(t[i])) {
       gorulen += 1;
-      return gorulen <= gizlenecek ? YILDIZ : ch;
-    })
-    .join("");
+      if (gorulen === hedef) {
+        kesim = i;
+        break;
+      }
+    }
+  }
+  return `${YILDIZ.repeat(kesim)}${t.slice(kesim)}`;
 }
 
 /** Liste vitrini: isim/soyisim/telefon maskeli, not alanı boş (detayda tam). */
