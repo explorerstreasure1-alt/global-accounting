@@ -60,10 +60,8 @@ export function MusteriSayfasi() {
     setAcik((a) => ({ ...a, [id]: true }));
   }
 
-  /** Satır vitrini: göz kapalıysa yıldızlı, açıksa karttan gelen tam veri. */
+  /** Satır vitrini: isim hep yıldızlı, göz sadece numarayı açar. */
   function satirAd(m: Musteri): string {
-    const v = tam[m.id];
-    if (acik[m.id] && v) return `${v.ad} ${v.soyad}`.trim() || "—";
     return `${maskAd(m.ad)} ${maskSoyad(m.soyad)}`.trim() || "—";
   }
 
@@ -80,8 +78,8 @@ export function MusteriSayfasi() {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); void gozDegis(id); }}
-        title={on ? "Gizle" : "Göster"}
-        aria-label={on ? "Gizle" : "Göster"}
+        title={on ? t("mus_hide") : t("mus_show")}
+        aria-label={on ? t("mus_hide") : t("mus_show")}
         className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[12px] ring-1 ring-slate-300 hover:bg-slate-100"
       >
         {on ? "🙈" : "👁"}
@@ -459,11 +457,11 @@ export function MusteriSayfasi() {
       : null;
     // Yıldız hep görünür: link + tam numara varsa puan mesajı gönderir, yoksa nedenini söyler.
     const yildizNeden = !wa.yorumLink
-      ? "Önce Ayarlar'a Google yorum linkini ekleyin"
+      ? t("mus_linkFirst")
       : !telTam
-        ? "Numarayı göz ile açın"
+        ? t("mus_eyeFirst")
         : t("mus_yorum");
-    const waNeden = !telTam ? "Numarayı göz ile açın" : `${t("mus_waSend")} · ${t("mus_waAlindi")}`;
+    const waNeden = !telTam ? t("mus_eyeFirst") : `${t("mus_waSend")} · ${t("mus_waAlindi")}`;
     return (
       <span className="flex max-w-[190px] shrink-0 flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={() => void etiketAcListe(m.id)} className="grid place-items-center rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-100" title={t("etiket_print")}>
