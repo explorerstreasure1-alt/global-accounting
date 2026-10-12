@@ -187,8 +187,15 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       throw new Error("ayarlar-kayit-hatasi");
     }
     if (!res.ok) {
-      setToast(t("toast_saveFailed"));
-      throw new Error(`ayarlar-kayit-hatasi:${res.status}`);
+      let neden = "";
+      try {
+        const j = (await res.json()) as { error?: string };
+        if (j?.error) neden = `: ${String(j.error).slice(0, 160)}`;
+      } catch {
+        /* yoksay */
+      }
+      setToast(`${t("toast_saveFailed")}${neden}`);
+      throw new Error(`ayarlar-kayit-hatasi:${res.status}${neden}`);
     }
     const json = (await res.json()) as { ayarlar: Ayarlar };
     setAyarlar(json.ayarlar);

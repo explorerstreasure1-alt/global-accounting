@@ -14,7 +14,12 @@ export async function GET() {
 export async function PUT(request: Request) {
   const { db, gate } = await resolveDb();
   if (gate) return gate;
-  const body = (await request.json()) as Partial<Ayarlar>;
-  const ayarlar = await db.updateAyarlar(body);
-  return NextResponse.json({ ayarlar });
+  try {
+    const body = (await request.json()) as Partial<Ayarlar>;
+    const ayarlar = await db.updateAyarlar(body);
+    return NextResponse.json({ ayarlar });
+  } catch (e) {
+    // Teşhis için asıl sebep döndürülür (ekranda toast ile gösterilir).
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
 }
