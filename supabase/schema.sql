@@ -165,7 +165,7 @@ create table if not exists musteriler (
   ad text not null default '',
   soyad text not null default '',
   telefon text not null default '',
-  not text not null default '',
+  "not" text not null default '',
   silindi_at timestamptz,
   olusturma_zamani timestamptz not null default now()
 );
@@ -177,7 +177,7 @@ create table if not exists ziyaretler (
   hizmet text not null default '',
   tutar numeric(14,2) not null default 0,
   tarih date not null default CURRENT_DATE,
-  not text not null default '',
+  "not" text not null default '',
   durum varchar(20) not null default 'hazirlaniyor',
   olusturma_zamani timestamptz not null default now()
 );

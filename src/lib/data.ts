@@ -657,7 +657,7 @@ async function ensureMusteriTables(): Promise<void> {
       ad text not null,
       soyad text not null default '',
       telefon text not null default '',
-      not text not null default '',
+      "not" text not null default '',
       silindi_at timestamp,
       olusturma_zamani timestamp not null
     );
@@ -667,7 +667,7 @@ async function ensureMusteriTables(): Promise<void> {
       hizmet text not null default '',
       tutar numeric(14,2) not null default '0',
       tarih date not null,
-      not text not null default '',
+      "not" text not null default '',
       durum varchar(20) not null default 'hazirlaniyor',
       olusturma_zamani timestamp not null
     );
