@@ -39,6 +39,56 @@ export function MusteriSayfasi() {
   const [mesgul, setMesgul] = useState(false);
   const [silKurulu, setSilKurulu] = useState<string | null>(null);
   const [wa, setWa] = useState<WaAyar>({ dukkan: "", alindi: "", hazir: "", yorumLink: "" });
+  const [tam, setTam] = useState<Record<string, { ad: string; soyad: string; telefon: string }>>({});
+  const [acik, setAcik] = useState<Record<string, boolean>>({});
+
+  /** Göz: satırdaki yıldızlı bilgiyi kart detayından (tam veri) açar/kapatır. */
+  async function gozDegis(id: string) {
+    if (acik[id]) {
+      setAcik((a) => ({ ...a, [id]: false }));
+      return;
+    }
+    if (!tam[id]) {
+      try {
+        const r = await fetch(`/api/musteriler/${id}`);
+        const j = await r.json();
+        if (!j.musteri) return;
+        setTam((t) => ({ ...t, [id]: { ad: j.musteri.ad ?? "", soyad: j.musteri.soyad ?? "", telefon: j.musteri.telefon ?? "" } }));
+      } catch {
+        return;
+      }
+    }
+    setAcik((a) => ({ ...a, [id]: true }));
+  }
+
+  /** Satır vitrini: göz kapalıysa yıldızlı, açıksa karttan gelen tam veri. */
+  function satirAd(m: Musteri): string {
+    const v = tam[m.id];
+    if (acik[m.id] && v) return `${v.ad} ${v.soyad}`.trim() || "—";
+    return `${maskAd(m.ad)} ${maskSoyad(m.soyad)}`.trim() || "—";
+  }
+
+  function satirTel(m: Musteri): string {
+    const v = tam[m.id];
+    if (acik[m.id] && v) return v.telefon || "—";
+    return maskTelefon(m.telefon) || "—";
+  }
+
+  /** Numaranın yanındaki göz: yıldızları kaldırır / geri koyar. */
+  function GozDugme({ id }: { id: string }) {
+    const on = Boolean(acik[id]);
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); void gozDegis(id); }}
+        title={on ? "Gizle" : "Göster"}
+        aria-label={on ? "Gizle" : "Göster"}
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[12px] ring-1 ring-slate-300 hover:bg-slate-100"
+      >
+        {on ? "🙈" : "👁"}
+      </button>
+    );
+  }
 
   const [ad, setAd] = useState("");
   const [soyad, setSoyad] = useState("");
@@ -110,7 +160,8 @@ export function MusteriSayfasi() {
       await fetch("/api/musteriler", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ad: maskAd(ad), soyad: maskSoyad(soyad), telefon: maskTelefon(telefon), hizmet, tutar: Number(tutar) || 0 }),
+        // Tam veri gönderilir (DB'de tam durur); maske sadece listede uygulanır.
+        body: JSON.stringify({ ad, soyad, telefon, hizmet, tutar: Number(tutar) || 0 }),
       });
       setAd("");
       setSoyad("");
@@ -325,8 +376,11 @@ export function MusteriSayfasi() {
                           {(m.ad || "?").slice(0, 1).toLocaleUpperCase()}
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate font-semibold text-[var(--ink)]">{maskAd(m.ad)} {maskSoyad(m.soyad)}</span>
-                          <span className="block truncate text-xs text-slate-500">{maskTelefon(m.telefon)}</span>
+                          <span className="block truncate font-semibold text-[var(--ink)]">{satirAd(m)}</span>
+                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                            <span className="block truncate">{satirTel(m)}</span>
+                            <GozDugme id={m.id} />
+                          </span>
                         </span>
                       </span>
                       <span className="truncate text-slate-600">{m.sonHizmet || "—"}</span>
@@ -342,8 +396,11 @@ export function MusteriSayfasi() {
                           {(m.ad || "?").slice(0, 1).toLocaleUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-[var(--ink)]">{maskAd(m.ad)} {maskSoyad(m.soyad)}</span>
-                          <span className="block truncate text-xs text-slate-500">{maskTelefon(m.telefon)} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}</span>
+                          <span className="block truncate text-sm font-semibold text-[var(--ink)]">{satirAd(m)}</span>
+                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                            <span className="block truncate">{satirTel(m)} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}</span>
+                            <GozDugme id={m.id} />
+                          </span>
                         </span>
                       </div>
                       <div className="mt-1.5 flex justify-end" onClick={(e) => e.stopPropagation()}>
@@ -441,31 +498,43 @@ export function MusteriSayfasi() {
   );
 
   function SatirIslem({ m }: { m: Musteri }) {
-    const adSoyad = `${m.ad} ${m.soyad}`.trim();
-    const bilgiMetni = `${adSoyad} · ${m.telefon || "—"} · Son: ${m.sonHizmet || "—"}${m.sonTutar ? ` (${fm(m.sonTutar)})` : ""} · ${m.ziyaretSayisi}× · Toplam ${fm(m.toplamHarcama)}`;
-    const hrefAlindi = waLink(
-      m.telefon,
+    // Göz açıksa WhatsApp da tam numaraya gider, yoksa vitrindeki yıldızlı veri kullanılır.
+    const v = tam[m.id];
+    const acikMi = Boolean(acik[m.id] && v);
+    const tel = acikMi ? v.telefon : m.telefon;
+    // Yıldızlı vitrin numarasıyla (4 rakam) WA linki kurulmaz — yanlış kişiye gider. Göz ile açılınca aktif olur.
+    const telTam = tel.replace(/\D/g, "").length >= 10;
+    const adSoyad = acikMi ? `${v.ad} ${v.soyad}`.trim() : `${m.ad} ${m.soyad}`.trim();
+    const bilgiMetni = `${adSoyad} · ${tel || "—"} · Son: ${m.sonHizmet || "—"}${m.sonTutar ? ` (${fm(m.sonTutar)})` : ""} · ${m.ziyaretSayisi}× · Toplam ${fm(m.toplamHarcama)}`;
+    const hrefAlindi = telTam ? waLink(
+      tel,
       waMesajKur("alindi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.alindi),
-    );
-    const hrefHazir = waLink(
-      m.telefon,
+    ) : null;
+    const hrefHazir = telTam ? waLink(
+      tel,
       waMesajKur("hazir", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.hazir),
-    );
-    const hrefAzKaldi = waLink(
-      m.telefon,
+    ) : null;
+    const hrefAzKaldi = telTam ? waLink(
+      tel,
       waMesajKur("azkaldi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale),
-    );
-    const hrefTeslim = waLink(
-      m.telefon,
+    ) : null;
+    const hrefTeslim = telTam ? waLink(
+      tel,
       waMesajKur("teslim", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale),
-    );
-    const hrefBilgi = waLink(
-      m.telefon,
+    ) : null;
+    const hrefBilgi = telTam ? waLink(
+      tel,
       waMesajKur("bilgi", { ad: adSoyad, hizmet: bilgiMetni, dukkan: wa.dukkan, kod: "" }, locale),
-    );
-    const hrefYorum = wa.yorumLink && m.telefon.replace(/\D/g, "")
-      ? waLink(m.telefon, waMesajKur("yorum", { ad: adSoyad, dukkan: wa.dukkan, link: wa.yorumLink }, locale))
+    ) : null;
+    const hrefYorum = telTam && wa.yorumLink
+      ? waLink(tel, waMesajKur("yorum", { ad: adSoyad, dukkan: wa.dukkan, link: wa.yorumLink }, locale))
       : null;
+    // Yıldız hep görünür: link + tam numara varsa puan mesajı gönderir, yoksa nedenini söyler.
+    const yildizNeden = !wa.yorumLink
+      ? "Önce Ayarlar'a Google yorum linkini ekleyin"
+      : !telTam
+        ? "Numarayı göz ile açın"
+        : t("mus_yorum");
     return (
       <span className="flex max-w-[190px] shrink-0 flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
         {hrefAlindi ? (
@@ -498,7 +567,7 @@ export function MusteriSayfasi() {
             <I name="star" size={13} />
           </a>
         ) : (
-          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-amber-100 bg-white p-2 text-amber-200" title={t("mus_yorum")}>
+          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-amber-200 bg-amber-50/60 p-2 text-amber-400" title={yildizNeden}>
             <I name="star" size={13} />
           </span>
         )}
@@ -579,7 +648,8 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
       await fetch(`/api/musteriler/${musteri.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ad: maskAd(fAd), soyad: maskSoyad(fSoyad), telefon: maskTelefon(fTel), not: fNot }),
+        // Kartta tam veri düzenlenir ve tam kaydedilir; maske sadece listededir.
+        body: JSON.stringify({ ad: fAd, soyad: fSoyad, telefon: fTel, not: fNot }),
       });
       setDuzenle(false);
       await yukle();
