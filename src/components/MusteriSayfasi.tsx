@@ -37,7 +37,6 @@ export function MusteriSayfasi() {
   const [detayId, setDetayId] = useState<string | null>(null);
   const [detayDuzenle, setDetayDuzenle] = useState(false);
   const [mesgul, setMesgul] = useState(false);
-  const [silKurulu, setSilKurulu] = useState<string | null>(null);
   const [wa, setWa] = useState<WaAyar>({ dukkan: "", alindi: "", hazir: "", yorumLink: "" });
   const [tam, setTam] = useState<Record<string, { ad: string; soyad: string; telefon: string }>>({});
   const [acik, setAcik] = useState<Record<string, boolean>>({});
@@ -186,32 +185,6 @@ export function MusteriSayfasi() {
     return waLink(m.telefon, waMesajKur("yorum", { ad: `${m.ad} ${m.soyad}`.trim(), dukkan: wa.dukkan, link: wa.yorumLink }, locale));
   }
 
-  async function tekrarla(musteriId: string, hizmet: string | null, tutar: number | null) {
-    if (!hizmet) return;
-    setMesgul(true);
-    try {
-      await fetch("/api/ziyaretler", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ musteriId, hizmet, tutar: tutar ?? 0, tarih: toISODate() }),
-      });
-      await yukle();
-    } finally {
-      setMesgul(false);
-    }
-  }
-
-  async function silListe(id: string) {
-    if (silKurulu !== id) {
-      setSilKurulu(id);
-      setTimeout(() => setSilKurulu((v) => (v === id ? null : v)), 3000);
-      return;
-    }
-    setSilKurulu(null);
-    await fetch(`/api/musteriler/${id}`, { method: "DELETE" });
-    await yukle();
-  }
-
   async function geriAl(id: string) {
     await fetch(`/api/musteriler/${id}`, {
       method: "PATCH",
@@ -265,19 +238,6 @@ export function MusteriSayfasi() {
   function kartAc(id: string, duzenle = false) {
     setDetayDuzenle(duzenle);
     setDetayId(id);
-  }
-
-  async function etiketAc(musteriId: string, z: AktifZiyaret) {
-    try {
-      const r = await fetch(`/api/musteriler/${musteriId}`);
-      const j = await r.json();
-      if (!j.musteri) return;
-      const zs: Ziyaret[] = (j.musteri.ziyaretler ?? []).slice().sort((x: Ziyaret, y: Ziyaret) => x.tarih.localeCompare(y.tarih));
-      const sira = zs.findIndex((x) => x.id === z.id) + 1 || zs.length;
-      router.push(`/app/etiket?m=${musteriId}&z=${z.id}&n=${sira}`);
-    } catch {
-      /* yoksay */
-    }
   }
 
   const FILTRELER: Array<{ id: Filtre; ad: string }> = [
@@ -436,14 +396,6 @@ export function MusteriSayfasi() {
                     >
                       ✓ {t("cm_hazirMesaj")}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void etiketAc(a.musteriId, a)}
-                      className="grid shrink-0 place-items-center rounded-lg bg-white/10 px-2.5 text-amber-50 hover:bg-white/20"
-                      title={t("etiket_print")}
-                    >
-                      <I name="print" size={14} />
-                    </button>
                   </div>
                 </div>
               ))}
@@ -463,14 +415,6 @@ export function MusteriSayfasi() {
                       className="flex-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold hover:bg-white/20"
                     >
                       {t("cm_teslimUst")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void etiketAc(a.musteriId, a)}
-                      className="grid shrink-0 place-items-center rounded-lg bg-white/10 px-2.5 text-amber-50 hover:bg-white/20"
-                      title={t("etiket_print")}
-                    >
-                      <I name="print" size={14} />
                     </button>
                   </div>
                 </div>
@@ -505,26 +449,10 @@ export function MusteriSayfasi() {
     // Yıldızlı vitrin numarasıyla (4 rakam) WA linki kurulmaz — yanlış kişiye gider. Göz ile açılınca aktif olur.
     const telTam = tel.replace(/\D/g, "").length >= 10;
     const adSoyad = acikMi ? `${v.ad} ${v.soyad}`.trim() : `${m.ad} ${m.soyad}`.trim();
-    const bilgiMetni = `${adSoyad} · ${tel || "—"} · Son: ${m.sonHizmet || "—"}${m.sonTutar ? ` (${fm(m.sonTutar)})` : ""} · ${m.ziyaretSayisi}× · Toplam ${fm(m.toplamHarcama)}`;
+    // 1) Etiket/yazıcı 2) WA alındı mesajı 3) Yıldız puan mesajı 4) Kartı düzenle.
     const hrefAlindi = telTam ? waLink(
       tel,
       waMesajKur("alindi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.alindi),
-    ) : null;
-    const hrefHazir = telTam ? waLink(
-      tel,
-      waMesajKur("hazir", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.hazir),
-    ) : null;
-    const hrefAzKaldi = telTam ? waLink(
-      tel,
-      waMesajKur("azkaldi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale),
-    ) : null;
-    const hrefTeslim = telTam ? waLink(
-      tel,
-      waMesajKur("teslim", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale),
-    ) : null;
-    const hrefBilgi = telTam ? waLink(
-      tel,
-      waMesajKur("bilgi", { ad: adSoyad, hizmet: bilgiMetni, dukkan: wa.dukkan, kod: "" }, locale),
     ) : null;
     const hrefYorum = telTam && wa.yorumLink
       ? waLink(tel, waMesajKur("yorum", { ad: adSoyad, dukkan: wa.dukkan, link: wa.yorumLink }, locale))
@@ -535,33 +463,21 @@ export function MusteriSayfasi() {
       : !telTam
         ? "Numarayı göz ile açın"
         : t("mus_yorum");
+    const waNeden = !telTam ? "Numarayı göz ile açın" : `${t("mus_waSend")} · ${t("mus_waAlindi")}`;
     return (
       <span className="flex max-w-[190px] shrink-0 flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={() => void etiketAcListe(m.id)} className="grid place-items-center rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-100" title={t("etiket_print")}>
+          <I name="print" size={13} />
+        </button>
         {hrefAlindi ? (
           <a href={hrefAlindi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100" title={`${t("mus_waSend")} · ${t("mus_waAlindi")}`}>
             <span className="text-[10px] font-black leading-none">WA</span>
           </a>
-        ) : null}
-        {hrefHazir ? (
-          <a href={hrefHazir} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-sky-200 bg-sky-50 p-2 text-sky-700 hover:bg-sky-100" title={`${t("mus_waSend")} · ${t("mus_waHazir")}`}>
-            <I name="check" size={13} />
-          </a>
-        ) : null}
-        {hrefAzKaldi ? (
-          <a href={hrefAzKaldi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-600 hover:bg-amber-100" title={`${t("mus_waSend")} · ${t("mus_waAzKaldi")}`}>
-            <I name="clock" size={13} />
-          </a>
-        ) : null}
-        {hrefTeslim ? (
-          <a href={hrefTeslim} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-teal-200 bg-teal-50 p-2 text-teal-700 hover:bg-teal-100" title={`${t("mus_waSend")} · ${t("mus_waTeslim")}`}>
-            <I name="send" size={13} />
-          </a>
-        ) : null}
-        {hrefBilgi ? (
-          <a href={hrefBilgi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-indigo-200 bg-indigo-50 p-2 text-indigo-700 hover:bg-indigo-100" title={`${t("mus_waSend")} · ${t("mus_waBilgi")}`}>
-            <I name="phone" size={13} />
-          </a>
-        ) : null}
+        ) : (
+          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-emerald-100 bg-emerald-50/50 p-2 text-emerald-300" title={waNeden}>
+            <span className="text-[10px] font-black leading-none">WA</span>
+          </span>
+        )}
         {hrefYorum ? (
           <a href={hrefYorum} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
             <I name="star" size={13} />
@@ -571,27 +487,8 @@ export function MusteriSayfasi() {
             <I name="star" size={13} />
           </span>
         )}
-        <button type="button" onClick={() => void etiketAcListe(m.id)} className="grid place-items-center rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-100" title={t("etiket_print")}>
-          <I name="print" size={13} />
-        </button>
-        <button type="button" onClick={() => kartAc(m.id)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100" title={t("mus_kart")}>
-          <I name="card" size={13} />
-        </button>
-        {m.sonHizmet ? (
-          <button type="button" disabled={mesgul} onClick={() => void tekrarla(m.id, m.sonHizmet, m.sonTutar)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100 disabled:opacity-50" title={t("mus_repeat")}>
-            <I name="refresh" size={13} />
-          </button>
-        ) : null}
         <button type="button" onClick={() => kartAc(m.id, true)} className="grid place-items-center rounded-lg border border-violet-200 bg-white p-2 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
           <I name="edit" size={13} />
-        </button>
-        <button
-          type="button"
-          onClick={() => void silListe(m.id)}
-          className={`grid place-items-center rounded-lg border p-2 ${silKurulu === m.id ? "border-rose-700 bg-rose-700 text-white" : "border-rose-100 bg-white text-rose-500 hover:bg-rose-50"}`}
-          title={t("mus_delete")}
-        >
-          <I name="delete" size={13} />
         </button>
       </span>
     );
