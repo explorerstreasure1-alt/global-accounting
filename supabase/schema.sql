@@ -153,8 +153,8 @@ begin
   values (new.id, 'My Tailor Shop', now() + interval '5 days')
   returning id into b_id;
 
-  insert into ayarlar(isletme_adi, kira_tutari, kira_periyodu, aylik_kira_karsiligi, para_birimi, kira_sonraki_tarih, acilis_bakiyesi, ai_motor, ollama_model, whatsapp_alici, business_id)
-  values ('My Tailor Shop', 1500, 6, 250, 'USD', null, 125, 'otomatik', 'gemma3:4b', '', b_id);
+  insert into ayarlar(isletme_adi, kira_tutari, kira_periyodu, aylik_kira_karsiligi, para_birimi, kira_sonraki_tarih, acilis_bakiyesi, ai_motor, ollama_model, whatsapp_alici, whatsapp_isletme, wa_sablon_alindi, wa_sablon_hazir, google_yorum_link, business_id)
+  values ('My Tailor Shop', 1500, 6, 250, 'USD', null, 125, 'otomatik', 'gemma3:4b', '', '', '', '', '', b_id);
 
   return new;
 end;

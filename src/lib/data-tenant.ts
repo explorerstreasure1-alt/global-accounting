@@ -141,6 +141,21 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     return toISODate();
   }
 
+  /**
+   * PostgREST schema cache (PGRST204) dayanıklılığı:
+   * Supabase'de kolon SQL ile eklendikten sonra API önbelleği bir süre eski kalabilir.
+   * Hata mesajındaki kolon adını ayıklayıp payload'dan çıkarıp tekrar dener —
+   * böylece tek eksik kolon tüm ayar kaydını bloklamaz.
+   */
+  function eksikKolonAdi(error: unknown): string | null {
+    const err = error as { code?: unknown; message?: unknown } | null;
+    if (!err) return null;
+    if (err.code !== "PGRST204" && err.code !== "PGRST205") return null;
+    const msg = typeof err.message === "string" ? err.message : "";
+    const m = msg.match(/'([a-z_]+)'\s+column/i);
+    return m ? m[1] : null;
+  }
+
   async function listKayitlar(): Promise<Kayit[]> {
     const { data, error } = await supa
       .from("kayitlar")
@@ -157,19 +172,28 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     if (!data) {
       const today = toISODate();
       const ilk = addMonths(today, 1).slice(0, 8) + "01";
-      const { data: ins, error: e2 } = await supa
-        .from("ayarlar")
-        .insert({
-          isletme_adi: businessName,
-          kira_tutari: 1500, kira_periyodu: 6, aylik_kira_karsiligi: 250,
-          para_birimi: "USD", kira_sonraki_tarih: ilk, acilis_bakiyesi: 125,
-          ai_motor: "otomatik", ollama_model: "gemma3:4b", whatsapp_alici: "",
-          business_id: businessId,
-        })
-        .select("*")
-        .single();
-      if (e2) throw e2;
-      return mapAyarlar(ins as Row);
+      const tam: Record<string, unknown> = {
+        isletme_adi: businessName,
+        kira_tutari: 1500, kira_periyodu: 6, aylik_kira_karsiligi: 250,
+        para_birimi: "USD", kira_sonraki_tarih: ilk, acilis_bakiyesi: 125,
+        ai_motor: "otomatik", ollama_model: "gemma3:4b", whatsapp_alici: "",
+        whatsapp_isletme: "", wa_sablon_alindi: "", wa_sablon_hazir: "",
+        google_yorum_link: "",
+        business_id: businessId,
+      };
+      // Dayanıklı insert: schema cache bayatsa (PGRST204) eksik kolonu eleyip tekrar dene.
+      let payload = { ...tam };
+      for (let deneme = 0; deneme < 5; deneme++) {
+        const ins = await supa.from("ayarlar").insert(payload).select("*").single();
+        if (!ins.error) return mapAyarlar(ins.data as Row);
+        const eksik = eksikKolonAdi(ins.error);
+        if (eksik && eksik in payload) {
+          delete payload[eksik];
+          continue;
+        }
+        throw ins.error;
+      }
+      throw new Error("ayarlar olusturulamadi");
     }
     return mapAyarlar(data as Row);
   }
@@ -238,9 +262,27 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
       wa_sablon_hazir: patch.waSablonHazir !== undefined ? patch.waSablonHazir.slice(0, 500) : current.waSablonHazir,
       google_yorum_link: patch.googleYorumLink !== undefined ? patch.googleYorumLink.trim().slice(0, 300) : current.googleYorumLink,
     };
-    const { error } = await supa.from("ayarlar").update(next).eq("business_id", businessId);
+    const { error } = await dayanikliAyarlarUpdate(next);
     if (error) throw error;
     return getAyarlar();
+  }
+
+  /** PGRST204'e dayanıklı ayar update: eksik kolonu eleyip en fazla 5 deneme. */
+  async function dayanikliAyarlarUpdate(payload: Record<string, unknown>): Promise<{ error: unknown | null }> {
+    let denemePayload = { ...payload };
+    for (let deneme = 0; deneme < 5; deneme++) {
+      const res = await supa.from("ayarlar").update(denemePayload).eq("business_id", businessId);
+      if (!res.error) return { error: null };
+      const eksik = eksikKolonAdi(res.error);
+      if (eksik && eksik in denemePayload) {
+        const { [eksik]: _atilan, ...kalan } = denemePayload;
+        void _atilan;
+        denemePayload = kalan;
+        continue;
+      }
+      return { error: res.error };
+    }
+    return { error: new Error("ayarlar kaydedilemedi") };
   }
 
   async function addMesaj(rol: "user" | "assistant", icerik: string): Promise<SohbetMesaji> {
