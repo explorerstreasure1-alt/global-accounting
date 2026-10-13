@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { AktifZiyaret, Musteri, Ziyaret } from "@/lib/types";
 import { formatDate, formatMoneyLocale, toISODate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { waGonderenOnay, waLink, waMesajKur, waUlke, yerelAyarDoldur, ziyaretKodu } from "@/lib/wa-mesaj";
+import { waGonderenOnay, waLink, waMesajKur, waUlkeISO, yerelAyarDoldur, ziyaretKodu } from "@/lib/wa-mesaj";
 import { maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
@@ -183,13 +183,13 @@ export function MusteriSayfasi() {
     return waLink(
       m.telefon,
       waMesajKur("alindi", { ad: `${m.ad} ${m.soyad}`.trim(), hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.alindi),
-      waUlke(wa.gonderen),
+      waUlkeISO(wa.gonderen),
     );
   }
 
   function yorumHrefListe(m: Musteri): string | null {
     if (!wa.yorumLink || !m.telefon.replace(/\D/g, "")) return null;
-    return waLink(m.telefon, waMesajKur("yorum", { ad: `${m.ad} ${m.soyad}`.trim(), dukkan: wa.dukkan, link: wa.yorumLink }, locale), waUlke(wa.gonderen));
+    return waLink(m.telefon, waMesajKur("yorum", { ad: `${m.ad} ${m.soyad}`.trim(), dukkan: wa.dukkan, link: wa.yorumLink }, locale), waUlkeISO(wa.gonderen));
   }
 
   async function geriAl(id: string) {
@@ -226,7 +226,7 @@ export function MusteriSayfasi() {
         ? waLink(
             tel,
             waMesajKur("hazir", { ad: adSoyad, hizmet: a.hizmet, dukkan: wa.dukkan, kod: "" }, locale, wa.hazir),
-            waUlke(wa.gonderen),
+            waUlkeISO(wa.gonderen),
           )
         : null;
       await yukle();
@@ -476,10 +476,10 @@ export function MusteriSayfasi() {
     const hrefAlindi = telTam ? waLink(
       tel,
       waMesajKur("alindi", { ad: adSoyad, hizmet: m.sonHizmet || "", dukkan: wa.dukkan, kod: "" }, locale, wa.alindi),
-      waUlke(wa.gonderen),
+      waUlkeISO(wa.gonderen),
     ) : null;
     const hrefYorum = telTam && wa.yorumLink
-      ? waLink(tel, waMesajKur("yorum", { ad: adSoyad, dukkan: wa.dukkan, link: wa.yorumLink }, locale), waUlke(wa.gonderen))
+      ? waLink(tel, waMesajKur("yorum", { ad: adSoyad, dukkan: wa.dukkan, link: wa.yorumLink }, locale), waUlkeISO(wa.gonderen))
       : null;
     // Yıldız hep görünür: link + tam numara varsa puan mesajı gönderir, yoksa nedenini söyler.
     const yildizNeden = !wa.yorumLink
@@ -622,7 +622,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
             locale,
             wa.hazir,
           ),
-          waUlke(wa.gonderen),
+          waUlkeISO(wa.gonderen),
         );
         await yukle();
         if (href && gonderOnayDetay()) window.open(href, "_blank", "noopener");
@@ -650,13 +650,13 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
         locale,
         kind === "hazir" ? wa.hazir : wa.alindi,
       ),
-      waUlke(wa.gonderen),
+      waUlkeISO(wa.gonderen),
     );
   }
 
   function yorumHref(): string | null {
     if (!musteri || !wa.yorumLink || !musteri.telefon.replace(/\D/g, "")) return null;
-    return waLink(musteri.telefon, waMesajKur("yorum", { ad: `${musteri.ad} ${musteri.soyad}`.trim(), dukkan: wa.dukkan, link: wa.yorumLink }, locale), waUlke(wa.gonderen));
+    return waLink(musteri.telefon, waMesajKur("yorum", { ad: `${musteri.ad} ${musteri.soyad}`.trim(), dukkan: wa.dukkan, link: wa.yorumLink }, locale), waUlkeISO(wa.gonderen));
   }
 
   if (!musteri) return null;

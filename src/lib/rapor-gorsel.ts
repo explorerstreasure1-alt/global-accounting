@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { jsPDF } from "jspdf";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import type { Ayarlar, RaporOzet } from "./types";
 import { formatMoneyLocale, formatDate } from "./format";
 import { LOCALE_META, type LocaleCode } from "./i18n";
@@ -337,12 +338,13 @@ export function raporPdfIndir(canvas: HTMLCanvasElement, baslik: string, rapor: 
 
 export type GonderFormati = "pdf" | "jpg" | "excel";
 
-/** 0556102095 → 90556102095 (wa.me biçimi). Geçersizse null. */
+/** Numarayı wa.me biçimine çevirir (E.164, artısız). Geçersizse null. */
 export function waNumara(no: string): string | null {
-  const rakam = String(no || "").replace(/\D/g, "");
-  const bastakiSifirsiz = rakam.startsWith("0") ? rakam.slice(1) : rakam;
-  const tam = bastakiSifirsiz.startsWith("90") ? bastakiSifirsiz : `90${bastakiSifirsiz}`;
-  return /^90\d{10}$/.test(tam) ? tam : null;
+  const ham = String(no || "").trim();
+  if (!ham) return null;
+  const dogrulanan = parsePhoneNumberFromString(ham) ?? parsePhoneNumberFromString(ham, "TR");
+  if (dogrulanan && dogrulanan.isValid()) return dogrulanan.number.replace(/\D/g, "");
+  return null;
 }
 
 /**
