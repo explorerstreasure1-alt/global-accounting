@@ -96,10 +96,39 @@ export function waMesajKur(kind: WaKind, v: Partial<WaVars>, locale: string, oze
   return waDoldur(dil[kind], v);
 }
 
-/** Müşteri telefonundan wa.me sohbet linki (rakam yoksa null). Global: rakamlar aynen kullanılır. */
-export function waLink(telefon: string, metin: string): string | null {
-  const rakam = String(telefon ?? "").replace(/\D/g, "");
-  if (!rakam) return null;
+/**
+ * Yerel numarayı wa.me'nin istediği uluslararası biçime çevirir.
+ * - "0552..." (baştaki 0 = yerel) → gönderenin ülkesi + numara (örn. 90552...)
+ * - "0090..." (00 = uluslararası ön ek) → 90...
+ * - "90552..." / "+90552..." → aynen (zaten uluslararası, dokunma).
+ * E.164 hiçbir zaman 0 ile başlamaz; o yüzden 0'lı sayıya dokunmak güvenlidir.
+ */
+export function waNormalize(telefon: string, ulke = "90"): string {
+  let d = String(telefon ?? "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("00")) {
+    d = d.slice(2);
+  } else if (d.startsWith("0")) {
+    const kod = String(ulke || "90").replace(/\D/g, "") || "90";
+    d = kod + d.replace(/^0+/, "");
+  }
+  return d;
+}
+
+/** Gönderen numarasından ülke kodunu çıkarır (+90552... → "90"). Bilinmezse "90". */
+export function waUlke(gonderenNo: string, varsayilan = "90"): string {
+  const d = String(gonderenNo ?? "").replace(/\D/g, "");
+  if (d.length > 10) {
+    const kod = d.slice(0, d.length - 10);
+    if (/^\d{1,4}$/.test(kod)) return kod;
+  }
+  return varsayilan;
+}
+
+/** Müşteri telefonundan wa.me sohbet linki (bulunamaz numaralara null). */
+export function waLink(telefon: string, metin: string, ulke = "90"): string | null {
+  const rakam = waNormalize(telefon, ulke);
+  if (rakam.length < 10) return null;
   return `https://wa.me/${rakam}?text=${encodeURIComponent(metin.trim())}`;
 }
 
