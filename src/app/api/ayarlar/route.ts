@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { Ayarlar } from "@/lib/types";
 import { resolveDb } from "@/lib/tenant";
 import { hasDatabase, pool } from "@/db";
-import { blobAyarOku, blobAyarYaz, blobNormalize } from "@/lib/blob-ayar";
+import { blobAyarOku, blobAktif, blobAyarYaz, blobNormalize } from "@/lib/blob-ayar";
 
 export const dynamic = "force-dynamic";
 
@@ -125,12 +125,16 @@ export async function PUT(request: Request) {
       }
     }
     // Teşhis: istenip de hiçbir katmana yazılamayanları cevapta bildir.
+    // Köprü durumları da eklenir (hangisi kapalıysa sorun oradadır).
     const atlananKolonlar: string[] = [];
     if (body.whatsappIsletme !== undefined && String(body.whatsappIsletme).trim().slice(0, 30) !== sonuc.whatsappIsletme) atlananKolonlar.push("whatsapp_isletme");
     if (body.googleYorumLink !== undefined && String(body.googleYorumLink).trim().slice(0, 300) !== sonuc.googleYorumLink) atlananKolonlar.push("google_yorum_link");
     if (body.waSablonAlindi !== undefined && String(body.waSablonAlindi).slice(0, 500) !== sonuc.waSablonAlindi) atlananKolonlar.push("wa_sablon_alindi");
     if (body.waSablonHazir !== undefined && String(body.waSablonHazir).slice(0, 500) !== sonuc.waSablonHazir) atlananKolonlar.push("wa_sablon_hazir");
-    return NextResponse.json({ ayarlar: sonuc, atlananKolonlar });
+    const kopru = atlananKolonlar.length > 0
+      ? { blob: blobAktif() ? "on" : "off", direktDb: hasDatabase && pool ? "on" : "off" }
+      : undefined;
+    return NextResponse.json({ ayarlar: sonuc, atlananKolonlar, kopru });
   } catch (e) {
     // Teşhis için asıl sebep döndürülür (ekranda toast ile gösterilir).
     // Supabase hataları nesnedir; message/details/hint alanları metne çevrilir.
