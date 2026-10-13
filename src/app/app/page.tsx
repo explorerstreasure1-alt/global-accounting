@@ -5,6 +5,7 @@ import { getInitData } from "@/lib/data";
 import { getAuthContext } from "@/lib/tenant";
 import { createClient } from "@/lib/supabase/server";
 import { tenantDb } from "@/lib/data-tenant";
+import { blobAyarOku } from "@/lib/blob-ayar";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,17 @@ export default async function AppPage() {
   const supa = await createClient();
   const db = tenantDb(supa, ctx.business.id, ctx.business.name);
   const initial = await db.getInitData();
+  // Hesap mührü: bu Google hesabının Vercel'deki kayıtlı ayarı varsa ilk açılışa işle.
+  const muhur = await blobAyarOku(ctx.business.id);
+  if (muhur) {
+    initial.ayarlar = {
+      ...initial.ayarlar,
+      whatsappIsletme: muhur.whatsappIsletme,
+      waSablonAlindi: muhur.waSablonAlindi,
+      waSablonHazir: muhur.waSablonHazir,
+      googleYorumLink: muhur.googleYorumLink,
+    };
+  }
   const trial =
     ctx.business.plan === "pro"
       ? undefined
