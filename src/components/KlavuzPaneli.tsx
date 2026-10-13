@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useT } from "@/lib/i18n";
 import { I, type IconName } from "./ui-icon";
 
-const SAYFA_SAYISI = 3;
+const SAYFA_SAYISI = 4;
 
 const IKON_SATIRLARI: Array<{ icon: IconName; key: string }> = [
   { icon: "calendar", key: "g2_calendar" },
@@ -56,7 +56,7 @@ export function KlavuzPaneli() {
               ))}
             </div>
           </>
-        ) : (
+        ) : sayfa === 2 ? (
           <>
             <p className="text-sm font-semibold text-amber-100">{t("guide_p3t")}</p>
             {t("guide_p3b").split("\n").map((satir, i) => (
@@ -64,6 +64,42 @@ export function KlavuzPaneli() {
                 {satir}
               </p>
             ))}
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-amber-100">{t("guide_contact_t")}</p>
+            <p className="text-[13px] leading-relaxed text-amber-50/90">{t("guide_contact_b")}</p>
+            <div className="space-y-1.5 pt-1">
+              <a
+                href="https://wa.me/905522678192"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-xl bg-white/5 px-2.5 py-1.5 ring-1 ring-white/10"
+              >
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-teal-300/15 text-teal-200">
+                  <I name="phone" size={15} />
+                </span>
+                <span className="text-[12.5px] leading-snug text-amber-50/90" dir="ltr">+90 552 267 81 92</span>
+              </a>
+              <a
+                href="mailto:tanergulbass1@gmail.com"
+                className="flex items-center gap-2 rounded-xl bg-white/5 px-2.5 py-1.5 ring-1 ring-white/10"
+              >
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-teal-300/15 text-teal-200">
+                  <I name="send" size={15} />
+                </span>
+                <span className="break-all text-[12.5px] leading-snug text-amber-50/90" dir="ltr">tanergulbass1@gmail.com</span>
+              </a>
+              <a
+                href="mailto:aryaterzim@gmail.com"
+                className="flex items-center gap-2 rounded-xl bg-white/5 px-2.5 py-1.5 ring-1 ring-white/10"
+              >
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-teal-300/15 text-teal-200">
+                  <I name="send" size={15} />
+                </span>
+                <span className="break-all text-[12.5px] leading-snug text-amber-50/90" dir="ltr">aryaterzim@gmail.com</span>
+              </a>
+            </div>
           </>
         )}
       </div>
