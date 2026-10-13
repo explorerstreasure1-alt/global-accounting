@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import type { AktifZiyaret, Musteri, Ziyaret } from "@/lib/types";
 import { formatDate, formatMoneyLocale, toISODate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { waLink, waMesajKur, yerelAyarDoldur, ziyaretKodu } from "@/lib/wa-mesaj";
+import { waGonderenOnay, waLink, waMesajKur, yerelAyarDoldur, ziyaretKodu } from "@/lib/wa-mesaj";
 import { maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
 
 type Filtre = "tum" | "bugun" | "tekrar" | "buay" | "uzun";
-type WaAyar = { dukkan: string; alindi: string; hazir: string; yorumLink: string };
+type WaAyar = { dukkan: string; alindi: string; hazir: string; yorumLink: string; gonderen: string };
 
 function gunFarki(tarih: string): number {
   const simdi = new Date();
@@ -37,7 +37,14 @@ export function MusteriSayfasi() {
   const [detayId, setDetayId] = useState<string | null>(null);
   const [detayDuzenle, setDetayDuzenle] = useState(false);
   const [mesgul, setMesgul] = useState(false);
-  const [wa, setWa] = useState<WaAyar>({ dukkan: "", alindi: "", hazir: "", yorumLink: "" });
+  const [wa, setWa] = useState<WaAyar>({ dukkan: "", alindi: "", hazir: "", yorumLink: "", gonderen: "" });
+
+  /** Gönderen no kayıtlıysa açılıştan önce onay sorar; olay varsa iptalde durdurur. */
+  function gonderOnay(e?: { preventDefault(): void }): boolean {
+    const ok = waGonderenOnay(wa.gonderen, t("wa_gonderenOnay").replace("{n}", wa.gonderen));
+    if (!ok && e) e.preventDefault();
+    return ok;
+  }
   const [tam, setTam] = useState<Record<string, { ad: string; soyad: string; telefon: string }>>({});
   const [acik, setAcik] = useState<Record<string, boolean>>({});
 
@@ -109,6 +116,7 @@ export function MusteriSayfasi() {
           alindi: ay.waSablonAlindi ?? "",
           hazir: ay.waSablonHazir ?? "",
           yorumLink: ay.googleYorumLink ?? "",
+          gonderen: ay.whatsappIsletme ?? "",
         });
       }
     } catch {
@@ -220,7 +228,7 @@ export function MusteriSayfasi() {
           )
         : null;
       await yukle();
-      if (link) window.open(link, "_blank", "noopener");
+      if (link && gonderOnay()) window.open(link, "_blank", "noopener");
     } finally {
       setMesgul(false);
     }
@@ -483,7 +491,7 @@ export function MusteriSayfasi() {
           <I name="print" size={13} />
         </button>
         {hrefAlindi ? (
-          <a href={hrefAlindi} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100" title={`${t("mus_waSend")} · ${t("mus_waAlindi")}`}>
+          <a href={hrefAlindi} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100" title={`${t("mus_waSend")} · ${t("mus_waAlindi")}`}>
             <span className="text-[10px] font-black leading-none">WA</span>
           </a>
         ) : (
@@ -492,7 +500,7 @@ export function MusteriSayfasi() {
           </span>
         )}
         {hrefYorum ? (
-          <a href={hrefYorum} target="_blank" rel="noreferrer" className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
+          <a href={hrefYorum} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
             <I name="star" size={13} />
           </a>
         ) : (
@@ -510,7 +518,7 @@ export function MusteriSayfasi() {
 
 function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
   id: string;
-  wa: { dukkan: string; alindi: string; hazir: string; yorumLink: string };
+  wa: { dukkan: string; alindi: string; hazir: string; yorumLink: string; gonderen: string };
   locale: string;
   onKapat: () => void;
   duzenleAc?: boolean;
@@ -529,6 +537,13 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
   const [zTarih, setZTarih] = useState(toISODate());
   const [mesgul, setMesgul] = useState(false);
   const [onaySil, setOnaySil] = useState(false);
+
+  /** Gönderen no kayıtlıysa açılıştan önce onay sorar; olay varsa iptalde durdurur. */
+  function gonderOnayDetay(e?: { preventDefault(): void }): boolean {
+    const ok = waGonderenOnay(wa.gonderen, t("wa_gonderenOnay").replace("{n}", wa.gonderen));
+    if (!ok && e) e.preventDefault();
+    return ok;
+  }
 
   async function yukle() {
     try {
@@ -606,7 +621,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
           ),
         );
         await yukle();
-        if (href) window.open(href, "_blank", "noopener");
+        if (href && gonderOnayDetay()) window.open(href, "_blank", "noopener");
         return;
       }
       await yukle();
@@ -676,7 +691,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
               <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">{t("mus_totalSpent")}: {fm(musteri.toplamHarcama)}</span>
               {(() => {
                 const yh = yorumHref(); return yh ? (
-                  <a href={yh} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-amber-800 ring-1 ring-amber-300">
+                  <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-amber-800 ring-1 ring-amber-300">
                     <I name="spark" size={13} /> {t("mus_yorum")}
                   </a>
                 ) : null;
@@ -711,8 +726,8 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
                   </button>
                 ) : null}
                 {(() => {
-                  const yh = yorumHref(); return yh ? (
-                    <a href={yh} target="_blank" rel="noreferrer" className="grid shrink-0 place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
+                   const yh = yorumHref(); return yh ? (
+                    <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
                       <I name="star" size={13} />
                     </a>
                   ) : null;
@@ -734,8 +749,8 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
                   <I name="refresh" size={13} />
                 </button>
                 {(() => {
-                  const href = waHref(z, zi, musteri.ziyaretler.length); return href ? (
-                    <a href={href} target="_blank" rel="noreferrer" className="grid shrink-0 place-items-center rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-500" title={t("mus_waSend")}>
+                   const href = waHref(z, zi, musteri.ziyaretler.length); return href ? (
+                    <a href={href} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-500" title={t("mus_waSend")}>
                       <I name="send" size={14} />
                     </a>
                   ) : null;

@@ -103,6 +103,24 @@ export function waLink(telefon: string, metin: string): string | null {
   return `https://wa.me/${rakam}?text=${encodeURIComponent(metin.trim())}`;
 }
 
+/**
+ * Gönderen-no güvencesi: kayıtlı işletme numarası varsa WhatsApp açılmadan
+ * önce kullanıcıya onay sorar ("bu numaradan gidecek, WA'n bu numarayla açık mı?").
+ * Numara kayıtlı değilse sürtünmesiz true döner. İptalde false (açılışı durdur).
+ * Not: tarayıcı, cihazda hangi numarayla WA'nın açık olduğunu göremez; bu onay
+ * kullanıcının göz kontrolünün yerini tutar.
+ */
+export function waGonderenOnay(gonderenNo: string, soru: string): boolean {
+  const g = String(gonderenNo ?? "").trim();
+  if (!g) return true;
+  try {
+    if (typeof window === "undefined") return true;
+    return window.confirm(soru);
+  } catch {
+    return true;
+  }
+}
+
 /** Ziyaret kodu: TZ-XXXX-01 (etiketle aynı formül). */
 export function ziyaretKodu(musteriId: string, siraNo: number): string {
   return `TZ-${musteriId.replace(/-/g, "").slice(0, 4).toUpperCase()}-${String(siraNo).padStart(2, "0")}`;

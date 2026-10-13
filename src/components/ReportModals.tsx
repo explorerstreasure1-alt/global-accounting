@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Ayarlar, RaporOzet } from "@/lib/types";
 import { formatMoneyLocale, formatDate, formatDateLong } from "@/lib/format";
 import { gonderRapor, raporCanvas, raporJpgIndir, type GonderFormati } from "@/lib/rapor-gorsel";
+import { waGonderenOnay } from "@/lib/wa-mesaj";
 import { I } from "./ui-icon";
 import { useT, catLabel } from "@/lib/i18n";
 
@@ -207,6 +208,8 @@ export function ReportModal({
                   disabled={hazirlaniyor}
                   onClick={async () => {
                     if (!rapor) return;
+                    const gonderen = ayarlar.whatsappIsletme || "";
+                    if (!waGonderenOnay(gonderen, t("wa_gonderenOnay").replace("{n}", gonderen))) return;
                     setHazirlaniyor(true);
                     setGonderDurum(t("rep_loading"));
                     try {
