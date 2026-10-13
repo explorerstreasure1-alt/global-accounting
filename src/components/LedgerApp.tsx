@@ -198,11 +198,11 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       setToast(`${t("toast_saveFailed")}${neden}`);
       throw new Error(`ayarlar-kayit-hatasi:${res.status}${neden}`);
     }
-    const json = (await res.json()) as { ayarlar: Ayarlar; atlananKolonlar?: string[]; kopru?: { blob: string; direktDb: string } };
+    const json = (await res.json()) as { ayarlar: Ayarlar; atlananKolonlar?: string[]; kopru?: { blob: string; direktDb: string; blobHata?: string } };
     yerelAyarYaz(json.ayarlar);
     setAyarlar(yerelAyarDoldur(json.ayarlar));
     if (json.atlananKolonlar && json.atlananKolonlar.length > 0) {
-      const k = json.kopru ? ` [blob:${json.kopru.blob}, direkt-db:${json.kopru.direktDb}]` : "";
+      const k = json.kopru ? ` [blob:${json.kopru.blob}, direkt-db:${json.kopru.direktDb}${json.kopru.blobHata ? `, hata:${json.kopru.blobHata}` : ""}]` : "";
       setToast(`${t("toast_partialSave")}: ${json.atlananKolonlar.join(", ")}${k}`);
     } else {
       setToast(t("toast_settingsSaved"));

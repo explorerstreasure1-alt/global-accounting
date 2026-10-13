@@ -40,7 +40,8 @@ export async function blobAyarOku(businessId: string): Promise<BlobAyar | null> 
   if (!blobAktif()) return null;
   try {
     const meta = await head(yol(businessId));
-    const res = await fetch(meta.url, { cache: "no-store" });
+    // CDN bayat kopya vermesin diye önbellek delen parametre.
+    const res = await fetch(`${meta.url}?v=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) return null;
     const j = (await res.json()) as Partial<BlobAyar>;
     return blobNormalize(j);
@@ -49,16 +50,17 @@ export async function blobAyarOku(businessId: string): Promise<BlobAyar | null> 
   }
 }
 
-export async function blobAyarYaz(businessId: string, v: Partial<BlobAyar>): Promise<boolean> {
-  if (!blobAktif()) return false;
+export async function blobAyarYaz(businessId: string, v: Partial<BlobAyar>): Promise<{ ok: boolean; hata?: string }> {
+  if (!blobAktif()) return { ok: false, hata: "token-yok" };
   try {
     await put(yol(businessId), JSON.stringify(blobNormalize(v)), {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
     });
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (e) {
+    const m = e instanceof Error ? e.message : String(e);
+    return { ok: false, hata: m.slice(0, 120) };
   }
 }

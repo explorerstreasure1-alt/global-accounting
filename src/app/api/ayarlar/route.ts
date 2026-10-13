@@ -101,6 +101,7 @@ export async function PUT(request: Request) {
       google_yorum_link: body.googleYorumLink !== undefined ? String(body.googleYorumLink).trim().slice(0, 300) : ayarlar.googleYorumLink,
     };
     let sonuc = ayarlar;
+    let blobHata: string | undefined;
     if (business) {
       // Köprü 1: direkt PG (PostgREST önbelleğinden bağımsız).
       if (await direktYaz(business.id, tam)) {
@@ -108,13 +109,15 @@ export async function PUT(request: Request) {
         sonuc = birlestir(sonuc, d);
       }
       // Köprü 2 (birincil): Vercel Blob — Supabase şemasına hiç ihtiyaç duymaz.
+      // put başarılıysa yazılan değere güven (CDN okuması bayat gelebilir).
       const bv = blobNormalize({
         whatsappIsletme: tam.whatsapp_isletme,
         waSablonAlindi: tam.wa_sablon_alindi,
         waSablonHazir: tam.wa_sablon_hazir,
         googleYorumLink: tam.google_yorum_link,
       });
-      if (await blobAyarYaz(business.id, bv)) {
+      const yazim = await blobAyarYaz(business.id, bv);
+      if (yazim.ok) {
         sonuc = {
           ...sonuc,
           whatsappIsletme: bv.whatsappIsletme,
@@ -122,6 +125,8 @@ export async function PUT(request: Request) {
           waSablonHazir: bv.waSablonHazir,
           googleYorumLink: bv.googleYorumLink,
         };
+      } else {
+        blobHata = yazim.hata;
       }
     }
     // Teşhis: istenip de hiçbir katmana yazılamayanları cevapta bildir.
@@ -132,7 +137,11 @@ export async function PUT(request: Request) {
     if (body.waSablonAlindi !== undefined && String(body.waSablonAlindi).slice(0, 500) !== sonuc.waSablonAlindi) atlananKolonlar.push("wa_sablon_alindi");
     if (body.waSablonHazir !== undefined && String(body.waSablonHazir).slice(0, 500) !== sonuc.waSablonHazir) atlananKolonlar.push("wa_sablon_hazir");
     const kopru = atlananKolonlar.length > 0
-      ? { blob: blobAktif() ? "on" : "off", direktDb: hasDatabase && pool ? "on" : "off" }
+      ? {
+          blob: blobAktif() ? "on" : "off",
+          direktDb: hasDatabase && pool ? "on" : "off",
+          ...(blobHata ? { blobHata } : {}),
+        }
       : undefined;
     return NextResponse.json({ ayarlar: sonuc, atlananKolonlar, kopru });
   } catch (e) {
