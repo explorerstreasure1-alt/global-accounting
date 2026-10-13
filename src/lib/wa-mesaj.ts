@@ -107,3 +107,63 @@ export function waLink(telefon: string, metin: string): string | null {
 export function ziyaretKodu(musteriId: string, siraNo: number): string {
   return `TZ-${musteriId.replace(/-/g, "").slice(0, 4).toUpperCase()}-${String(siraNo).padStart(2, "0")}`;
 }
+
+/**
+ * Cihaz aynası: sunucu (bayat Supabase önbelleği) bu alanları boş döndürse bile
+ * son kaydedilen değerler bu cihazda kaybolmaz. Sunucu dolu bir değer verirse
+ * sunucu kazanır; ayna sadece boşlukları doldurur.
+ */
+const YEREL_AYAR_KEY = "tailor-yerel-ayar-v1";
+
+export type YerelAyar = {
+  isletmeAdi: string;
+  whatsappIsletme: string;
+  waSablonAlindi: string;
+  waSablonHazir: string;
+  googleYorumLink: string;
+};
+
+const BOS_YEREL: YerelAyar = {
+  isletmeAdi: "",
+  whatsappIsletme: "",
+  waSablonAlindi: "",
+  waSablonHazir: "",
+  googleYorumLink: "",
+};
+
+export function yerelAyarOku(): YerelAyar {
+  try {
+    if (typeof localStorage === "undefined") return { ...BOS_YEREL };
+    const raw = localStorage.getItem(YEREL_AYAR_KEY);
+    if (!raw) return { ...BOS_YEREL };
+    const j = JSON.parse(raw) as Partial<YerelAyar>;
+    return {
+      isletmeAdi: typeof j.isletmeAdi === "string" ? j.isletmeAdi : "",
+      whatsappIsletme: typeof j.whatsappIsletme === "string" ? j.whatsappIsletme : "",
+      waSablonAlindi: typeof j.waSablonAlindi === "string" ? j.waSablonAlindi : "",
+      waSablonHazir: typeof j.waSablonHazir === "string" ? j.waSablonHazir : "",
+      googleYorumLink: typeof j.googleYorumLink === "string" ? j.googleYorumLink : "",
+    };
+  } catch {
+    return { ...BOS_YEREL };
+  }
+}
+
+export function yerelAyarYaz(v: Partial<YerelAyar>): void {
+  try {
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem(YEREL_AYAR_KEY, JSON.stringify({ ...yerelAyarOku(), ...v }));
+  } catch {
+    /* kota dolarsa yoksay */
+  }
+}
+
+/** Sunucu değeri boşsa cihazdaki son değeri doldur (sunucu doluysa dokunma). */
+export function yerelAyarDoldur<T extends Partial<YerelAyar>>(a: T): T {
+  const y = yerelAyarOku();
+  const out: Record<string, unknown> = { ...a };
+  (Object.keys(BOS_YEREL) as (keyof YerelAyar)[]).forEach((k) => {
+    if (!out[k]) out[k] = y[k];
+  });
+  return out as T;
+}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { AktifZiyaret, Musteri, Ziyaret } from "@/lib/types";
 import { formatDate, formatMoneyLocale, toISODate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { waLink, waMesajKur, ziyaretKodu } from "@/lib/wa-mesaj";
+import { waLink, waMesajKur, yerelAyarDoldur, ziyaretKodu } from "@/lib/wa-mesaj";
 import { maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
@@ -102,7 +102,7 @@ export function MusteriSayfasi() {
       ]);
       setListe(l.musteriler ?? []);
       setAktif(a.aktif ?? []);
-      const ay = y.ayarlar;
+      const ay = y.ayarlar ? yerelAyarDoldur(y.ayarlar) : null;
       if (ay) {
         setWa({
           dukkan: ay.isletmeAdi ?? "",

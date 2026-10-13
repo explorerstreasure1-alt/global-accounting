@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Ayarlar, InitData, Kayit, KayitGirdi, RaporOzet, SohbetMesaji, Uyari } from "@/lib/types";
 import { formatMoneyLocale, formatDate, monthLabel, toISODate, getMonthNames } from "@/lib/format";
+import { yerelAyarDoldur, yerelAyarYaz } from "@/lib/wa-mesaj";
 import { buildRapor, computeUyarilar, monthRange } from "@/lib/reports";
 import { NotebookPanel, TotalsStrip } from "./NotebookPanel";
 import { GlobalBar } from "./GlobalBar";
@@ -21,7 +22,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const monthNames = getMonthNames(intl);
   const now = new Date();
   const [kayitlar, setKayitlar] = useState<Kayit[]>(initial.kayitlar);
-  const [ayarlar, setAyarlar] = useState<Ayarlar>(initial.ayarlar);
+  const [ayarlar, setAyarlar] = useState<Ayarlar>(() => yerelAyarDoldur(initial.ayarlar));
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -94,7 +95,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
 
   function applyData(data: InitData) {
     setKayitlar(data.kayitlar);
-    setAyarlar(data.ayarlar);
+    setAyarlar(yerelAyarDoldur(data.ayarlar));
   }
 
   /** Sunucudaki gerçek listeyi çekip ekranla eşitle (kayma olmasın) */
@@ -198,7 +199,8 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       throw new Error(`ayarlar-kayit-hatasi:${res.status}${neden}`);
     }
     const json = (await res.json()) as { ayarlar: Ayarlar; atlananKolonlar?: string[] };
-    setAyarlar(json.ayarlar);
+    yerelAyarYaz(json.ayarlar);
+    setAyarlar(yerelAyarDoldur(json.ayarlar));
     if (json.atlananKolonlar && json.atlananKolonlar.length > 0) {
       setToast(`${t("toast_partialSave")}: ${json.atlananKolonlar.join(", ")}`);
     } else {
