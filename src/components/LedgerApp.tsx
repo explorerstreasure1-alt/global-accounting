@@ -197,9 +197,13 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       setToast(`${t("toast_saveFailed")}${neden}`);
       throw new Error(`ayarlar-kayit-hatasi:${res.status}${neden}`);
     }
-    const json = (await res.json()) as { ayarlar: Ayarlar };
+    const json = (await res.json()) as { ayarlar: Ayarlar; atlananKolonlar?: string[] };
     setAyarlar(json.ayarlar);
-    setToast(t("toast_settingsSaved"));
+    if (json.atlananKolonlar && json.atlananKolonlar.length > 0) {
+      setToast(`${t("toast_partialSave")}: ${json.atlananKolonlar.join(", ")}`);
+    } else {
+      setToast(t("toast_settingsSaved"));
+    }
   }
 
   /** Kirayı aylara böl (AI'sız): son kira giderini N taksite ayırır */
