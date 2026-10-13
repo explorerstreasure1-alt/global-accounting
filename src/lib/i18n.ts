@@ -441,12 +441,27 @@ export const CURRENCIES = [
   { code: "SAR", label: "SAR ر.س" },
   { code: "RUB", label: "RUB ₽" },
   { code: "AED", label: "AED د.إ" },
+  { code: "AZN", label: "AZN ₼" },
+  { code: "GEL", label: "GEL ₾" },
+  { code: "UZS", label: "UZS" },
+  { code: "UAH", label: "UAH ₴" },
+  { code: "EGP", label: "EGP £" },
 ] as const;
 
 export function getLocale(): LocaleCode {
   if (typeof window === "undefined") return "en";
-  const v = window.localStorage.getItem("tailor-locale") || "en";
-  return (Object.keys(MAP) as LocaleCode[]).includes(v as LocaleCode) ? (v as LocaleCode) : "en";
+  try {
+    const v = window.localStorage.getItem("tailor-locale");
+    if (v && (Object.keys(MAP) as LocaleCode[]).includes(v as LocaleCode)) return v as LocaleCode;
+    // İlk açılış: tarayıcı dilinden tahmin et (de-DE → de, pt-BR → en ...).
+    const nav = String(window.navigator?.language || "en").toLowerCase();
+    const kod = nav.split("-")[0].split("_")[0];
+    const eslesme: Record<string, LocaleCode> = { tr: "tr", de: "de", fr: "fr", es: "es", ar: "ar", ru: "ru" };
+    if (eslesme[kod]) return eslesme[kod];
+  } catch {
+    /* yoksay */
+  }
+  return "en";
 }
 
 export function setLocale(code: LocaleCode) {
