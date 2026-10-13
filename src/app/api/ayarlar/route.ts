@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { Ayarlar } from "@/lib/types";
 import { resolveDb } from "@/lib/tenant";
 import { hasDatabase, pool } from "@/db";
+import { blobAyarOku, blobAyarYaz, blobNormalize } from "@/lib/blob-ayar";
 
 export const dynamic = "force-dynamic";
 
@@ -68,10 +69,21 @@ export async function GET() {
   const { db, gate, business } = await resolveDb();
   if (gate) return gate;
   const ayarlar = await db.getAyarlar();
-  // Önbellek eskiyse select * yeni kolonları döndürmez; direkt oku ve üzerine yaz.
+  // Okuma önceliği: Vercel Blob > direkt PG > PostgREST (önbellek bayatsa alttakiler boş döner).
   if (business) {
     const d = await direktOku(business.id);
-    return NextResponse.json({ ayarlar: birlestir(ayarlar, d) });
+    let sonuc = birlestir(ayarlar, d);
+    const b = await blobAyarOku(business.id);
+    if (b) {
+      sonuc = {
+        ...sonuc,
+        whatsappIsletme: b.whatsappIsletme,
+        waSablonAlindi: b.waSablonAlindi,
+        waSablonHazir: b.waSablonHazir,
+        googleYorumLink: b.googleYorumLink,
+      };
+    }
+    return NextResponse.json({ ayarlar: sonuc });
   }
   return NextResponse.json({ ayarlar });
 }
@@ -82,27 +94,43 @@ export async function PUT(request: Request) {
   try {
     const body = (await request.json()) as Partial<Ayarlar>;
     const ayarlar = await db.updateAyarlar(body);
-    // Teşhis: PostgREST schema cache bayatsa (PGRST204) sunucu yeni kolonları
-    // sessizce eleyebilir; istenip de yazılamayanları cevapta bildir.
-    const atlananKolonlar: string[] = [];
-    if (body.whatsappIsletme !== undefined && String(body.whatsappIsletme).trim().slice(0, 30) !== ayarlar.whatsappIsletme) atlananKolonlar.push("whatsapp_isletme");
-    if (body.googleYorumLink !== undefined && String(body.googleYorumLink).trim().slice(0, 300) !== ayarlar.googleYorumLink) atlananKolonlar.push("google_yorum_link");
-    if (body.waSablonAlindi !== undefined && String(body.waSablonAlindi).slice(0, 500) !== ayarlar.waSablonAlindi) atlananKolonlar.push("wa_sablon_alindi");
-    if (body.waSablonHazir !== undefined && String(body.waSablonHazir).slice(0, 500) !== ayarlar.waSablonHazir) atlananKolonlar.push("wa_sablon_hazir");
-    // Köprü: bir şey atlandıysa direkt yazmayı dene (önbellekten bağımsız).
-    if (atlananKolonlar.length > 0 && business) {
-      const tam: YeniAlanlar = {
-        whatsapp_isletme: body.whatsappIsletme !== undefined ? String(body.whatsappIsletme).trim().slice(0, 30) : ayarlar.whatsappIsletme,
-        wa_sablon_alindi: body.waSablonAlindi !== undefined ? String(body.waSablonAlindi).slice(0, 500) : ayarlar.waSablonAlindi,
-        wa_sablon_hazir: body.waSablonHazir !== undefined ? String(body.waSablonHazir).slice(0, 500) : ayarlar.waSablonHazir,
-        google_yorum_link: body.googleYorumLink !== undefined ? String(body.googleYorumLink).trim().slice(0, 300) : ayarlar.googleYorumLink,
-      };
+    const tam: YeniAlanlar = {
+      whatsapp_isletme: body.whatsappIsletme !== undefined ? String(body.whatsappIsletme).trim().slice(0, 30) : ayarlar.whatsappIsletme,
+      wa_sablon_alindi: body.waSablonAlindi !== undefined ? String(body.waSablonAlindi).slice(0, 500) : ayarlar.waSablonAlindi,
+      wa_sablon_hazir: body.waSablonHazir !== undefined ? String(body.waSablonHazir).slice(0, 500) : ayarlar.waSablonHazir,
+      google_yorum_link: body.googleYorumLink !== undefined ? String(body.googleYorumLink).trim().slice(0, 300) : ayarlar.googleYorumLink,
+    };
+    let sonuc = ayarlar;
+    if (business) {
+      // Köprü 1: direkt PG (PostgREST önbelleğinden bağımsız).
       if (await direktYaz(business.id, tam)) {
         const d = await direktOku(business.id);
-        return NextResponse.json({ ayarlar: birlestir(ayarlar, d), atlananKolonlar: [] });
+        sonuc = birlestir(sonuc, d);
+      }
+      // Köprü 2 (birincil): Vercel Blob — Supabase şemasına hiç ihtiyaç duymaz.
+      const bv = blobNormalize({
+        whatsappIsletme: tam.whatsapp_isletme,
+        waSablonAlindi: tam.wa_sablon_alindi,
+        waSablonHazir: tam.wa_sablon_hazir,
+        googleYorumLink: tam.google_yorum_link,
+      });
+      if (await blobAyarYaz(business.id, bv)) {
+        sonuc = {
+          ...sonuc,
+          whatsappIsletme: bv.whatsappIsletme,
+          waSablonAlindi: bv.waSablonAlindi,
+          waSablonHazir: bv.waSablonHazir,
+          googleYorumLink: bv.googleYorumLink,
+        };
       }
     }
-    return NextResponse.json({ ayarlar, atlananKolonlar });
+    // Teşhis: istenip de hiçbir katmana yazılamayanları cevapta bildir.
+    const atlananKolonlar: string[] = [];
+    if (body.whatsappIsletme !== undefined && String(body.whatsappIsletme).trim().slice(0, 30) !== sonuc.whatsappIsletme) atlananKolonlar.push("whatsapp_isletme");
+    if (body.googleYorumLink !== undefined && String(body.googleYorumLink).trim().slice(0, 300) !== sonuc.googleYorumLink) atlananKolonlar.push("google_yorum_link");
+    if (body.waSablonAlindi !== undefined && String(body.waSablonAlindi).slice(0, 500) !== sonuc.waSablonAlindi) atlananKolonlar.push("wa_sablon_alindi");
+    if (body.waSablonHazir !== undefined && String(body.waSablonHazir).slice(0, 500) !== sonuc.waSablonHazir) atlananKolonlar.push("wa_sablon_hazir");
+    return NextResponse.json({ ayarlar: sonuc, atlananKolonlar });
   } catch (e) {
     // Teşhis için asıl sebep döndürülür (ekranda toast ile gösterilir).
     // Supabase hataları nesnedir; message/details/hint alanları metne çevrilir.
