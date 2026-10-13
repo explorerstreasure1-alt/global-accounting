@@ -56,6 +56,7 @@ export async function blobAyarYaz(businessId: string, v: Partial<BlobAyar>): Pro
     await put(yol(businessId), JSON.stringify(blobNormalize(v)), {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
       contentType: "application/json",
     });
     return { ok: true };
