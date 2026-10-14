@@ -92,19 +92,34 @@ textarea {
   pointer-events: none;
 }
 
-/* Spiral delikleri: ortası boş, koyu halkalı gerçek defter görünümü */
+/* Çerçevesiz doldurma alanlarına defter çizgisi (kenarlıklı olanlara dokunmaz) */
+.desk-app input:not([class*="border"]):not([type="checkbox"]):not([type="radio"]),
+.desk-app select:not([class*="border"]),
+.desk-app textarea:not([class*="border"]) {
+  border-bottom: 2px solid rgba(22, 50, 79, 0.35);
+  border-radius: 6px 6px 0 0;
+}
+
+.desk-app input:not([class*="border"]):focus,
+.desk-app select:not([class*="border"]):focus,
+.desk-app textarea:not([class*="border"]):focus {
+  border-bottom-color: rgba(22, 50, 79, 0.7);
+  outline: none;
+}
+
+/* Spiral delikleri: küçük nokta */
 .spiral-delik {
   display: block;
-  width: 19px;
-  height: 19px;
+  width: 10px;
+  height: 10px;
   margin-inline: auto;
   border-radius: 9999px;
   background: radial-gradient(
     circle at 50% 42%,
     rgba(0, 0, 0, 0) 0 32%,
-    #4a2f1a 33% 52%,
-    #1c1109 53% 66%,
-    rgba(28, 17, 9, 0) 67%
+    #4a4a4f 33% 52%,
+    #17171a 53% 66%,
+    rgba(23, 23, 26, 0) 67%
   );
   filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.4));
 }
@@ -390,10 +405,10 @@ textarea {
 }
 
 /* === Kâğıt cilt: koyu yüzeyleri fildişine çevir (giriş ekranı bu kapsamın dışındadır) === */
-.desk-app [class*="bg-black/25"],
-.desk-app [class*="bg-black/20"],
-.desk-app [class*="bg-white/10"],
-.desk-app [class*="bg-white/5"],
+.desk-app [class~="bg-black/25"],
+.desk-app [class~="bg-black/20"],
+.desk-app [class~="bg-white/10"],
+.desk-app [class~="bg-white/5"],
 .desk-app .ai-panel {
   background-color: rgba(255, 255, 255, 0.92);
   background-image:

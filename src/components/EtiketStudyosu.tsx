@@ -349,14 +349,7 @@ export function EtiketStudyosu() {
   }
 
   return (
-    <div
-      className="desk-app min-h-screen text-amber-50"
-      /* Stüdyo zemini her temada kahve: koyu mavi pro-dark zemini ezer. */
-      style={{
-        backgroundImage:
-          "linear-gradient(180deg, rgba(20, 12, 8, 0.28), rgba(20, 12, 8, 0.45)), repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.025) 0 1px, transparent 1px 5px), radial-gradient(ellipse at 50% 35%, #725039 0%, #4e3425 55%, #352217 100%)",
-      }}
-    >
+    <div className="desk-app min-h-screen text-amber-50">
       <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <div className="w-full sm:w-auto">
@@ -525,9 +518,9 @@ export function EtiketStudyosu() {
                               rows={3}
                               placeholder="QR — boş = otomatik"
                               aria-label={z.baslik}
-                              className="w-full resize-none rounded bg-white/10 px-1 py-1 font-mono text-[11px] text-slate-900 outline-none"
+                              className="w-full resize-none rounded bg-slate-900 px-1 py-1 font-mono text-[11px] text-white outline-none"
                             />
-                            {!qrOzel.trim() ? <span className="block truncate font-mono text-[9px] text-amber-100/50">{qrEfektif().slice(0, 40)}…</span> : null}
+                            {!qrOzel.trim() ? <span className="block truncate font-mono text-[9px] text-slate-300">{qrEfektif().slice(0, 40)}…</span> : null}
                           </span>
                         );
                       }
