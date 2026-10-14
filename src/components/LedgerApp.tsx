@@ -308,7 +308,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
             <p className="text-[11px] uppercase tracking-[0.16em] text-amber-100/70">{t("app_sub")}</p>
           </div>
 
-          <div className="flex items-center gap-1 rounded-full bg-black/20 p-1">
+          <div className="flex items-center gap-1 rounded-full bg-black/20 p-1 ring-1 ring-slate-900/10">
             <button onClick={() => shiftMonth(-1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10">
               ‹
             </button>
@@ -535,9 +535,9 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
 
 function HeaderStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-black/20 px-3 py-1.5">
-      <p className="text-[10px] uppercase tracking-wider text-amber-100/60">{label}</p>
-      <p className="text-sm font-semibold tabular-nums">{value}</p>
+    <div className="rounded-xl bg-white/80 px-2.5 py-1 ring-1 ring-slate-900/10">
+      <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="text-[13px] font-bold tabular-nums text-slate-800">{value}</p>
     </div>
   );
 }
@@ -546,7 +546,7 @@ function ToolBtn({ children, onClick }: { children: ReactNode; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-50/95 px-3 py-2 text-xs font-medium text-slate-800 shadow-sm hover:bg-white sm:py-1.5"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm ring-1 ring-slate-900/10 hover:bg-slate-50 sm:py-1.5"
     >
       {children}
     </button>

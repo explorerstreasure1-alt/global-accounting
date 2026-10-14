@@ -3,7 +3,7 @@ import type { LocaleCode } from "./i18n";
 /** Full-app dictionaries (ledger body, reports, settings, toasts). Merged over base dicts in i18n.ts. */
 
 const tr: Record<string, string> = {
-  guide_contact_t: "İletişim", guide_contact_b: "İstek, öneri ve şikayetleriniz için bize ulaşın:", guide_motto: "Küçük adımlar, büyük hayaller. ♥", mus_cikis: "Çıkış",
+  guide_contact_t: "İletişim", guide_contact_b: "İstek, öneri ve şikayetleriniz için bize ulaşın:", guide_motto: "Küçük adımlar, büyük hayaller. ♥", mus_cikis: "Çıkış", et_kare: "Kare", et_dikey: "Dikey", et_yatay: "Yatay",
   appSubtitle: "Muhasebe defteri · Defterdar", income: "Gelir", expense: "Gider", net: "Net", monthlyRent: "Aylık kira",
   calendar: "Takvim", dayEnd: "Gün sonu", monthEnd: "Ay sonu", zReport: "Z raporu", excel: "Excel", backup: "Yedek", print: "Yazdır", phone: "Telefon",
   defterTab: "Defter", asistanTab: "Asistan", period: "Dönem:", rentPeriod: "Kira dönemi:", monthlyProvision: "Aylık karşılık:", nextRent: "Sonraki kira:", loadBackup: "Yedek yükle", noDate: "—",
@@ -42,7 +42,7 @@ const tr: Record<string, string> = {
 };
 
 const en: Record<string, string> = {
-  guide_contact_t: "Contact", guide_contact_b: "For requests, suggestions and complaints, reach us:", guide_motto: "Small steps, big dreams. ♥", mus_cikis: "Log out",
+  guide_contact_t: "Contact", guide_contact_b: "For requests, suggestions and complaints, reach us:", guide_motto: "Small steps, big dreams. ♥", mus_cikis: "Log out", et_kare: "Square", et_dikey: "Portrait", et_yatay: "Landscape",
   appSubtitle: "Accounting ledger · Defterdar", income: "Income", expense: "Expense", net: "Net", monthlyRent: "Monthly rent",
   calendar: "Calendar", dayEnd: "Day close", monthEnd: "Month close", zReport: "Z report", excel: "Excel", backup: "Backup", print: "Print", phone: "Phone",
   defterTab: "Ledger", asistanTab: "Assistant", period: "Period:", rentPeriod: "Rent term:", monthlyProvision: "Monthly provision:", nextRent: "Next rent:", loadBackup: "Upload backup", noDate: "—",
@@ -82,7 +82,7 @@ const en: Record<string, string> = {
 };
 
 const de: Record<string, string> = {
-  guide_contact_t: "Kontakt", guide_contact_b: "Bei Fragen, Vorschlägen und Beschwerden erreichst du uns hier:", guide_motto: "Kleine Schritte, große Träume. ♥", mus_cikis: "Abmelden",
+  guide_contact_t: "Kontakt", guide_contact_b: "Bei Fragen, Vorschlägen und Beschwerden erreichst du uns hier:", guide_motto: "Kleine Schritte, große Träume. ♥", mus_cikis: "Abmelden", et_kare: "Quadrat", et_dikey: "Hochformat", et_yatay: "Querformat",
   appSubtitle: "Buchhaltung · Defterdar", income: "Einnahmen", expense: "Ausgaben", net: "Netto", monthlyRent: "Monatsmiete",
   calendar: "Kalender", dayEnd: "Tagesschluss", monthEnd: "Monatsschluss", zReport: "Z-Bericht", excel: "Excel", backup: "Sicherung", print: "Drucken", phone: "Handy",
   defterTab: "Kassenbuch", asistanTab: "Assistent", period: "Zeitraum:", rentPeriod: "Mietzeitraum:", monthlyProvision: "Monatsanteil:", nextRent: "Nächste Miete:", loadBackup: "Sicherung laden", noDate: "—",
@@ -122,7 +122,7 @@ const de: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
-  guide_contact_t: "Contact", guide_contact_b: "Pour demandes, suggestions et réclamations, contactez-nous :", guide_motto: "Petits pas, grands rêves. ♥", mus_cikis: "Déconnexion",
+  guide_contact_t: "Contact", guide_contact_b: "Pour demandes, suggestions et réclamations, contactez-nous :", guide_motto: "Petits pas, grands rêves. ♥", mus_cikis: "Déconnexion", et_kare: "Carré", et_dikey: "Portrait", et_yatay: "Paysage",
   appSubtitle: "Comptabilité · Defterdar", income: "Revenus", expense: "Dépenses", net: "Net", monthlyRent: "Loyer mensuel",
   calendar: "Calendrier", dayEnd: "Clôture jour", monthEnd: "Clôture mois", zReport: "Rapport Z", excel: "Excel", backup: "Sauvegarde", print: "Imprimer", phone: "Téléphone",
   defterTab: "Registre", asistanTab: "Assistant", period: "Période :", rentPeriod: "Loyer :", monthlyProvision: "Provision mensuelle :", nextRent: "Prochain loyer :", loadBackup: "Charger sauvegarde", noDate: "—",
@@ -162,7 +162,7 @@ const fr: Record<string, string> = {
 };
 
 const es: Record<string, string> = {
-  guide_contact_t: "Contacto", guide_contact_b: "Para solicitudes, sugerencias y quejas, contáctanos:", guide_motto: "Pasos pequeños, grandes sueños. ♥", mus_cikis: "Cerrar sesión",
+  guide_contact_t: "Contacto", guide_contact_b: "Para solicitudes, sugerencias y quejas, contáctanos:", guide_motto: "Pasos pequeños, grandes sueños. ♥", mus_cikis: "Cerrar sesión", et_kare: "Cuadrado", et_dikey: "Vertical", et_yatay: "Horizontal",
   appSubtitle: "Contabilidad · Defterdar", income: "Ingresos", expense: "Gastos", net: "Neto", monthlyRent: "Alquiler mensual",
   calendar: "Calendario", dayEnd: "Cierre día", monthEnd: "Cierre mes", zReport: "Informe Z", excel: "Excel", backup: "Copia", print: "Imprimir", phone: "Teléfono",
   defterTab: "Libro", asistanTab: "Asistente", period: "Período:", rentPeriod: "Alquiler:", monthlyProvision: "Provisión mensual:", nextRent: "Próximo alquiler:", loadBackup: "Cargar copia", noDate: "—",
@@ -202,7 +202,7 @@ const es: Record<string, string> = {
 };
 
 const ar: Record<string, string> = {
-  guide_contact_t: "اتصل بنا", guide_contact_b: "للطلبات والاقتراحات والشكاوى، تواصل معنا:", guide_motto: "خطوات صغيرة، أحلام كبيرة. ♥", mus_cikis: "تسجيل الخروج",
+  guide_contact_t: "اتصل بنا", guide_contact_b: "للطلبات والاقتراحات والشكاوى، تواصل معنا:", guide_motto: "خطوات صغيرة، أحلام كبيرة. ♥", mus_cikis: "تسجيل الخروج", et_kare: "مربع", et_dikey: "طولي", et_yatay: "عرضي",
   appSubtitle: "دفتر المحاسبة · دفتردار", income: "الدخل", expense: "المصروف", net: "الصافي", monthlyRent: "الإيجار الشهري",
   calendar: "التقويم", dayEnd: "إغلاق اليوم", monthEnd: "إغلاق الشهر", zReport: "تقرير Z", excel: "إكسل", backup: "نسخة", print: "طباعة", phone: "الهاتف",
   defterTab: "الدفتر", asistanTab: "المساعد", period: "الفترة:", rentPeriod: "الإيجار:", monthlyProvision: "المخصص الشهري:", nextRent: "الإيجار القادم:", loadBackup: "تحميل نسخة", noDate: "—",
@@ -242,7 +242,7 @@ const ar: Record<string, string> = {
 };
 
 const ru: Record<string, string> = {
-  guide_contact_t: "Контакты", guide_contact_b: "По вопросам, предложениям и жалобам свяжитесь с нами:", guide_motto: "Маленькие шаги, большие мечты. ♥", mus_cikis: "Выйти",
+  guide_contact_t: "Контакты", guide_contact_b: "По вопросам, предложениям и жалобам свяжитесь с нами:", guide_motto: "Маленькие шаги, большие мечты. ♥", mus_cikis: "Выйти", et_kare: "Квадрат", et_dikey: "Портрет", et_yatay: "Альбомная",
   appSubtitle: "Бухгалтерия · Дефтердар", income: "Доход", expense: "Расход", net: "Нетто", monthlyRent: "Аренда в мес.",
   calendar: "Календарь", dayEnd: "Закрытие дня", monthEnd: "Закрытие месяца", zReport: "Z-отчёт", excel: "Excel", backup: "Бэкап", print: "Печать", phone: "Телефон",
   defterTab: "Книга", asistanTab: "Ассистент", period: "Период:", rentPeriod: "Аренда:", monthlyProvision: "Месячная доля:", nextRent: "След. аренда:", loadBackup: "Загрузить бэкап", noDate: "—",

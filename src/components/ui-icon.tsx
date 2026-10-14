@@ -38,6 +38,13 @@ import {
   ShieldCheck,
   Upload,
   ChevronDown,
+  ShoppingCart,
+  Usb,
+  Square,
+  RectangleVertical,
+  RectangleHorizontal,
+  ZoomIn,
+  ZoomOut,
   type LucideIcon,
 } from "lucide-react";
 
@@ -82,6 +89,14 @@ const MAP = {
   receipt: ReceiptText,
   upload: Upload,
   chevD: ChevronDown,
+  cart: ShoppingCart,
+  usb: Usb,
+  square: Square,
+  portrait: RectangleVertical,
+  landscape: RectangleHorizontal,
+  zoomIn: ZoomIn,
+  zoomOut: ZoomOut,
+  rotate: RotateCcw,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof MAP;

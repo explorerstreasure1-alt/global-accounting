@@ -72,6 +72,9 @@ export function EtiketStudyosu() {
   const [vurgu, setVurgu] = useState<string | null>(null);
   const [duzenId, setDuzenId] = useState<string | null>(null);
   const [kayitBilgi, setKayitBilgi] = useState("");
+  const [yak, setYak] = useState(100);
+  const [acikUyum, setAcikUyum] = useState(true);
+  const [acikKilavuz, setAcikKilavuz] = useState(true);
   /** Etiket başlığı varsayılanı: kullanıcı Kaydet'e basar, bu cihazda kalır, her açılışta hazır gelir. */
   const [varsayilan] = useState<{ dukkan: string; dukkanAlt: string } | null>(() => {
     try {
@@ -336,6 +339,17 @@ export function EtiketStudyosu() {
     setBoyut({ w: SABLONLAR[i].w, h: SABLONLAR[i].h });
   }
 
+  /** Yön seçimi: o yöndeki ilk şablona gider (kare: w==h, dikey: h>w, yatay: w>h). */
+  function yonSec(yon: "kare" | "dikey" | "yatay") {
+    const idx = SABLONLAR.findIndex((s) => (yon === "kare" ? s.w === s.h : yon === "dikey" ? s.h > s.w : s.w > s.h));
+    if (idx >= 0) sablonSec(idx);
+  }
+
+  function yonAktif(): "kare" | "dikey" | "yatay" {
+    if (boyut.w === boyut.h) return "kare";
+    return boyut.h > boyut.w ? "dikey" : "yatay";
+  }
+
   function ozelUygula() {
     const w = Math.max(10, Math.min(200, Number(ozelW) || 60));
     const h = Math.max(10, Math.min(200, Number(ozelH) || 40));
@@ -366,12 +380,25 @@ export function EtiketStudyosu() {
           <button type="button" onClick={pdfIndir} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold hover:bg-white/20">
             ↓ {t("et_pdf")}
           </button>
+          <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs tabular-nums">
+            <span className="min-w-9 text-center">%{yak}</span>
+            <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-6 w-6 place-items-center rounded-md hover:bg-white/20" title="−">
+              <I name="zoomOut" size={13} />
+            </button>
+            <button type="button" onClick={() => setYak((v) => Math.min(200, v + 10))} className="grid h-6 w-6 place-items-center rounded-md hover:bg-white/20" title="+">
+              <I name="zoomIn" size={13} />
+            </button>
+            <button type="button" onClick={() => setYak(100)} className="grid h-6 w-6 place-items-center rounded-md hover:bg-white/20" title="100%">
+              <I name="rotate" size={12} />
+            </button>
+          </span>
           {seriVar ? (
-            <button type="button" onClick={() => void baglan()} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold hover:bg-white/20">
-              {port ? t("bt_disconnect") : `◉ ${t("et_baglan")}`}
+            <button type="button" onClick={() => void baglan()} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
+              <I name="usb" size={13} /> {port ? t("bt_disconnect") : `${t("et_baglan")}`}
+              <span className={`h-2 w-2 rounded-full ${port ? "bg-emerald-400" : "bg-slate-400"}`} />
             </button>
           ) : null}
-          <button type="button" disabled={mesgul} onClick={() => void simdiYazdir()} className="rounded-lg bg-sky-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
+          <button type="button" disabled={mesgul} onClick={() => void simdiYazdir()} className="rounded-lg bg-[#9a6b2f] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">
             🖨 {t("et_simdi")}
           </button>
         </header>
@@ -379,13 +406,30 @@ export function EtiketStudyosu() {
         <div className="grid flex-1 items-start gap-3 lg:grid-cols-[230px_minmax(0,1fr)_300px]">
           <aside className="rounded-2xl bg-black/25 p-3 backdrop-blur-md">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-amber-100/60">{t("et_sablonlar")} · {t("et_boyut")} (mm)</p>
+            <div className="mb-1.5 grid grid-cols-3 gap-1.5">
+              {([
+                { id: "kare", icon: "square", label: t("et_kare") },
+                { id: "dikey", icon: "portrait", label: t("et_dikey") },
+                { id: "yatay", icon: "landscape", label: t("et_yatay") },
+              ] as const).map((y) => (
+                <button
+                  key={y.id}
+                  type="button"
+                  onClick={() => yonSec(y.id)}
+                  className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-[11px] font-semibold ${yonAktif() === y.id ? "border-teal-600 bg-teal-600/10 text-teal-800" : "border-slate-300 bg-white/60 text-slate-600 hover:bg-white"}`}
+                >
+                  <I name={y.icon} size={18} />
+                  {y.label}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-1">
               {SABLONLAR.map((s, i) => (
                 <button
                   key={`${s.w}x${s.h}`}
                   type="button"
                   onClick={() => sablonSec(i)}
-                  className={`rounded-xl border px-3 py-2 text-left ${sablon === i ? "border-sky-500 bg-sky-500/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                  className={`rounded-xl border px-3 py-2 text-left ${sablon === i ? "border-teal-600 bg-teal-600/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
                 >
                   <span className="block text-sm font-bold tabular-nums">{s.w}×{s.h}</span>
                   <span className="text-[11px] text-amber-100/60">mm</span>
@@ -397,7 +441,7 @@ export function EtiketStudyosu() {
               <input value={ozelW} onChange={(e) => setOzelW(e.target.value)} inputMode="decimal" className="w-full min-w-0 rounded-lg bg-white/10 px-2 py-1.5 text-sm outline-none" />
               <span className="text-amber-100/60">×</span>
               <input value={ozelH} onChange={(e) => setOzelH(e.target.value)} inputMode="decimal" className="w-full min-w-0 rounded-lg bg-white/10 px-2 py-1.5 text-sm outline-none" />
-              <button type="button" onClick={ozelUygula} className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white">
+              <button type="button" onClick={ozelUygula} className="shrink-0 rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-bold text-white">
                 {t("et_uygula")}
               </button>
             </div>
@@ -459,8 +503,12 @@ export function EtiketStudyosu() {
                 <a href="/app/musteriler" className="text-sky-700 underline">‹ {t("mus_title")}</a>
               </p>
             ) : onizleme ? (
-              <div className="flex min-h-[320px] items-center justify-center">
-                <div className="relative inline-block max-w-full rounded-lg bg-slate-950/40 p-3 ring-1 ring-slate-800/50">
+              <div className="flex min-h-[320px] items-center justify-center overflow-auto">
+                <div>
+                  <div
+                    className="relative inline-block max-w-full rounded-lg bg-transparent p-3"
+                    style={{ transform: `scale(${yak / 100})`, transformOrigin: "top center" }}
+                  >
                   <img src={onizleme} alt={t("et_studio")} className="h-auto max-w-full rounded shadow-2xl ring-2 ring-slate-800/60" style={{ maxHeight: "62vh" }} />
                   {zonlar(t).map((z) => {
                     if (duzenId === z.id) {
@@ -516,6 +564,16 @@ export function EtiketStudyosu() {
                       />
                     );
                   })}
+                  </div>
+                  <div className="mt-2 flex items-center justify-center gap-1 text-xs text-slate-600">
+                    <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-7 w-7 place-items-center rounded-lg bg-white ring-1 ring-slate-900/10 hover:bg-slate-50">
+                      <I name="zoomOut" size={13} />
+                    </button>
+                    <span className="min-w-11 text-center tabular-nums">%{yak}</span>
+                    <button type="button" onClick={() => setYak((v) => Math.min(200, v + 10))} className="grid h-7 w-7 place-items-center rounded-lg bg-white ring-1 ring-slate-900/10 hover:bg-slate-50">
+                      <I name="zoomIn" size={13} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -531,11 +589,11 @@ export function EtiketStudyosu() {
 
           <aside className="rounded-2xl bg-black/25 p-3 backdrop-blur-md">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-amber-100/60">⚙ {t("et_yazdirma")}</p>
-            <div className={`mb-2 rounded-xl px-3 py-2 text-xs font-semibold ${port ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+            <div className={`mb-2 rounded-xl px-3 py-2 text-xs font-semibold ${port ? "bg-emerald-500/15 text-emerald-800" : "bg-rose-500/15 text-rose-700"}`}>
               {port ? durum || t("bt_connected") : t("et_bagliDegil")}
             </div>
             {!seriVar ? <p className="mb-2 text-xs leading-relaxed text-amber-100/60">{t("bt_noserial")}</p> : null}
-            {durum && port ? <p className="mb-2 text-xs text-emerald-300">{durum}</p> : null}
+            {durum && port ? <p className="mb-2 text-xs text-emerald-700">{durum}</p> : null}
             {durum && !port ? <p className="mb-2 text-xs text-amber-300">{durum}</p> : null}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <label className="text-amber-100/60">
@@ -562,9 +620,14 @@ export function EtiketStudyosu() {
                 <input value={bosluk} onChange={(e) => setBosluk(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-slate-900 outline-none" />
               </label>
             </div>
-            <button type="button" disabled={mesgul} onClick={() => void simdiYazdir()} className="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={mesgul} onClick={() => void simdiYazdir()} className="mt-3 w-full rounded-xl bg-teal-950 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
               🖨 {t("et_simdi")}
             </button>
+            {seriVar && !port ? (
+              <button type="button" onClick={() => void baglan()} className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-bold text-white">
+                <I name="usb" size={14} /> {t("et_baglan")}
+              </button>
+            ) : null}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <button type="button" onClick={pngIndir} className="rounded-xl bg-white/10 px-3 py-2 text-xs font-semibold hover:bg-white/20">
                 ↓ {t("et_png")}
@@ -574,17 +637,29 @@ export function EtiketStudyosu() {
               </button>
             </div>
             <div className="mt-3 rounded-xl bg-sky-500/10 p-3 ring-1 ring-sky-400/40">
-              <p className="mb-1 text-xs font-bold text-sky-200">🖨️ Yazıcı uyumu</p>
-              <p className="text-[11px] leading-snug text-amber-100/80">
-                Bu etiket baskısı <span className="font-bold text-slate-900">Phomemo D520-BT Bluetooth+USB Termal Yazıcı</span> (Barkod/Adres/Posta
-                Etiketi, pazaryerleri ile uyumlu) ile uyumludur — bu yazıcıyı alın ve <span className="font-bold text-slate-900">40×60 etiket kağıdı</span> alın.
-              </p>
+              <button type="button" onClick={() => setAcikUyum((v) => !v)} className="mb-1 flex w-full items-center gap-1 text-xs font-bold text-sky-800">
+                <span>🖨️ Yazıcı uyumu</span>
+                <I name="chevD" size={13} className={`ml-auto transition-transform ${acikUyum ? "rotate-180" : ""}`} />
+              </button>
+              {acikUyum ? (
+                <p className="text-[11px] leading-snug text-amber-100/80">
+                  Bu etiket baskısı <span className="font-bold text-slate-900">Phomemo D520-BT Bluetooth+USB Termal Yazıcı</span> (Barkod/Adres/Posta
+                  Etiketi, pazaryerleri ile uyumlu) ile uyumludur — bu yazıcıyı alın ve <span className="font-bold text-slate-900">40×60 etiket kağıdı</span> alın.
+                </p>
+              ) : null}
             </div>
             <div className="mt-3 rounded-xl bg-slate-500/10 p-3 ring-1 ring-slate-400/30">
-              <p className="mb-1 text-xs font-bold text-amber-200">📖 {t("et_kilavuzBaslik")}</p>
-              <p className="mb-1 text-[11px] font-semibold leading-snug text-amber-100">{t("et_kilavuzUyari")}</p>
-              <p className="mb-1 text-[11px] text-amber-100/70">{t("et_kilavuzModeller")}</p>
-              <p className="text-[11px] leading-snug text-amber-100/60">{t("et_kilavuzAdim")}</p>
+              <button type="button" onClick={() => setAcikKilavuz((v) => !v)} className="mb-1 flex w-full items-center gap-1 text-xs font-bold text-amber-200">
+                <span>📖 {t("et_kilavuzBaslik")}</span>
+                <I name="chevD" size={13} className={`ml-auto transition-transform ${acikKilavuz ? "rotate-180" : ""}`} />
+              </button>
+              {acikKilavuz ? (
+                <>
+                  <p className="mb-1 text-[11px] font-semibold leading-snug text-amber-100">{t("et_kilavuzUyari")}</p>
+                  <p className="mb-1 text-[11px] text-amber-100/70">{t("et_kilavuzModeller")}</p>
+                  <p className="text-[11px] leading-snug text-amber-100/60">{t("et_kilavuzAdim")}</p>
+                </>
+              ) : null}
             </div>
           </aside>
         </div>

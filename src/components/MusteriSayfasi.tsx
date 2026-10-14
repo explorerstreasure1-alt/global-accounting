@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AktifZiyaret, Musteri, Ziyaret } from "@/lib/types";
 import { formatDate, formatMoneyLocale, toISODate } from "@/lib/format";
@@ -99,6 +99,17 @@ export function MusteriSayfasi() {
   const [telefon, setTelefon] = useState("");
   const [hizmet, setHizmet] = useState("");
   const [tutar, setTutar] = useState("");
+  const adRef = useRef<HTMLInputElement | null>(null);
+
+  /** "Müşteri ekle" düğmesi: hızlı ekleme alanına odaklar. */
+  function musteriOdagina() {
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* yoksay */
+    }
+    setTimeout(() => adRef.current?.focus(), 120);
+  }
 
   async function yukle(q = arama, cop = copte) {
     try {
@@ -279,54 +290,49 @@ export function MusteriSayfasi() {
           <GlobalBar />
         </div>
 
-        <header className="no-print mb-3 flex flex-wrap items-center gap-3 rounded-[24px] bg-black/25 px-3 py-2 text-amber-50 backdrop-blur-md">
-          <a href="/app" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" title={t("mus_back")}>
-            ‹
-          </a>
-          <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40 sm:h-12 sm:w-12" />
-          <div className="min-w-0">
-            <p className="font-hand text-2xl leading-none sm:text-3xl">Shop Ledger</p>
-            <p className="text-[11px] uppercase tracking-[0.16em] text-amber-100/70">{t("mus_title")}</p>
+        <header className="no-print mb-3 rounded-[24px] bg-black/25 px-4 py-3 backdrop-blur-md">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex min-w-[210px] items-center gap-3">
+              <a href="/app" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" title={t("mus_back")}>
+                ‹
+              </a>
+              <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40 sm:h-12 sm:w-12" />
+              <div className="min-w-0">
+                <p className="font-hand text-2xl leading-none sm:text-3xl">Shop Ledger</p>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-amber-100/70">{t("mus_title")}</p>
+              </div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="mb-2 text-sm font-semibold text-amber-100">{t("cm_hizliEkle")}</p>
+              <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4">
+                <input ref={adRef} value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+                <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+                <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+                <input value={hizmet} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
+                <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+                <button type="button" disabled={mesgul} onClick={() => void hizliEkle()} className="rounded-xl bg-emerald-600 px-8 py-2 text-sm font-bold text-white disabled:opacity-50">
+                  {t("mus_add")}
+                </button>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-white/10 px-3 py-2">
+                  <I name="search" size={15} className="shrink-0 text-amber-100/70" />
+                  <input
+                    value={arama}
+                    onChange={(e) => setArama(e.target.value)}
+                    placeholder={t("mus_search")}
+                    className="w-full min-w-0 bg-transparent text-sm text-amber-50 outline-none placeholder:text-amber-100/50"
+                  />
+                </div>
+                <button type="button" onClick={musteriOdagina} className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 hover:bg-slate-50">
+                  {t("mus_addCustomer")}
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-white/10 px-3 py-2">
-            <I name="search" size={15} className="shrink-0 text-amber-100/70" />
-            <input
-              value={arama}
-              onChange={(e) => setArama(e.target.value)}
-              placeholder={t("mus_search")}
-              className="w-full min-w-0 bg-transparent text-sm text-amber-50 outline-none placeholder:text-amber-100/50"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setCopte((v) => !v)}
-            className={`shrink-0 rounded-full px-3 py-2 text-xs font-semibold ${copte ? "bg-rose-700 text-white" : "bg-white/10 text-amber-50"}`}
-          >
-            {t("mus_deleted")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              window.location.href = `/api/export-musteriler?locale=${locale}&currency=${currency}`;
-            }}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-amber-50 hover:bg-white/20"
-            title={t("excel")}
-          >
-            <I name="excel" size={15} />
-          </button>
         </header>
-
-        <div className="no-print mb-3 grid grid-cols-2 gap-2 rounded-2xl bg-black/20 p-3 min-[480px]:grid-cols-4">
-          <p className="col-span-2 text-sm font-semibold text-amber-100 min-[480px]:col-span-4">{t("cm_hizliEkle")}</p>
-          <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-          <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-          <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-          <input value={hizmet} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-          <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-          <button type="button" disabled={mesgul} onClick={() => void hizliEkle()} className="col-span-2 rounded-xl bg-emerald-600 px-5 py-2 text-sm font-bold text-white disabled:opacity-50 min-[480px]:col-span-2">
-            {t("mus_add")}
-          </button>
-        </div>
 
         <div className="no-print mb-3 flex flex-wrap items-center gap-1.5">
           {FILTRELER.map((f) => (
@@ -334,11 +340,29 @@ export function MusteriSayfasi() {
               key={f.id}
               type="button"
               onClick={() => setFiltre(f.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${filtre === f.id ? "bg-slate-200 text-slate-900" : "bg-white/10 text-amber-50"}`}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${filtre === f.id ? "bg-slate-900 text-white" : "bg-white/10 text-amber-50"}`}
             >
               {f.ad}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setCopte((v) => !v)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${copte ? "bg-rose-700 text-white" : "bg-white/10 text-amber-50"}`}
+            title={t("mus_deleted")}
+          >
+            <I name="delete" size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = `/api/export-musteriler?locale=${locale}&currency=${currency}`;
+            }}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-amber-50 hover:bg-white/20"
+            title={t("excel")}
+          >
+            <I name="excel" size={14} />
+          </button>
           <span className="ml-auto text-xs text-amber-100/70">
             {t("cm_ozet").split("{n}").join(String(suzulmus.length)).split("{t}").join(fm(ozetToplam))}
           </span>
@@ -408,13 +432,18 @@ export function MusteriSayfasi() {
                     </div>
                   </div>
                 ))}
-                {!suzulmus.length ? <p className="font-hand py-10 text-center text-2xl text-slate-500">{t("mus_empty")}</p> : null}
+                {!suzulmus.length ? (
+                  <div className="font-hand py-10 text-center text-2xl text-slate-500">
+                    <I name="edit" size={40} className="mx-auto mb-2 block opacity-60" />
+                    <p>{t("mus_empty")}</p>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
 
           <aside className="no-print min-w-0 rounded-[28px] bg-black/25 p-4 text-amber-50 backdrop-blur-md">
-            <p className="font-hand text-2xl leading-none text-teal-100">{t("cm_islemler")}</p>
+            <p className="font-hand flex items-center gap-2 text-2xl leading-none text-teal-100"><I name="cart" size={22} />{t("cm_islemler")}</p>
             <div className="mt-2 flex gap-1.5 text-xs">
               <span className="rounded-full bg-white/10 px-2.5 py-1">{t("cm_tumu")} ({aktif.length})</span>
               <span className="rounded-full bg-white/10 px-2.5 py-1">{t("cm_islemde")} ({islemde.length})</span>
