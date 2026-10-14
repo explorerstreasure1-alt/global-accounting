@@ -416,10 +416,11 @@ export function EtiketStudyosu() {
                   key={y.id}
                   type="button"
                   onClick={() => yonSec(y.id)}
-                  className={`flex flex-col items-center gap-1 rounded-xl border px-2 py-2 text-[11px] font-semibold ${yonAktif() === y.id ? "border-teal-600 bg-teal-600/10 text-teal-800" : "border-slate-300 bg-white/60 text-slate-600 hover:bg-white"}`}
+                  title={y.label}
+                  className={`flex min-w-0 flex-col items-center gap-1 overflow-hidden rounded-xl border px-1 py-2 text-[10px] font-semibold leading-tight ${yonAktif() === y.id ? "border-teal-600 bg-teal-600/10 text-teal-800" : "border-slate-300 bg-white/60 text-slate-600 hover:bg-white"}`}
                 >
-                  <I name={y.icon} size={18} />
-                  {y.label}
+                  <I name={y.icon} size={18} className="shrink-0" />
+                  <span className="w-full truncate text-center">{y.label}</span>
                 </button>
               ))}
             </div>
