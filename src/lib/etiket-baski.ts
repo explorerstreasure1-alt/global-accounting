@@ -181,9 +181,6 @@ export async function etiketCanvasCiz(a: EtiketAlan): Promise<HTMLCanvasElement>
   x.font = `700 ${X(2.2)}px ${mono}`;
   x.textAlign = "right";
   x.fillText(a.tarih.slice(0, 16), X(56), Y(33), X(32));
-  x.font = `700 ${X(2.4)}px system-ui, sans-serif`;
-  x.fillStyle = a.durumRenk;
-  x.fillText(a.durum.toUpperCase().slice(0, 12), X(58), Y(2), X(14));
   x.textAlign = "left";
 
   return c;

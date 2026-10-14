@@ -46,7 +46,6 @@ function zonlar(t: (k: string) => string): Array<{ id: string; l: number; t: num
     { id: "kod", l: 64, t: 56, w: 32, h: 11, baslik: t("et_kod") },
     { id: "sira", l: 31, t: 69, w: 65, h: 13, baslik: t("et_sira") },
     { id: "tarih", l: 39, t: 82, w: 57, h: 11, baslik: t("et_tarih") },
-    { id: "durum", l: 67, t: 2, w: 29, h: 10, baslik: t("et_durum") },
     { id: "qr", l: 2, t: 28, w: 27, h: 44, baslik: t("et_qr") },
   ];
 }
@@ -69,7 +68,6 @@ export function EtiketStudyosu() {
   const [onizleme, setOnizleme] = useState("");
   const [bilgi, setBilgi] = useState<{ musteri: Musteri; ziyaret: Ziyaret; siraNo: number; dukkan: string } | null>(null);
   const [alan, setAlan] = useState<EtiketAlan | null>(null);
-  const [durumKey, setDurumKey] = useState<"hazirlaniyor" | "hazir" | "teslim">("hazirlaniyor");
   const [qrOzel, setQrOzel] = useState("");
   const [vurgu, setVurgu] = useState<string | null>(null);
   const [duzenId, setDuzenId] = useState<string | null>(null);
@@ -121,7 +119,6 @@ export function EtiketStudyosu() {
       return;
     }
     const dk = bilgi.ziyaret.durum;
-    setDurumKey(dk);
     setQrOzel("");
     setAlan({
       // Etikette isim yıldızlı (TAN** G*****), numara tam görünür.
@@ -168,7 +165,6 @@ export function EtiketStudyosu() {
   function duzenDeger(id: string): string {
     if (!alan) return "";
     if (id === "qr") return qrOzel;
-    if (id === "durum") return durumKey;
     if (id === "dukkan") return alan.dukkan;
     if (id === "slogan") return alan.dukkanAlt;
     if (id === "adSoyad") return alan.adSoyad;
@@ -184,10 +180,6 @@ export function EtiketStudyosu() {
   function duzenYaz(id: string, v: string) {
     if (id === "qr") {
       setQrOzel(v);
-      return;
-    }
-    if (id === "durum") {
-      durumSec(v);
       return;
     }
     if (!alan) return;
@@ -217,7 +209,7 @@ export function EtiketStudyosu() {
     }
   }
 
-  const girisKls = "w-full min-w-0 rounded-lg bg-white/10 px-2 py-1.5 text-sm text-white outline-none";
+  const girisKls = "w-full min-w-0 rounded-lg bg-white/10 px-2 py-1.5 text-sm text-slate-900 outline-none";
 
   function kutu(id: string, etiket: string, icerik: ReactNode) {
     return (
@@ -226,13 +218,6 @@ export function EtiketStudyosu() {
         {icerik}
       </label>
     );
-  }
-
-  function durumSec(v: string) {
-    const key = (["hazirlaniyor", "hazir", "teslim"] as const).includes(v as "hazirlaniyor") ? (v as "hazirlaniyor" | "hazir" | "teslim") : "hazirlaniyor";
-    setDurumKey(key);
-    alanYaz("durum", key === "teslim" ? t("mus_delivered") : key === "hazir" ? t("mus_ready") : t("mus_processing"));
-    alanYaz("durumRenk", key === "teslim" ? "#4ade80" : key === "hazir" ? "#7dd3fc" : "#4a9b6f");
   }
 
   useEffect(() => {
@@ -435,18 +420,6 @@ export function EtiketStudyosu() {
                   {kutu("tarih", t("et_tarih"), (
                     <input value={alan.tarih} onChange={(e) => alanYaz("tarih", e.target.value)} ref={(el) => { alanRef.current["tarih"] = el; }} className={girisKls} />
                   ))}
-                  {kutu("durum", t("et_durum"), (
-                    <select
-                      value={durumKey}
-                      onChange={(e) => durumSec(e.target.value)}
-                      ref={(el) => { alanRef.current["durum"] = el; }}
-                      className={`${girisKls} [&>option]:text-slate-900`}
-                    >
-                      <option value="hazirlaniyor">{t("mus_processing")}</option>
-                      <option value="hazir">{t("mus_ready")}</option>
-                      <option value="teslim">{t("mus_delivered")}</option>
-                    </select>
-                  ))}
                   {kutu("qr", t("et_qr"), (
                     <textarea
                       value={qrOzel}
@@ -473,7 +446,7 @@ export function EtiketStudyosu() {
           <main className="scroll-thin min-w-0 overflow-auto rounded-2xl bg-[#e9e9ed] p-4 ring-1 ring-slate-300">
             {!bilgi ? (
               <p className="py-16 text-center text-sm text-amber-100/60">
-                <a href="/app/musteriler" className="text-sky-300 underline">‹ {t("mus_title")}</a>
+                <a href="/app/musteriler" className="text-sky-700 underline">‹ {t("mus_title")}</a>
               </p>
             ) : onizleme ? (
               <div className="flex min-h-[320px] items-center justify-center">
@@ -482,25 +455,6 @@ export function EtiketStudyosu() {
                   {zonlar(t).map((z) => {
                     if (duzenId === z.id) {
                       const genis = z.w < 35;
-                      if (z.id === "durum") {
-                        return (
-                          <select
-                            key={z.id}
-                            autoFocus
-                            value={durumKey}
-                            onChange={(e) => duzenYaz(z.id, e.target.value)}
-                            onBlur={() => setDuzenId(null)}
-                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") (e.target as HTMLSelectElement).blur(); }}
-                            aria-label={z.baslik}
-                            className="absolute z-10 rounded border border-slate-300 bg-black/95 px-1 py-1 text-xs text-white outline-none"
-                            style={{ left: `${z.l}%`, top: `${z.t}%`, width: `${Math.max(z.w, 30)}%`, minHeight: `${z.h}%` }}
-                          >
-                            <option value="hazirlaniyor">{t("mus_processing")}</option>
-                            <option value="hazir">{t("mus_ready")}</option>
-                            <option value="teslim">{t("mus_delivered")}</option>
-                          </select>
-                        );
-                      }
                       if (z.id === "qr") {
                         return (
                           <span
