@@ -91,9 +91,9 @@ export function EtiketStudyosu() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
     const m = q.get("m");
-    const z = q.get("z");
+    const z = q.get("z") || "";
     const n = Number(q.get("n") || 1) || 1;
-    if (!m || !z) return;
+    if (!m) return;
     (async () => {
       try {
         const [dm, da] = await Promise.all([
