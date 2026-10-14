@@ -92,18 +92,19 @@ textarea {
   pointer-events: none;
 }
 
-/* Çerçevesiz doldurma alanlarına defter çizgisi (kenarlıklı olanlara dokunmaz) */
+/* Çerçevesiz doldurma alanlarına defter çerçevesi (kenarlıklı olanlara dokunmaz) */
 .desk-app input:not([class*="border"]):not([type="checkbox"]):not([type="radio"]),
 .desk-app select:not([class*="border"]),
 .desk-app textarea:not([class*="border"]) {
-  border-bottom: 2px solid rgba(22, 50, 79, 0.35);
-  border-radius: 6px 6px 0 0;
+  border: 1.5px solid rgba(22, 50, 79, 0.28);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 .desk-app input:not([class*="border"]):focus,
 .desk-app select:not([class*="border"]):focus,
 .desk-app textarea:not([class*="border"]):focus {
-  border-bottom-color: rgba(22, 50, 79, 0.7);
+  border-color: rgba(22, 50, 79, 0.6);
   outline: none;
 }
 

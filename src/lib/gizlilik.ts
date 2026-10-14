@@ -26,6 +26,14 @@ export function maskSoyad(soyad: string): string {
   return `${s.slice(0, 2)}${YILDIZ.repeat(s.length - 2)}`;
 }
 
+/** Soyisim kısa maske: ilk 1 harf görünür (etiket altı gibi dar alanlar için). */
+export function maskSoyadKisa(soyad: string): string {
+  const s = (soyad ?? "").trim();
+  if (!s) return "";
+  if (s.length <= 1) return s;
+  return `${s.slice(0, 1)}${YILDIZ.repeat(s.length - 1)}`;
+}
+
 /**
  * Telefon: SADECE son 4 rakam görünür, öncesi ful silinip yıldızlanır
  * (boşluk/ayraç dahil her karakter yıldız olur, veri SİLİNMEZ).

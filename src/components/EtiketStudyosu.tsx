@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf";
 import type { Musteri, Ziyaret } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { maskAd, maskSoyad } from "@/lib/gizlilik";
+import { maskAd, maskSoyad, maskSoyadKisa } from "@/lib/gizlilik";
 import { waMesajKur, ziyaretKodu } from "@/lib/wa-mesaj";
 import {
   etiketCanvasCiz,
@@ -470,7 +470,7 @@ export function EtiketStudyosu() {
             ) : null}
           </aside>
 
-          <main className="scroll-thin min-w-0 overflow-auto rounded-2xl bg-[#fafafa] p-4 ring-1 ring-slate-300">
+          <main className="scroll-thin min-w-0 overflow-auto rounded-2xl bg-[#e9e9ed] p-4 ring-1 ring-slate-300">
             {!bilgi ? (
               <p className="py-16 text-center text-sm text-amber-100/60">
                 <a href="/app/musteriler" className="text-sky-300 underline">‹ {t("mus_title")}</a>
@@ -559,7 +559,7 @@ export function EtiketStudyosu() {
             )}
             {bilgi ? (
               <p className="mt-2 text-center text-xs text-amber-100/60">
-                {bilgi.musteri.ad} {bilgi.musteri.soyad} · {bilgi.ziyaret.hizmet} · {formatDate(bilgi.ziyaret.tarih, intl)} · {boyut.w}×{boyut.h}mm
+                {maskAd(bilgi.musteri.ad)} {maskSoyadKisa(bilgi.musteri.soyad)} · {bilgi.ziyaret.hizmet} · {formatDate(bilgi.ziyaret.tarih, intl)} · {boyut.w}×{boyut.h}mm
               </p>
             ) : null}
             <p className="mx-auto mt-1 max-w-md text-center text-[11px] leading-snug text-amber-100/40">{t("et_kahveNot")}</p>
