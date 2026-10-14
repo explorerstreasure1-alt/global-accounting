@@ -102,8 +102,8 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/55 p-3">
-      <div className="my-4 w-full max-w-3xl rounded-2xl bg-[#fbf6ea] text-slate-900 shadow-2xl">
-        <div className="flex flex-wrap items-center gap-2 border-b border-amber-200 px-5 py-3">
+      <div className="my-4 w-full max-w-3xl rounded-2xl bg-[#fafafa] text-slate-900 shadow-2xl">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-5 py-3">
           <div className="mr-auto">
             <p className="font-hand inline-flex items-center gap-2 text-3xl leading-none"><I name="calendar" size={26} /> {t("cal_title")}</p>
             <p className="text-xs text-slate-600">{t("cal_sub")}</p>
@@ -111,7 +111,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
           <select
             value={y}
             onChange={(e) => setY(Number(e.target.value))}
-            className="rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-sm"
+            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
             title={t("date")}
           >
             {yillar.map((yy) => (
@@ -123,7 +123,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
           <select
             value={m}
             onChange={(e) => setM(Number(e.target.value))}
-            className="rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-sm capitalize"
+            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm capitalize"
             title={t("calendar")}
           >
             {monthNames.map((a, i) => (
@@ -148,7 +148,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
                 key={i}
                 onClick={() => setM(i + 1)}
                 className={`rounded-full px-2.5 py-1 text-xs capitalize ${
-                  m === i + 1 ? "bg-slate-900 text-white" : "bg-amber-100 text-slate-700 hover:bg-amber-200"
+                  m === i + 1 ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
                 {monthNames[i].slice(0, 3)}
@@ -184,7 +184,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
                       ? "border-slate-900 bg-slate-900 text-white"
                       : bugunMu
                         ? "border-teal-600 bg-teal-50"
-                        : "border-amber-200 bg-white hover:border-slate-400"
+                        : "border-slate-200 bg-white hover:border-slate-400"
                   }`}
                 >
                   <span className={`text-xs font-semibold ${seciliMi ? "text-white" : "text-slate-800"}`}>
@@ -206,7 +206,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
           </div>
 
           {/* Seçili gün özeti + aksiyonlar */}
-          <div className="mt-4 rounded-2xl bg-white/70 p-3 ring-1 ring-amber-200">
+          <div className="mt-4 rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm">
                 <span className="font-semibold">{fd(secili)}</span>
@@ -246,7 +246,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
                   min="2015-01-01"
                   max="2035-12-31"
                   onChange={(e) => setAralikBas(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-sm text-slate-900"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
                 />
               </label>
               <label className="text-xs text-slate-600">
@@ -257,7 +257,7 @@ export function TakvimPanel({ open, kayitlar, year, month, onClose, onPickDate, 
                   min="2015-01-01"
                   max="2035-12-31"
                   onChange={(e) => setAralikBit(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-sm text-slate-900"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
                 />
               </label>
               <button

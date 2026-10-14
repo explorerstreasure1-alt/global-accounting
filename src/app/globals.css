@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f3e6c4;
-  --paper-dark: #ead9a8;
+  --paper: #f5f5f4;
+  --paper-dark: #e2e2df;
   --line: rgba(90, 140, 190, 0.42);
   --margin: #c43c3c;
   --ink: #16324f;
@@ -21,8 +21,8 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(255, 253, 244, 0.5), transparent 50%),
-    #efe3c2;
+    radial-gradient(1200px 600px at 20% -10%, rgba(255, 255, 255, 0.5), transparent 50%),
+    #e9e6da;
   background-attachment: fixed;
 }
 
@@ -52,11 +52,11 @@ textarea {
 .desk-app {
   min-height: 100vh;
   color: var(--ink);
-  background-color: #faf3e3;
+  background-color: #f5f3ec;
   background-image:
-    radial-gradient(rgba(90, 120, 160, 0.2) 1px, transparent 1.5px),
-    repeating-linear-gradient(to bottom, transparent 0 35px, rgba(90, 140, 190, 0.26) 35px 36px),
-    radial-gradient(ellipse at 50% 0%, #fffef8 0%, #faf3e3 60%, #f3e7c8 100%);
+    radial-gradient(rgba(100, 116, 140, 0.2) 1px, transparent 1.5px),
+    repeating-linear-gradient(to bottom, transparent 0 35px, rgba(100, 116, 140, 0.26) 35px 36px),
+    radial-gradient(ellipse at 50% 0%, #ffffff 0%, #f5f3ec 60%, #e9e6d8 100%);
   background-size:
     26px 26px,
     auto,
@@ -74,13 +74,13 @@ textarea {
       transparent 0 35px,
       var(--line) 35px 36px
     ),
-    repeating-linear-gradient(3deg, rgba(105, 75, 35, 0.025) 0 1px, transparent 1px 4px),
-    radial-gradient(ellipse at 45% 20%, #fff9e9 0%, var(--paper) 72%, #eadab5 100%);
+    repeating-linear-gradient(3deg, rgba(90, 90, 95, 0.03) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 45% 20%, #ffffff 0%, var(--paper) 72%, #e6e6e3 100%);
   background-blend-mode: normal, normal, multiply, normal;
   background-size: auto, auto, auto, cover;
   box-shadow:
     0 30px 70px rgba(20, 10, 0, 0.45),
-    inset 0 0 80px rgba(120, 80, 20, 0.08);
+    inset 0 0 80px rgba(90, 90, 95, 0.1);
 }
 
 .notebook::before {
@@ -88,7 +88,7 @@ textarea {
   position: absolute;
   inset: 0 auto 0 0;
   width: 48px;
-  background: linear-gradient(90deg, rgba(120, 80, 20, 0.16), rgba(120, 80, 20, 0) 75%);
+  background: linear-gradient(90deg, rgba(90, 90, 95, 0.16), rgba(90, 90, 95, 0) 75%);
   pointer-events: none;
 }
 
@@ -150,9 +150,9 @@ textarea {
 }
 
 .chip.active-kart {
-  background: #fef3c7;
-  border-color: #d97706;
-  color: #b45309;
+  background: #e2e8f0;
+  border-color: #64748b;
+  color: #334155;
 }
 
 .chip.active-havale {
@@ -403,28 +403,28 @@ textarea {
 .desk-app [class*="bg-white/10"],
 .desk-app [class*="bg-white/5"],
 .desk-app .ai-panel {
-  background-color: rgba(255, 254, 248, 0.9);
+  background-color: rgba(255, 255, 255, 0.92);
   background-image:
-    radial-gradient(rgba(90, 120, 160, 0.13) 1px, transparent 1.5px);
+    radial-gradient(rgba(100, 116, 140, 0.13) 1px, transparent 1.5px);
   background-size: 26px 26px;
   color: var(--ink);
-  border: 1px solid rgba(93, 64, 28, 0.18);
+  border: 1px solid rgba(75, 72, 66, 0.2);
   box-shadow:
-    0 10px 28px rgba(93, 64, 28, 0.1),
-    inset 0 0 40px rgba(120, 80, 20, 0.05);
+    0 10px 28px rgba(75, 72, 66, 0.1),
+    inset 0 0 40px rgba(90, 90, 95, 0.05);
   backdrop-filter: none;
 }
 
 .desk-app [class*="hover:bg-white/20"]:hover {
-  background-color: rgba(93, 64, 28, 0.08);
+  background-color: rgba(75, 72, 66, 0.08);
 }
 
 .desk-app [class*="border-white/10"] {
-  border-color: rgba(93, 64, 28, 0.2);
+  border-color: rgba(75, 72, 66, 0.2);
 }
 
 .desk-app [class*="ring-white/10"] {
-  --tw-ring-color: rgba(93, 64, 28, 0.2);
+  --tw-ring-color: rgba(75, 72, 66, 0.2);
 }
 
 /* Açık zemin yazılarını mürekkebe çevir (renkli düğmelerdeki beyazlar aynen kalır) */
@@ -437,6 +437,10 @@ textarea {
 }
 
 .desk-app [class*="text-amber-200"] {
+  color: var(--ink-soft);
+}
+
+.desk-app [class*="text-amber-300"] {
   color: var(--ink-soft);
 }
 
@@ -462,7 +466,7 @@ textarea {
 }
 
 .desk-app .ai-panel .msg-html code {
-  background: rgba(93, 64, 28, 0.1);
+  background: rgba(75, 72, 66, 0.12);
 }
 
 .desk-app .ai-panel .msg-tablo th {
@@ -472,11 +476,11 @@ textarea {
 
 .desk-app .ai-panel .msg-tablo th,
 .desk-app .ai-panel .msg-tablo td {
-  border-color: rgba(93, 64, 28, 0.28);
+  border-color: rgba(75, 72, 66, 0.3);
 }
 
 .desk-app .ai-panel .scroll-thin::-webkit-scrollbar-thumb {
-  background: rgba(80, 60, 30, 0.35);
+  background: rgba(90, 90, 95, 0.4);
 }
 
 /* === Kabartma (deftere mühür basılmış hissi) === */
@@ -484,15 +488,34 @@ textarea {
   color: var(--ink);
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85),
-    0 -1px 1px rgba(93, 64, 28, 0.3);
+    0 -1px 1px rgba(75, 72, 66, 0.32);
+}
+
+/* Tüm ikonlar: antrasit sade çizgi (renkli dolgulu düğmelerdeki beyazlar korunur) */
+.desk-app svg {
+  color: #34383f;
+  stroke-width: 1.6;
+}
+
+.desk-app [class*="bg-emerald"] svg,
+.desk-app [class*="bg-slate-900"] svg,
+.desk-app [class*="bg-slate-800"] svg,
+.desk-app [class*="bg-sky-"] svg,
+.desk-app [class*="bg-rose"] svg,
+.desk-app [class*="bg-indigo"] svg,
+.desk-app [class*="bg-teal-700"] svg,
+.desk-app [class*="bg-teal-600"] svg,
+.desk-app [class*="bg-[var(--ink)]"] svg,
+.desk-app [class*="bg-black/95"] svg,
+.desk-app [class*="gradient"] svg {
+  color: #fff;
 }
 
 .desk-app button svg,
 .desk-app a svg {
   filter:
     drop-shadow(0 1px 0 rgba(255, 255, 255, 0.65))
-    drop-shadow(0 -1px 1px rgba(93, 64, 28, 0.4));
-  stroke-width: 2.1;
+    drop-shadow(0 -1px 1px rgba(75, 72, 66, 0.4));
 }
 
 .kabartma {

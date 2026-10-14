@@ -221,7 +221,7 @@ export function EtiketStudyosu() {
 
   function kutu(id: string, etiket: string, icerik: ReactNode) {
     return (
-      <label className={`block rounded-lg px-2 py-1 ring-1 ${vurgu === id ? "bg-amber-200/20 ring-amber-300" : "ring-transparent"}`}>
+      <label className={`block rounded-lg px-2 py-1 ring-1 ${vurgu === id ? "bg-slate-200/20 ring-slate-300" : "ring-transparent"}`}>
         <span className="text-[11px] text-amber-100/60">{etiket}</span>
         {icerik}
       </label>
@@ -368,7 +368,7 @@ export function EtiketStudyosu() {
           <a href="/app/musteriler" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" title={t("mus_back")}>
             ‹
           </a>
-          <img src="/images/logo.svg" alt="Shop Ledger" className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-amber-200/40" />
+          <img src="/images/logo.svg" alt="Shop Ledger" className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40" />
           <p className="mr-auto text-sm font-bold">
             Shop Ledger <span className="font-normal text-amber-100/60">· {t("et_studio")}</span>
           </p>
@@ -467,7 +467,7 @@ export function EtiketStudyosu() {
                   <button
                     type="button"
                     onClick={baslikKaydet}
-                    className="w-full rounded-lg bg-amber-200/20 px-3 py-2 text-xs font-bold text-amber-100 ring-1 ring-amber-300/40 hover:bg-amber-200/30"
+                    className="w-full rounded-lg bg-slate-200/20 px-3 py-2 text-xs font-bold text-amber-100 ring-1 ring-slate-300/40 hover:bg-slate-200/30"
                   >
                     💾 {t("cm_kaydet")} · {t("set_shop")}
                   </button>
@@ -477,15 +477,15 @@ export function EtiketStudyosu() {
             ) : null}
           </aside>
 
-          <main className="scroll-thin min-w-0 overflow-auto rounded-2xl bg-gradient-to-br from-amber-950/70 via-[#3b2412]/60 to-black/40 p-4 ring-1 ring-amber-900/40 backdrop-blur-md">
+          <main className="scroll-thin min-w-0 overflow-auto rounded-2xl bg-[#fafafa] p-4 ring-1 ring-slate-300">
             {!bilgi ? (
               <p className="py-16 text-center text-sm text-amber-100/60">
                 <a href="/app/musteriler" className="text-sky-300 underline">‹ {t("mus_title")}</a>
               </p>
             ) : onizleme ? (
               <div className="flex min-h-[320px] items-center justify-center">
-                <div className="relative inline-block max-w-full rounded-lg bg-amber-950/40 p-3 ring-1 ring-amber-800/50">
-                  <img src={onizleme} alt={t("et_studio")} className="h-auto max-w-full rounded shadow-2xl ring-2 ring-amber-800/60" style={{ maxHeight: "62vh" }} />
+                <div className="relative inline-block max-w-full rounded-lg bg-slate-950/40 p-3 ring-1 ring-slate-800/50">
+                  <img src={onizleme} alt={t("et_studio")} className="h-auto max-w-full rounded shadow-2xl ring-2 ring-slate-800/60" style={{ maxHeight: "62vh" }} />
                   {zonlar(t).map((z) => {
                     if (duzenId === z.id) {
                       const genis = z.w < 35;
@@ -499,7 +499,7 @@ export function EtiketStudyosu() {
                             onBlur={() => setDuzenId(null)}
                             onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") (e.target as HTMLSelectElement).blur(); }}
                             aria-label={z.baslik}
-                            className="absolute z-10 rounded border border-amber-300 bg-black/95 px-1 py-1 text-xs text-white outline-none"
+                            className="absolute z-10 rounded border border-slate-300 bg-black/95 px-1 py-1 text-xs text-white outline-none"
                             style={{ left: `${z.l}%`, top: `${z.t}%`, width: `${Math.max(z.w, 30)}%`, minHeight: `${z.h}%` }}
                           >
                             <option value="hazirlaniyor">{t("mus_processing")}</option>
@@ -512,7 +512,7 @@ export function EtiketStudyosu() {
                         return (
                           <span
                             key={z.id}
-                            className="absolute z-10 rounded border border-amber-300 bg-black/95 p-1"
+                            className="absolute z-10 rounded border border-slate-300 bg-black/95 p-1"
                             style={{ left: `${z.l}%`, top: `${z.t}%`, width: `${Math.max(z.w, 42)}%`, minHeight: `${z.h}%` }}
                           >
                             <textarea
@@ -525,7 +525,7 @@ export function EtiketStudyosu() {
                               rows={3}
                               placeholder="QR — boş = otomatik"
                               aria-label={z.baslik}
-                              className="w-full resize-none rounded bg-white/10 px-1 py-1 font-mono text-[11px] text-white outline-none"
+                              className="w-full resize-none rounded bg-white/10 px-1 py-1 font-mono text-[11px] text-slate-900 outline-none"
                             />
                             {!qrOzel.trim() ? <span className="block truncate font-mono text-[9px] text-amber-100/50">{qrEfektif().slice(0, 40)}…</span> : null}
                           </span>
@@ -542,7 +542,7 @@ export function EtiketStudyosu() {
                           onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") (e.target as HTMLInputElement).blur(); }}
                           aria-label={z.baslik}
                           placeholder={z.baslik}
-                          className={`absolute z-10 rounded border border-amber-300 bg-black/95 px-1 py-1 text-white outline-none ${genis ? "text-[11px]" : "text-sm font-bold"}`}
+                          className={`absolute z-10 rounded border border-slate-300 bg-black/95 px-1 py-1 text-white outline-none ${genis ? "text-[11px]" : "text-sm font-bold"}`}
                           style={{ left: `${z.l}%`, top: `${z.t}%`, width: `${z.w}%`, minHeight: `${z.h}%` }}
                         />
                       );
@@ -554,7 +554,7 @@ export function EtiketStudyosu() {
                         title={`${z.baslik} — düzenlemek için tıkla`}
                         aria-label={z.baslik}
                         onClick={() => odakla(z.id)}
-                        className="absolute rounded border border-transparent hover:border-white/60 hover:bg-white/10 focus-visible:border-amber-300"
+                        className="absolute rounded border border-transparent hover:border-white/60 hover:bg-white/10 focus-visible:border-slate-300"
                         style={{ left: `${z.l}%`, top: `${z.t}%`, width: `${z.w}%`, height: `${z.h}%` }}
                       />
                     );
@@ -583,18 +583,18 @@ export function EtiketStudyosu() {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <label className="text-amber-100/60">
                 {t("bt_baud")}
-                <select value={baud} onChange={(e) => setBaud(e.target.value)} className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-white outline-none [&>option]:text-slate-900">
+                <select value={baud} onChange={(e) => setBaud(e.target.value)} className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-slate-900 outline-none [&>option]:text-slate-900">
                   <option value="115200">115200 (USB)</option>
                   <option value="9600">9600 (Bluetooth)</option>
                 </select>
               </label>
               <label className="text-amber-100/60">
                 {t("et_kopya")}
-                <input value={kopya} onChange={(e) => setKopya(e.target.value)} inputMode="numeric" className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-white outline-none" />
+                <input value={kopya} onChange={(e) => setKopya(e.target.value)} inputMode="numeric" className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-slate-900 outline-none" />
               </label>
               <label className="text-amber-100/60">
                 {t("et_yogunluk")}
-                <select value={yogunluk} onChange={(e) => setYogunluk(e.target.value)} className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-white outline-none [&>option]:text-slate-900">
+                <select value={yogunluk} onChange={(e) => setYogunluk(e.target.value)} className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-slate-900 outline-none [&>option]:text-slate-900">
                   <option value="1">{t("et_hafif")}</option>
                   <option value="2">{t("et_normal")}</option>
                   <option value="3">{t("et_koyu")}</option>
@@ -602,7 +602,7 @@ export function EtiketStudyosu() {
               </label>
               <label className="text-amber-100/60">
                 GAP (mm)
-                <input value={bosluk} onChange={(e) => setBosluk(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-white outline-none" />
+                <input value={bosluk} onChange={(e) => setBosluk(e.target.value)} inputMode="decimal" className="mt-1 w-full rounded-lg bg-white/10 px-2 py-2 text-slate-900 outline-none" />
               </label>
             </div>
             <button type="button" disabled={mesgul} onClick={() => void simdiYazdir()} className="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
@@ -619,11 +619,11 @@ export function EtiketStudyosu() {
             <div className="mt-3 rounded-xl bg-sky-500/10 p-3 ring-1 ring-sky-400/40">
               <p className="mb-1 text-xs font-bold text-sky-200">🖨️ Yazıcı uyumu</p>
               <p className="text-[11px] leading-snug text-amber-100/80">
-                Bu etiket baskısı <span className="font-bold text-white">Phomemo D520-BT Bluetooth+USB Termal Yazıcı</span> (Barkod/Adres/Posta
-                Etiketi, pazaryerleri ile uyumlu) ile uyumludur — bu yazıcıyı alın ve <span className="font-bold text-white">40×60 etiket kağıdı</span> alın.
+                Bu etiket baskısı <span className="font-bold text-slate-900">Phomemo D520-BT Bluetooth+USB Termal Yazıcı</span> (Barkod/Adres/Posta
+                Etiketi, pazaryerleri ile uyumlu) ile uyumludur — bu yazıcıyı alın ve <span className="font-bold text-slate-900">40×60 etiket kağıdı</span> alın.
               </p>
             </div>
-            <div className="mt-3 rounded-xl bg-amber-500/10 p-3 ring-1 ring-amber-400/30">
+            <div className="mt-3 rounded-xl bg-slate-500/10 p-3 ring-1 ring-slate-400/30">
               <p className="mb-1 text-xs font-bold text-amber-200">📖 {t("et_kilavuzBaslik")}</p>
               <p className="mb-1 text-[11px] font-semibold leading-snug text-amber-100">{t("et_kilavuzUyari")}</p>
               <p className="mb-1 text-[11px] text-amber-100/70">{t("et_kilavuzModeller")}</p>

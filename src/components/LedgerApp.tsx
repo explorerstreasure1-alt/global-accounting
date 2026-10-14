@@ -302,7 +302,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         </div>
         {trial ? <ProBanner gun={trial.gun} email={trial.email} /> : null}
         <header className="no-print mb-3 flex flex-wrap items-center gap-3 rounded-[24px] bg-black/25 px-3 py-2 text-amber-50 backdrop-blur-md">
-          <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-amber-200/40 sm:h-12 sm:w-12" />
+          <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40 sm:h-12 sm:w-12" />
           <div className="min-w-0">
             <p className="font-hand text-2xl leading-none sm:text-3xl md:text-4xl">{ayarlar.isletmeAdi}</p>
             <p className="text-[11px] uppercase tracking-[0.16em] text-amber-100/70">{t("app_sub")}</p>
@@ -403,7 +403,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
               .filter((u) => u.tip !== "bilgi")
               .slice(0, 3)
               .map((u) => (
-                <p key={u.baslik} className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 px-3 py-1.5 text-xs text-amber-100">
+                <p key={u.baslik} className="flex items-center gap-1.5 rounded-2xl bg-slate-400/15 px-3 py-1.5 text-xs text-amber-100">
                   <I name="warn" size={13} /> {u.mesaj}
                 </p>
               ))}
@@ -542,7 +542,7 @@ function ToolBtn({ children, onClick }: { children: ReactNode; onClick: () => vo
   return (
     <button
       onClick={onClick}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50/95 px-3 py-2 text-xs font-medium text-slate-800 shadow-sm hover:bg-white sm:py-1.5"
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-50/95 px-3 py-2 text-xs font-medium text-slate-800 shadow-sm hover:bg-white sm:py-1.5"
     >
       {children}
     </button>

@@ -113,7 +113,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
               min="2015-01-01"
               max="2035-12-31"
               onChange={(e) => setTariheGit(e.target.value)}
-              className="w-28 min-w-0 rounded-lg border border-amber-900/20 bg-white/60 px-2 py-1 text-xs"
+              className="w-28 min-w-0 rounded-lg border border-slate-900/20 bg-white/60 px-2 py-1 text-xs"
               title={t("calendar")}
             />
             <button
@@ -215,7 +215,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                           <I
                             name={k.odemeTipi === "Nakit" ? "cash" : k.odemeTipi === "Havale" ? "transfer" : "card"}
                             size={14}
-                            className={k.odemeTipi === "Nakit" ? "text-blue-700" : k.odemeTipi === "Havale" ? "text-green-700" : "text-amber-600"}
+                            className={k.odemeTipi === "Nakit" ? "text-blue-700" : k.odemeTipi === "Havale" ? "text-green-700" : "text-slate-600"}
                           />
                         </span>
                       </span>
@@ -261,7 +261,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
           ) : null}
         </div>
 
-        <div className="mt-3 rounded-2xl bg-white/35 p-2 ring-1 ring-amber-900/10">
+        <div className="mt-3 rounded-2xl bg-white/35 p-2 ring-1 ring-slate-900/10">
           <p className="px-1 pb-1 text-[10px] uppercase tracking-wider text-slate-500">
             {t("nb_newRow")} ({fd(today)})
           </p>
@@ -276,7 +276,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
       </div>
 
       {confirmId ? (
-        <div className="absolute inset-0 z-10 grid place-items-center overflow-y-auto bg-[#f3e6c4]/80 p-4">
+        <div className="absolute inset-0 z-10 grid place-items-center overflow-y-auto bg-[#f5f5f4]/80 p-4">
           <div className="my-auto w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
             <p className="font-hand text-2xl">{t("confirm_delete")}</p>
             <div className="mt-4 flex justify-end gap-2">
@@ -428,7 +428,7 @@ function PayChip({
       <I
         name={icon}
         size={15}
-        className={icon === "cash" ? "text-blue-700" : icon === "transfer" ? "text-green-700" : "text-amber-600"}
+        className={icon === "cash" ? "text-blue-700" : icon === "transfer" ? "text-green-700" : "text-slate-600"}
       />
     </button>
   );
@@ -472,7 +472,7 @@ export function TotalsStrip({
 
 function TotalCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl bg-[var(--paper)]/90 px-3 py-2 shadow-sm ring-1 ring-amber-950/10 min-w-0 overflow-hidden">
+    <div className="rounded-2xl bg-[var(--paper)]/90 px-3 py-2 shadow-sm ring-1 ring-slate-950/10 min-w-0 overflow-hidden">
       <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
       <p className="font-semibold tabular-nums text-[var(--ink)] break-words">{value}</p>
       {hint ? <p className="text-[10px] text-slate-500">{hint}</p> : null}

@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import type { Ayarlar, RaporOzet } from "@/lib/types";
@@ -8,7 +8,7 @@ import { waGonderenOnay } from "@/lib/wa-mesaj";
 import { I } from "./ui-icon";
 import { useT, catLabel } from "@/lib/i18n";
 
-/** GÃ¶nderici numarasÄ± Ã¼lke kodlarÄ± (ISO ile, dil baÄŸÄ±msÄ±z). */
+/** Gönderici numarasý ülke kodlarý (ISO ile, dil baðýmsýz). */
 const ULKE_KODLARI: Array<{ kod: string; etiket: string }> = [
   { kod: "90", etiket: "+90 TR" },
   { kod: "1", etiket: "+1 US" },
@@ -33,10 +33,10 @@ const ULKE_KODLARI: Array<{ kod: string; etiket: string }> = [
   { kod: "966", etiket: "+966 SA" },
   { kod: "971", etiket: "+971 AE" },
   { kod: "20", etiket: "+20 EG" },
-  { kod: "", etiket: "Â·Â·Â·" },
+  { kod: "", etiket: "···" },
 ];
 
-/** KayÄ±tlÄ± numarayÄ± kod + yerel parÃ§aya ayÄ±r (eÅŸleÅŸmezse +90 varsayÄ±lÄ±r). */
+/** Kayýtlý numarayý kod + yerel parçaya ayýr (eþleþmezse +90 varsayýlýr). */
 function kodAyir(ham: string): [string, string] {
   const d = String(ham ?? "").replace(/\D/g, "");
   const sirali = [...ULKE_KODLARI].filter((u) => u.kod).sort((a, b) => b.kod.length - a.kod.length);
@@ -46,7 +46,7 @@ function kodAyir(ham: string): [string, string] {
   return ["90", d.replace(/^0+/, "")];
 }
 
-/** Kod + yazÄ±lanÄ± tek uluslararasÄ± numarada birleÅŸtir (Ã§ift kod yazÄ±lmaz). */
+/** Kod + yazýlaný tek uluslararasý numarada birleþtir (çift kod yazýlmaz). */
 function kodBirlestir(kod: string, ham: string): string {
   if (!kod) return String(ham ?? "").trim().slice(0, 30);
   let d = String(ham ?? "").replace(/\D/g, "").replace(/^0+/, "");
@@ -98,7 +98,7 @@ export function ReportModal({
   const fd = (iso: string) => formatDate(iso, intl);
   if (!open) return null;
 
-  const damgaMetni = damga ?? (singleDate ? "GÃœN SONU" : "Z RAPORU");
+  const damgaMetni = damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU");
 
   function gorselHazirla(): HTMLCanvasElement | null {
     if (!rapor) return null;
@@ -111,8 +111,8 @@ export function ReportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/55 p-3 print:static print:bg-white print:p-0">
-      <div className="print-root my-4 w-full max-w-4xl rounded-2xl bg-[#fbf6ea] text-slate-900 shadow-2xl print:my-0 print:max-w-none print:rounded-none print:shadow-none">
-        <div className="no-print flex flex-wrap items-center gap-2 border-b border-amber-200 px-5 py-3">
+      <div className="print-root my-4 w-full max-w-4xl rounded-2xl bg-[#fafafa] text-slate-900 shadow-2xl print:my-0 print:max-w-none print:rounded-none print:shadow-none">
+        <div className="no-print flex flex-wrap items-center gap-2 border-b border-slate-200 px-5 py-3">
           <div className="mr-auto">
             <p className="font-hand text-3xl leading-none">{title}</p>
             <p className="text-xs text-slate-600">{subtitle}</p>
@@ -125,7 +125,7 @@ export function ReportModal({
                 onBaslangic(e.target.value);
                 onBitis(e.target.value);
               }}
-              className="rounded-lg border border-amber-300 bg-white px-2 py-1 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
             />
           ) : (
             <>
@@ -133,14 +133,14 @@ export function ReportModal({
                 type="date"
                 value={baslangic}
                 onChange={(e) => onBaslangic(e.target.value)}
-                className="rounded-lg border border-amber-300 bg-white px-2 py-1 text-sm"
+                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
               />
-              <span className="text-sm">â€”</span>
+              <span className="text-sm">—</span>
               <input
                 type="date"
                 value={bitis}
                 onChange={(e) => onBitis(e.target.value)}
-                className="rounded-lg border border-amber-300 bg-white px-2 py-1 text-sm"
+                className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
               />
             </>
           )}
@@ -197,7 +197,7 @@ export function ReportModal({
         </div>
 
         {gonderSec ? (
-          <div className="no-print border-b border-amber-200 bg-sky-50 px-5 py-3">
+          <div className="no-print border-b border-slate-200 bg-sky-50 px-5 py-3">
               <p className="text-sm font-semibold text-slate-800">
                 {t("rep_sendAs")} <span className="font-normal text-slate-500">({ayarlar.whatsappIsletme || ayarlar.whatsappAlici || t("noDate")})</span>
               </p>
@@ -222,7 +222,7 @@ export function ReportModal({
                         tip: pdfTip ?? "z",
                         baslangic,
                         bitis,
-                        // AlÄ±cÄ± alanÄ± kalktÄ±: rapor iÅŸletmenin kendi numarasÄ±na gider.
+                        // Alýcý alaný kalktý: rapor iþletmenin kendi numarasýna gider.
                         alici: ayarlar.whatsappIsletme || ayarlar.whatsappAlici,
                       });
                       setGonderDurum(
@@ -260,11 +260,11 @@ export function ReportModal({
                 <p className="font-hand text-4xl leading-none">{ayarlar.isletmeAdi}</p>
                 <p className="mt-1 text-sm uppercase tracking-[0.2em] text-slate-500">{title}</p>
                 <p className="text-sm text-slate-600">
-                  {rapor ? `${fd(rapor.baslangic)} â€” ${fd(rapor.bitis)}` : ""}
+                  {rapor ? `${fd(rapor.baslangic)} — ${fd(rapor.bitis)}` : ""}
                 </p>
               </div>
             </div>
-            <div className="stamp px-3 py-1 text-xs font-bold">{damga ?? (singleDate ? "GÃœN SONU" : "Z RAPORU")}</div>
+            <div className="stamp px-3 py-1 text-xs font-bold">{damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU")}</div>
           </div>
 
           {rapor ? (
@@ -332,7 +332,7 @@ export function ReportModal({
               <div className="mt-2 grid gap-2 md:grid-cols-2">
                 {rapor.kategoriler.map((k) => (
                   <div key={k.kategori} className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-sm">
-                    <span>{catLabel(k.kategori, locale)} Â· {k.adet}</span>
+                    <span>{catLabel(k.kategori, locale)} · {k.adet}</span>
                     <span className="tabular-nums">{fm(k.net)}</span>
                   </div>
                 ))}
@@ -358,8 +358,8 @@ export function ReportModal({
                       <td>{k.aciklama}</td>
                       <td>{catLabel(k.kategori, locale)}</td>
                       <td>{k.odemeTipi === "Nakit" ? t("pay_cash") : k.odemeTipi === "Havale" ? t("pay_transfer") : t("pay_card")}</td>
-                      <td>{k.gelir ? fm(k.gelir) : "â€”"}</td>
-                      <td>{k.gider ? fm(k.gider) : "â€”"}</td>
+                      <td>{k.gelir ? fm(k.gelir) : "—"}</td>
+                      <td>{k.gider ? fm(k.gider) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -367,7 +367,7 @@ export function ReportModal({
               </div>
 
               <p className="mt-8 text-right text-xs text-slate-500">
-                {ayarlar.isletmeAdi} Â· {formatDateLong(rapor.bitis, intl)}
+                {ayarlar.isletmeAdi} · {formatDateLong(rapor.bitis, intl)}
               </p>
             </>
           ) : (
@@ -388,7 +388,7 @@ function GrafikCubuklari({ rapor }: { rapor: RaporOzet }) {
   const gunler = rapor.gunler.slice(-14);
   return (
     <div className="mt-4 grid gap-3 md:grid-cols-2">
-      <div className="rounded-xl border border-amber-200 bg-white/80 p-3">
+      <div className="rounded-xl border border-slate-200 bg-white/80 p-3">
         <p className="text-[11px] uppercase tracking-wider text-slate-500">{t("rep_dailyChart")}{rapor.gunler.length > 14 ? " (14)" : ""}</p>
         <div className="mt-2 space-y-1">
           {gunler.map((g) => (
@@ -409,7 +409,7 @@ function GrafikCubuklari({ rapor }: { rapor: RaporOzet }) {
           {gunler.length === 0 ? <p className="text-xs text-slate-400">{t("rep_noRange")}</p> : null}
         </div>
       </div>
-      <div className="rounded-xl border border-amber-200 bg-white/80 p-3">
+      <div className="rounded-xl border border-slate-200 bg-white/80 p-3">
         <p className="text-[11px] uppercase tracking-wider text-slate-500">{t("rep_catDist")}</p>
         <div className="mt-2 space-y-1">
           {rapor.kategoriler.slice(0, 8).map((k) => (
@@ -446,7 +446,7 @@ function Stat({
   big?: boolean;
 }) {
   return (
-    <div className={`rounded-xl border border-amber-200 bg-white/80 px-3 py-3 ${big ? "col-span-1" : ""}`}>
+    <div className={`rounded-xl border border-slate-200 bg-white/80 px-3 py-3 ${big ? "col-span-1" : ""}`}>
       <p className="text-[11px] uppercase tracking-wider text-slate-500">{label}</p>
       <p className={`mt-1 font-semibold tabular-nums ${accent ? "text-teal-800" : "text-slate-900"} ${big ? "text-xl" : "text-base"}`}>
         {value}
@@ -497,9 +497,9 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
       <p className="font-hand text-2xl text-teal-200">{t("sub_title")}</p>
       <p className="mt-1 text-sm">
         {pro ? (
-          <span className="font-semibold text-teal-300">âœ“ {t("sub_pro")}</span>
+          <span className="font-semibold text-teal-300">? {t("sub_pro")}</span>
         ) : (
-          <span>{t("sub_free")} Â· {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
+          <span>{t("sub_free")} · {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
         )}
       </p>
       <p className="mt-1 text-[11px] text-slate-400">{sub.email}</p>
@@ -523,7 +523,7 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
                   onClick={() => void iptalEt()}
                   className="flex-1 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
                 >
-                  {yapiliyor ? "â€¦" : t("sub_cancel")}
+                  {yapiliyor ? "…" : t("sub_cancel")}
                 </button>
                 <button
                   type="button"
@@ -558,7 +558,7 @@ function KiraBolBolumu({ varsayilanAy, onKiraBol }: { varsayilanAy: number; onKi
   const [yapiliyor, setYapiliyor] = useState(false);
   if (!kurulu) {
     return (
-      <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3 ring-1 ring-amber-200">
+      <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3 ring-1 ring-slate-200">
         <label className="text-xs text-slate-600">
           {t("kirabol_ay")}
           <input
@@ -567,7 +567,7 @@ function KiraBolBolumu({ varsayilanAy, onKiraBol }: { varsayilanAy: number; onKi
             max={36}
             value={ay}
             onChange={(e) => setAy(Math.max(1, Math.min(36, Number(e.target.value) || 1)))}
-            className="mt-1 w-20 rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-sm"
+            className="mt-1 w-20 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
           />
         </label>
         <button
@@ -596,7 +596,7 @@ function KiraBolBolumu({ varsayilanAy, onKiraBol }: { varsayilanAy: number; onKi
         }}
         className="rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
       >
-        {yapiliyor ? "â€¦" : t("kirabol_onay")}
+        {yapiliyor ? "…" : t("kirabol_onay")}
       </button>
       <button type="button" onClick={() => setKurulu(false)} className="rounded-lg px-3 py-1.5 text-sm">
         {t("rep_giveUp")}
@@ -717,7 +717,7 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
       <form
-        className="scroll-thin my-auto max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[#fbf6ea] p-6 shadow-2xl"
+        className="scroll-thin my-auto max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[#fafafa] p-6 shadow-2xl"
         onSubmit={async (e) => {
           e.preventDefault();
           const form = e.currentTarget;
@@ -743,16 +743,16 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
         <div className="mt-4 grid gap-3">
           <label className="text-sm">
             {t("set_shop")}
-            <input name="isletmeAdi" defaultValue={ayarlar.isletmeAdi} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <input name="isletmeAdi" defaultValue={ayarlar.isletmeAdi} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm">
               {t("set_rent")} ({currency})
-              <input name="kiraTutari" type="number" step="0.01" defaultValue={ayarlar.kiraTutari} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+              <input name="kiraTutari" type="number" step="0.01" defaultValue={ayarlar.kiraTutari} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
             </label>
             <label className="text-sm">
               {t("set_period")}
-              <input name="kiraPeriyodu" type="number" defaultValue={ayarlar.kiraPeriyodu} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+              <input name="kiraPeriyodu" type="number" defaultValue={ayarlar.kiraPeriyodu} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
             </label>
           </div>
           <p className="text-xs text-slate-600">
@@ -760,11 +760,11 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
           </p>
           <label className="text-sm">
             {t("set_nextRent")}
-            <input name="kiraSonrakiTarih" type="date" defaultValue={ayarlar.kiraSonrakiTarih ?? ""} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <input name="kiraSonrakiTarih" type="date" defaultValue={ayarlar.kiraSonrakiTarih ?? ""} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </label>
           <label className="text-sm">
             {t("set_opening")} ({currency})
-            <input name="acilisBakiyesi" type="number" step="0.01" defaultValue={ayarlar.acilisBakiyesi} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <input name="acilisBakiyesi" type="number" step="0.01" defaultValue={ayarlar.acilisBakiyesi} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </label>
           <KiraBolBolumu varsayilanAy={ayarlar.kiraPeriyodu} onKiraBol={onKiraBol} />
           <label className="text-sm">
@@ -774,12 +774,12 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
                 const [varsayilanKod, varsayilanNo] = kodAyir(ayarlar.whatsappIsletme);
                 return (
                   <>
-                    <select name="waUlkeKod" defaultValue={varsayilanKod} dir="ltr" className="w-28 shrink-0 rounded-lg border border-amber-300 bg-white px-2 py-2">
+                    <select name="waUlkeKod" defaultValue={varsayilanKod} dir="ltr" className="w-28 shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-2">
                       {ULKE_KODLARI.map((u) => (
                         <option key={u.etiket} value={u.kod}>{u.etiket}</option>
                       ))}
                     </select>
-                    <input name="whatsappIsletme" defaultValue={varsayilanNo} placeholder="555 123 45 67" inputMode="tel" dir="ltr" className="min-w-0 flex-1 rounded-lg border border-amber-300 bg-white px-3 py-2" />
+                    <input name="whatsappIsletme" defaultValue={varsayilanNo} placeholder="555 123 45 67" inputMode="tel" dir="ltr" className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2" />
                   </>
                 );
               })()}
@@ -787,21 +787,21 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
           </label>
           <label className="text-sm">
             {t("set_googleYorum")}
-            <input name="googleYorumLink" defaultValue={ayarlar.googleYorumLink} placeholder="https://" dir="ltr" className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <input name="googleYorumLink" defaultValue={ayarlar.googleYorumLink} placeholder="https://" dir="ltr" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </label>
           <label className="text-sm">
             {t("set_waSablonAlindi")}
-            <textarea name="waSablonAlindi" defaultValue={ayarlar.waSablonAlindi} rows={2} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <textarea name="waSablonAlindi" defaultValue={ayarlar.waSablonAlindi} rows={2} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </label>
           <label className="text-sm">
             {t("set_waSablonHazir")}
-            <textarea name="waSablonHazir" defaultValue={ayarlar.waSablonHazir} rows={2} className="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2" />
+            <textarea name="waSablonHazir" defaultValue={ayarlar.waSablonHazir} rows={2} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </label>
           <p className="text-xs text-slate-600">{t("set_waSablonHint")}</p>
         </div>
         <AbonelikBolumu sub={sub} />
         <HafizaBolumu onYedekIndir={onYedekIndir} onYedekYukle={onYedekYukle} onSifirla={onSifirla} />
-        <div className="sticky bottom-0 mt-5 flex justify-end gap-2 bg-[#fbf6ea] py-3">
+        <div className="sticky bottom-0 mt-5 flex justify-end gap-2 bg-[#fafafa] py-3">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm">
             {t("set_giveUp")}
           </button>
@@ -821,7 +821,7 @@ type TelefonBilgi = {
   qr: string | null;
 };
 
-/** Telefonda aÃ§: aynÄ± Wi-Fi'den karekodla baÄŸlan. */
+/** Telefonda aç: ayný Wi-Fi'den karekodla baðlan. */
 export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useT();
   const [bilgi, setBilgi] = useState<TelefonBilgi | null>(null);
@@ -860,10 +860,10 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
     try {
       olay.prompt();
       const secim = await olay.userChoice;
-      setKuruldu(secim.outcome === "accepted" ? "Installing â€” Shop Ledger will appear on your home screen." : "Cancelled â€” you can also install from the menu.");
+      setKuruldu(secim.outcome === "accepted" ? "Installing — Shop Ledger will appear on your home screen." : "Cancelled — you can also install from the menu.");
       if (secim.outcome === "accepted") setKurabilir(false);
     } catch {
-      setKuruldu("Failed â€” try from the menu.");
+      setKuruldu("Failed — try from the menu.");
     }
   }
 
@@ -876,13 +876,13 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
-      <div className="scroll-thin my-auto max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-[#fbf6ea] p-6 text-center shadow-2xl">
-        <p className="font-hand text-3xl">ðŸ“± {t("phone_title")}</p>
+      <div className="scroll-thin my-auto max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-[#fafafa] p-6 text-center shadow-2xl">
+        <p className="font-hand text-3xl">?? {t("phone_title")}</p>
         <p className="mt-1 text-xs text-slate-600">{t("phone_sub")}</p>
         {bilgi ? (
           <>
             {bilgi.qr ? (
-              <img src={bilgi.qr} alt="QR" className="mx-auto mt-3 h-52 w-52 rounded-xl bg-white p-2 ring-1 ring-amber-300" />
+              <img src={bilgi.qr} alt="QR" className="mx-auto mt-3 h-52 w-52 rounded-xl bg-white p-2 ring-1 ring-slate-300" />
             ) : null}
             <p className="mt-3 font-mono text-lg font-bold text-slate-900">{bilgi.url}</p>
             <button

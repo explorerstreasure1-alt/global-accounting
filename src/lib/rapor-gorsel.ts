@@ -8,7 +8,7 @@ import { LOCALE_META, type LocaleCode } from "./i18n";
 
 const W = 1080;
 const PAD = 48;
-const BG = "#FBF6EA";
+const BG = "#FAFAFA";
 const INK = "#0F172A";
 const SOLUK = "#64748B";
 const CIZGI = "#E2D9C3";

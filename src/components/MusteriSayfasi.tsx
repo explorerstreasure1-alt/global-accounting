@@ -294,7 +294,7 @@ export function MusteriSayfasi() {
           <a href="/app" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" title={t("mus_back")}>
             ‹
           </a>
-          <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-amber-200/40 sm:h-12 sm:w-12" />
+          <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40 sm:h-12 sm:w-12" />
           <div className="min-w-0">
             <p className="font-hand text-2xl leading-none sm:text-3xl">Shop Ledger</p>
             <p className="text-[11px] uppercase tracking-[0.16em] text-amber-100/70">{t("mus_title")}</p>
@@ -345,7 +345,7 @@ export function MusteriSayfasi() {
               key={f.id}
               type="button"
               onClick={() => setFiltre(f.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${filtre === f.id ? "bg-amber-200 text-slate-900" : "bg-white/10 text-amber-50"}`}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${filtre === f.id ? "bg-slate-200 text-slate-900" : "bg-white/10 text-amber-50"}`}
             >
               {f.ad}
             </button>
@@ -535,11 +535,11 @@ export function MusteriSayfasi() {
           </span>
         )}
         {hrefYorum ? (
-          <a href={hrefYorum} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
+          <a href={hrefYorum} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100" title={t("mus_yorum")}>
             <I name="star" size={13} />
           </a>
         ) : (
-          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-amber-200 bg-amber-50/60 p-2 text-amber-400" title={yildizNeden}>
+          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-slate-200 bg-slate-50/60 p-2 text-slate-400" title={yildizNeden}>
             <I name="star" size={13} />
           </span>
         )}
@@ -724,15 +724,15 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/55 p-3">
-      <div className="scroll-thin my-4 max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[#fbf6ea] text-slate-900 shadow-2xl">
-        <div className="flex flex-wrap items-center gap-2 border-b border-amber-200 px-5 py-3">
+      <div className="scroll-thin my-4 max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[#fafafa] text-slate-900 shadow-2xl">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-5 py-3">
           <button type="button" onClick={onKapat} className="grid h-8 w-8 place-items-center rounded-full bg-slate-200 text-lg hover:bg-slate-300" title={t("mus_back")}>
             ‹
           </button>
           <p className="font-hand mr-auto inline-flex items-center gap-2 text-3xl leading-none">
             <I name="scissors" size={24} /> {musteri.ad} {musteri.soyad}
           </p>
-          <button type="button" onClick={() => setDuzenle((v) => !v)} className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold ring-1 ring-amber-200">
+          <button type="button" onClick={() => setDuzenle((v) => !v)} className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold ring-1 ring-slate-200">
             {t("cm_duzenle")}
           </button>
           <button type="button" onClick={onKapat} className="rounded-lg px-3 py-1.5 text-sm text-slate-600">
@@ -741,23 +741,23 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
         </div>
         <div className="px-5 py-4">
           {duzenle ? (
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-3 ring-1 ring-amber-200">
-              <input value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
-              <input value={fSoyad} onChange={(e) => setFSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
-              <input value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
-              <input value={fNot} onChange={(e) => setFNot(e.target.value)} placeholder={t("mus_note")} className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
+            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200">
+              <input value={fAd} onChange={(e) => setFAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
+              <input value={fSoyad} onChange={(e) => setFSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
+              <input value={fTel} onChange={(e) => setFTel(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
+              <input value={fNot} onChange={(e) => setFNot(e.target.value)} placeholder={t("mus_note")} className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
               <button type="button" disabled={mesgul} onClick={() => void kaydet()} className="col-span-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
                 {t("cm_kaydet")}
               </button>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2 text-sm">
-              <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">📞 {musteri.telefon || "—"}</span>
-              <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">{musteri.ziyaretSayisi} {t("mus_visitCount")}</span>
-              <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-amber-200">{t("mus_totalSpent")}: {fm(musteri.toplamHarcama)}</span>
+              <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-slate-200">📞 {musteri.telefon || "—"}</span>
+              <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-slate-200">{musteri.ziyaretSayisi} {t("mus_visitCount")}</span>
+              <span className="rounded-full bg-white px-3 py-1.5 ring-1 ring-slate-200">{t("mus_totalSpent")}: {fm(musteri.toplamHarcama)}</span>
               {(() => {
                 const yh = yorumHref(); return yh ? (
-                  <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-amber-800 ring-1 ring-amber-300">
+                  <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-800 ring-1 ring-slate-300">
                     <I name="spark" size={13} /> {t("mus_yorum")}
                   </a>
                 ) : null;
@@ -785,10 +785,10 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
             </div>
           ) : null}
           <p className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">{t("mus_newVisit")}</p>
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-3 ring-1 ring-amber-200 min-[480px]:grid-cols-[1fr_110px_130px_auto]">
-            <input value={zHizmet} onChange={(e) => setZHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
-            <input value={zTutar} onChange={(e) => setZTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
-            <input type="date" value={zTarih} onChange={(e) => setZTarih(e.target.value)} className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200 min-[480px]:grid-cols-[1fr_110px_130px_auto]">
+            <input value={zHizmet} onChange={(e) => setZHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
+            <input value={zTutar} onChange={(e) => setZTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
+            <input type="date" value={zTarih} onChange={(e) => setZTarih(e.target.value)} className="min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none" />
             <button type="button" disabled={mesgul} onClick={() => void ziyaretEkle()} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
               {t("mus_add")}
             </button>
@@ -796,12 +796,12 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
           <p className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">{t("mus_visits")} ({musteri.ziyaretler.length})</p>
           <div className="space-y-1.5">
             {musteri.ziyaretler.map((z, zi) => (
-              <div key={z.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white/70 px-3 py-2 ring-1 ring-amber-200">
+              <div key={z.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white/70 px-3 py-2 ring-1 ring-slate-200">
                 <div className="min-w-[140px] flex-1">
                   <p className="truncate text-sm font-semibold">{z.hizmet || "—"} · {fm(z.tutar)}{z.tutar - z.odenen > 0 ? <span className="font-bold text-rose-700"> · {t("mus_borc")}: {fm(z.tutar - z.odenen)}</span> : null}</p>
                   <p className="text-xs text-slate-500">{formatDate(z.tarih, intl)}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${z.durum === "hazirlaniyor" ? "bg-amber-100 text-amber-800" : z.durum === "hazir" ? "bg-sky-100 text-sky-800" : "bg-emerald-100 text-emerald-800"}`}>{t(z.durum === "hazirlaniyor" ? "mus_processing" : z.durum === "hazir" ? "mus_ready" : "mus_delivered")}</span>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${z.durum === "hazirlaniyor" ? "bg-slate-100 text-slate-800" : z.durum === "hazir" ? "bg-sky-100 text-sky-800" : "bg-emerald-100 text-emerald-800"}`}>{t(z.durum === "hazirlaniyor" ? "mus_processing" : z.durum === "hazir" ? "mus_ready" : "mus_delivered")}</span>
                 {z.durum === "hazirlaniyor" ? (
                   <button type="button" onClick={() => void durumDegis(z.id, "hazir")} className="shrink-0 rounded-lg bg-sky-700 px-2.5 py-1.5 text-xs font-semibold text-white">
                     {t("mus_markReady")}
@@ -813,7 +813,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
                 ) : null}
                 {(() => {
                    const yh = yorumHref(); return yh ? (
-                    <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-500 hover:bg-amber-100" title={t("mus_yorum")}>
+                    <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100" title={t("mus_yorum")}>
                       <I name="star" size={13} />
                     </a>
                   ) : null;
@@ -847,7 +847,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
               </div>
             ))}
           </div>
-          <div className="mt-4 border-t border-amber-200 pt-3">
+          <div className="mt-4 border-t border-slate-200 pt-3">
             {!musteri.silindi ? (
               !onaySil ? (
                 <button type="button" onClick={() => setOnaySil(true)} className="rounded-lg px-3 py-2 text-sm text-rose-700 hover:bg-rose-50">
