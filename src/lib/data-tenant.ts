@@ -464,22 +464,26 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
   async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
     const tutar = round2(Math.max(0, Number(input.tutar) || 0));
     const odenen = Math.min(tutar, round2(Math.max(0, Number(input.odenen) || 0)));
-    const { data, error } = await supa
-      .from("ziyaretler")
-      .insert({
-        musteri_id: input.musteriId,
-        hizmet: String(input.hizmet || "").trim().slice(0, 80),
-        tutar,
-        tarih: /^\d{4}-\d{2}-\d{2}$/.test(String(input.tarih || "")) ? input.tarih : toISODate(),
-        not: String(input.not || "").trim().slice(0, 500),
-        durum: "hazirlaniyor",
-        odenen,
-        business_id: businessId,
-      })
-      .select("*")
-      .single();
-    if (error) throw error;
-    return mapZiyaret(data as Row);
+    const satir = {
+      musteri_id: input.musteriId,
+      hizmet: String(input.hizmet || "").trim().slice(0, 80),
+      tutar,
+      tarih: /^\d{4}-\d{2}-\d{2}$/.test(String(input.tarih || "")) ? input.tarih : toISODate(),
+      not: String(input.not || "").trim().slice(0, 500),
+      durum: "hazirlaniyor",
+      odenen,
+      business_id: businessId,
+    };
+    const ilk = await supa.from("ziyaretler").insert(satir).select("*").single();
+    if (!ilk.error) return mapZiyaret(ilk.data as Row);
+    // Kolon henüz yoksa (PGRST204) odenen'siz dene — ziyaret kaybolmasın.
+    if (eksikKolonAdi(ilk.error) === "odenen") {
+      const { odenen: _at, ...sade } = satir;
+      void _at;
+      const yedek = await supa.from("ziyaretler").insert(sade).select("*").single();
+      if (!yedek.error) return mapZiyaret(yedek.data as Row);
+    }
+    throw ilk.error;
   }
 
   async function updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null> {

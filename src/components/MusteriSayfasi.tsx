@@ -557,6 +557,13 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
   const [mesgul, setMesgul] = useState(false);
   const [onaySil, setOnaySil] = useState(false);
   const [tahsil, setTahsil] = useState("");
+  const [hata, setHata] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hata) return;
+    const h = setTimeout(() => setHata(null), 2800);
+    return () => clearTimeout(h);
+  }, [hata]);
 
   /** Veresiye tahsilatı: tutarı en eski borçlu ziyaretten başlayarak dağıtır. */
   async function tahsilEt() {
@@ -635,14 +642,20 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
     if (!musteri || (!zHizmet.trim() && !(Number(zTutar) > 0))) return;
     setMesgul(true);
     try {
-      await fetch("/api/ziyaretler", {
+      const r = await fetch("/api/ziyaretler", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ musteriId: musteri.id, hizmet: zHizmet, tutar: Number(zTutar) || 0, tarih: zTarih }),
       });
+      if (!r.ok) {
+        setHata(t("toast_saveFailed"));
+        return;
+      }
       setZHizmet("");
       setZTutar("");
       await yukle();
+    } catch {
+      setHata(t("toast_saveFailed"));
     } finally {
       setMesgul(false);
     }
@@ -723,6 +736,11 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
             {t("mus_close")}
           </button>
         </div>
+        {hata ? (
+          <p className="mx-5 mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 ring-1 ring-rose-200">
+            {hata}
+          </p>
+        ) : null}
         <div className="px-5 py-4">
           {duzenle ? (
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-3 ring-1 ring-slate-200">

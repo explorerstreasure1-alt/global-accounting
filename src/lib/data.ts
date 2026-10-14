@@ -921,7 +921,15 @@ export async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
     async () => {
       await ensureMusteriTables();
       const row = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar: tutar.toFixed(2), tarih, not, durum: "hazirlaniyor", odenen: Math.min(tutar, round2(Math.max(0, Number(input.odenen) || 0))).toFixed(2), olusturmaZamani: new Date() };
-      await db!.insert(ziyaretler).values(row);
+      try {
+        await db!.insert(ziyaretler).values(row);
+      } catch (e) {
+        // Kolon henüz yoksa (42703) odenen'siz dene — ziyaret kaybolmasın.
+        if ((e as { code?: string })?.code !== "42703") throw e;
+        const { odenen: _at, ...sade } = row;
+        void _at;
+        await db!.insert(ziyaretler).values(sade);
+      }
       return mapZiyaret({ ...row });
     },
     async () => {
