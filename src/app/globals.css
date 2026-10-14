@@ -52,11 +52,11 @@ textarea {
 .desk-app {
   min-height: 100vh;
   color: var(--ink);
-  background-color: #f6efdd;
+  background-color: #faf3e3;
   background-image:
-    radial-gradient(rgba(90, 120, 160, 0.22) 1px, transparent 1.5px),
-    repeating-linear-gradient(to bottom, transparent 0 35px, rgba(90, 140, 190, 0.28) 35px 36px),
-    radial-gradient(ellipse at 50% 0%, #fffdf4 0%, #f6efdd 60%, #eee0bd 100%);
+    radial-gradient(rgba(90, 120, 160, 0.2) 1px, transparent 1.5px),
+    repeating-linear-gradient(to bottom, transparent 0 35px, rgba(90, 140, 190, 0.26) 35px 36px),
+    radial-gradient(ellipse at 50% 0%, #fffef8 0%, #faf3e3 60%, #f3e7c8 100%);
   background-size:
     26px 26px,
     auto,
@@ -399,12 +399,13 @@ textarea {
 
 /* === Kâğıt cilt: koyu yüzeyleri fildişine çevir (giriş ekranı bu kapsamın dışındadır) === */
 .desk-app [class*="bg-black/25"],
+.desk-app [class*="bg-black/20"],
 .desk-app [class*="bg-white/10"],
 .desk-app [class*="bg-white/5"],
 .desk-app .ai-panel {
-  background-color: rgba(255, 253, 244, 0.78);
+  background-color: rgba(255, 254, 248, 0.9);
   background-image:
-    radial-gradient(rgba(90, 120, 160, 0.14) 1px, transparent 1.5px);
+    radial-gradient(rgba(90, 120, 160, 0.13) 1px, transparent 1.5px);
   background-size: 26px 26px;
   color: var(--ink);
   border: 1px solid rgba(93, 64, 28, 0.18);
@@ -488,7 +489,10 @@ textarea {
 
 .desk-app button svg,
 .desk-app a svg {
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5));
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.65))
+    drop-shadow(0 -1px 1px rgba(93, 64, 28, 0.4));
+  stroke-width: 2.1;
 }
 
 .kabartma {
