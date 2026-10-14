@@ -381,8 +381,8 @@ export function MusteriSayfasi() {
                           {(m.ad || "?").slice(0, 1).toLocaleUpperCase()}
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate font-semibold text-[var(--ink)]">{satirAd(m)}</span>
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <span className="block truncate text-[15px] font-semibold text-[var(--ink)]">{satirAd(m)}</span>
+                          <span className="flex items-center gap-1 text-[13px] text-slate-500">
                             <span className="block truncate">{satirTel(m)}</span>
                             <GozDugme id={m.id} />
                           </span>
@@ -406,8 +406,8 @@ export function MusteriSayfasi() {
                           {(m.ad || "?").slice(0, 1).toLocaleUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-[var(--ink)]">{satirAd(m)}</span>
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <span className="block truncate text-[15px] font-semibold text-[var(--ink)]">{satirAd(m)}</span>
+                          <span className="flex items-center gap-1 text-[13px] text-slate-500">
                             <span className="block truncate">{satirTel(m)} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}{(m.borc ?? 0) > 0 ? ` · ${t("mus_borc")}: ${fm(m.borc)}` : ""}</span>
                             <GozDugme id={m.id} />
                           </span>

@@ -33,7 +33,7 @@ export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: num
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[#f6efdd] p-6">
+    <div className="grid min-h-screen place-items-center bg-[#f4f4f2] p-6">
       <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">Shop Ledger · Pro</p>
         <h1 className="mt-2 text-3xl font-extrabold">{t("kilit_title")}</h1>
