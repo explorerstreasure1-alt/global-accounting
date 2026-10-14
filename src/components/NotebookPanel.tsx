@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Ayarlar, Kayit, KayitGirdi, Kategori } from "@/lib/types";
 import { KATEGORILER } from "@/lib/types";
 import { useT, catLabel } from "@/lib/i18n";
-import { I } from "./ui-icon";
+import { I, type IconName } from "./ui-icon";
 import { formatMoneyLocale, formatMoneySignedLocale, formatDate, toISODate } from "@/lib/format";
 
 type Props = {
@@ -255,7 +255,10 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
             );
           })}
           {rows.length === 0 ? (
-            <p className="font-hand py-10 text-center text-2xl text-slate-500">{t("nb_empty")}</p>
+            <div className="font-hand py-10 text-center text-2xl text-slate-500">
+              <I name="receipt" size={44} className="mx-auto mb-2 block opacity-60" />
+              <p>{t("nb_empty")}</p>
+            </div>
           ) : süzülmüş.length === 0 ? (
             <p className="font-hand py-10 text-center text-2xl text-slate-500">{t("nb_noSearch")}</p>
           ) : null}
@@ -460,20 +463,23 @@ export function TotalsStrip({
 
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-      <TotalCard label={t("total_cash")} value={fm(nakit)} />
-      <TotalCard label={t("total_card")} value={fm(kart)} />
-      <TotalCard label={t("total_transfer")} value={fm(havale)} />
-      <TotalCard label={t("total_grand")} value={fm(gelir - gider)} />
-      <TotalCard label={t("total_monthlyNet")} value={fm(gelir - gider)} hint={`${t("income")} ${fm(gelir)}`} />
-      <TotalCard label={t("total_safe")} value={fm(kasa)} hint={`${t("rep_opening")} ${fm(ayarlar.acilisBakiyesi)}`} />
+      <TotalCard icon="cash" label={t("total_cash")} value={fm(nakit)} />
+      <TotalCard icon="card" label={t("total_card")} value={fm(kart)} />
+      <TotalCard icon="transfer" label={t("total_transfer")} value={fm(havale)} />
+      <TotalCard icon="bank" label={t("total_grand")} value={fm(gelir - gider)} />
+      <TotalCard icon="trend" label={t("total_monthlyNet")} value={fm(gelir - gider)} hint={`${t("income")} ${fm(gelir)}`} />
+      <TotalCard icon="shield" label={t("total_safe")} value={fm(kasa)} hint={`${t("rep_opening")} ${fm(ayarlar.acilisBakiyesi)}`} />
     </div>
   );
 }
 
-function TotalCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function TotalCard({ icon, label, value, hint }: { icon: IconName; label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-2xl bg-[var(--paper)]/90 px-3 py-2 shadow-sm ring-1 ring-slate-950/10 min-w-0 overflow-hidden">
-      <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-500">
+        <I name={icon} size={13} />
+        <span className="truncate">{label}</span>
+      </p>
       <p className="font-semibold tabular-nums text-[var(--ink)] break-words">{value}</p>
       {hint ? <p className="text-[10px] text-slate-500">{hint}</p> : null}
     </div>

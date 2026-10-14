@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { jsPDF } from "jspdf";
 import type { Musteri, Ziyaret } from "@/lib/types";
-import { formatDate } from "@/lib/format";
+import { formatDate, toISODate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { maskAd, maskSoyad, maskSoyadKisa } from "@/lib/gizlilik";
 import { waMesajKur, ziyaretKodu } from "@/lib/wa-mesaj";
@@ -102,9 +102,19 @@ export function EtiketStudyosu() {
         ]);
         if (!dm.musteri) return;
         const zs: Ziyaret[] = (dm.musteri.ziyaretler ?? []).slice().sort((x: Ziyaret, y: Ziyaret) => x.tarih.localeCompare(y.tarih));
-        const zj = zs.find((x) => x.id === z) ?? zs[zs.length - 1];
-        if (!zj) return;
-        const sira = zs.findIndex((x) => x.id === zj.id) + 1 || n;
+        // Ziyareti yoksa boş etiket: bugünün tarihi, 1 sıra, borçsuz varsayılan satır.
+        const zj: Ziyaret = zs.find((x) => x.id === z) ?? zs[zs.length - 1] ?? {
+          id: "",
+          musteriId: dm.musteri.id,
+          hizmet: "",
+          tutar: 0,
+          tarih: toISODate(),
+          not: "",
+          durum: "hazirlaniyor",
+          odenen: 0,
+          olusturmaZamani: new Date().toISOString(),
+        };
+        const sira = (zj.id ? zs.findIndex((x) => x.id === zj.id) + 1 : 1) || n;
         setBilgi({ musteri: dm.musteri, ziyaret: zj, siraNo: sira, dukkan: da.ayarlar?.isletmeAdi ?? "" });
       } catch {
         /* yoksay */

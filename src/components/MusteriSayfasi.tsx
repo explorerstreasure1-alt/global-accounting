@@ -38,13 +38,6 @@ export function MusteriSayfasi() {
   const [detayDuzenle, setDetayDuzenle] = useState(false);
   const [mesgul, setMesgul] = useState(false);
   const [wa, setWa] = useState<WaAyar>({ dukkan: "", alindi: "", hazir: "", yorumLink: "", gonderen: "" });
-  const [bilgi, setBilgi] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!bilgi) return;
-    const h = setTimeout(() => setBilgi(null), 2600);
-    return () => clearTimeout(h);
-  }, [bilgi]);
 
   /** Gönderen no kayıtlıysa açılıştan önce onay sorar; olay varsa iptalde durdurur. */
   function gonderOnay(e?: { preventDefault(): void }): boolean {
@@ -259,11 +252,7 @@ export function MusteriSayfasi() {
       const j = await r.json();
       const zs: Ziyaret[] = ((j.musteri?.ziyaretler ?? []) as Ziyaret[]).slice().sort((x, y) => x.tarih.localeCompare(y.tarih));
       const z = zs[zs.length - 1];
-      if (!z) {
-        setBilgi(t("mus_etiketZiyaretYok"));
-        return;
-      }
-      router.push(`/app/etiket?m=${musteriId}&z=${z.id}&n=${zs.length}`);
+      router.push(`/app/etiket?m=${musteriId}&z=${z ? z.id : ""}&n=${zs.length || 1}`);
     } catch {
       /* yoksay */
     }
@@ -487,11 +476,6 @@ export function MusteriSayfasi() {
             void yukle();
           }}
         />
-      ) : null}
-      {bilgi ? (
-        <div className="no-print fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">
-          {bilgi}
-        </div>
       ) : null}
     </div>
   );

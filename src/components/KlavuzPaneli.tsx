@@ -103,6 +103,7 @@ export function KlavuzPaneli() {
           </>
         )}
       </div>
+      <p className="font-hand px-4 pb-1 text-center text-lg leading-tight text-teal-100">{t("guide_motto")}</p>
       <div className="flex items-center justify-center gap-2 border-t border-white/10 px-4 py-3">
         <button
           onClick={() => setSayfa((s) => (s + SAYFA_SAYISI - 1) % SAYFA_SAYISI)}

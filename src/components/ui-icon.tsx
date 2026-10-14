@@ -34,6 +34,10 @@ import {
   Star,
   RefreshCw,
   ExternalLink,
+  TrendingUp,
+  ShieldCheck,
+  Upload,
+  ChevronDown,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,6 +77,11 @@ const MAP = {
   star: Star,
   refresh: RefreshCw,
   external: ExternalLink,
+  trend: TrendingUp,
+  shield: ShieldCheck,
+  receipt: ReceiptText,
+  upload: Upload,
+  chevD: ChevronDown,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof MAP;

@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LOCALES, CURRENCIES, getLocale, setLocale, setTheme, getCurrency, setCurrency, type LocaleCode } from "@/lib/i18n";
+import { LOCALES, CURRENCIES, getLocale, setLocale, setTheme, getCurrency, setCurrency, useT, type LocaleCode } from "@/lib/i18n";
 import { I } from "./ui-icon";
 
 /** Dil + para birimi seçici. Tema tekdir: fildişi defter (değiştirilemez). */
-export function GlobalBar({ compact = false }: { compact?: boolean }) {
+export function GlobalBar({ compact = false, userEmail }: { compact?: boolean; userEmail?: string }) {
   const [locale, setLoc] = useState<LocaleCode>("en");
   const [currency, setCur] = useState<string>("USD");
+  const [menu, setMenu] = useState(false);
+  const { t } = useT();
 
   useEffect(() => {
     const l = getLocale();
@@ -66,6 +68,29 @@ export function GlobalBar({ compact = false }: { compact?: boolean }) {
       ) : null}
       {!compact ? (
       <span className="text-[11px] text-amber-100/60">7 languages · RTL ready · Notebook</span>
+      ) : null}
+      {!compact && userEmail ? (
+        <span className="relative ml-auto">
+          <button
+            type="button"
+            onClick={() => setMenu((v) => !v)}
+            className="flex items-center gap-1.5 rounded-full bg-white/10 py-1 pl-1 pr-2 text-xs font-semibold outline-none hover:bg-white/20"
+          >
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-800 text-[11px] font-bold text-white">
+              {(userEmail || "?").slice(0, 1).toLocaleUpperCase()}
+            </span>
+            <span className="max-w-[140px] truncate">{userEmail.split("@")[0]}</span>
+            <I name="chevD" size={12} />
+          </button>
+          {menu ? (
+            <span className="absolute right-0 top-full z-50 mt-1 block min-w-[180px] rounded-xl bg-white p-1 shadow-xl ring-1 ring-slate-900/10">
+              <span className="block max-w-[220px] truncate px-3 py-1.5 text-xs text-slate-500">{userEmail}</span>
+              <a href="/cikis" className="block rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-100">
+                {t("mus_cikis")}
+              </a>
+            </span>
+          ) : null}
+        </span>
       ) : null}
     </div>
   );

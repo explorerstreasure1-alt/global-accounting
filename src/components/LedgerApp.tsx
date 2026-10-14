@@ -298,7 +298,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
     <div className="desk-app min-h-screen">
       <div className={`mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4 ${zOpen || gunOpen ? "no-print" : ""}`}>
         <div className="mb-2">
-          <GlobalBar />
+          <GlobalBar userEmail={trial?.email || sub?.email} />
         </div>
         {trial ? <ProBanner gun={trial.gun} email={trial.email} /> : null}
         <header className="no-print mb-3 flex flex-wrap items-center gap-3 rounded-[24px] bg-black/25 px-3 py-2 text-amber-50 backdrop-blur-md">
@@ -415,16 +415,20 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         </div>
 
         <div className="mb-3 no-print grid gap-2 rounded-2xl bg-black/20 p-3 text-amber-50 md:grid-cols-[1fr_1fr_1fr_auto]">
-          <p className="text-sm">
-            <span className="text-amber-200/70">{t("period")}:</span> <span className="capitalize">{monthLabel(year, month, intl)}</span>
+          <p className="flex items-center gap-1.5 text-sm">
+            <I name="calendar" size={14} />
+            <span><span className="text-amber-200/70">{t("period")}:</span> <span className="capitalize">{monthLabel(year, month, intl)}</span></span>
           </p>
-          <p className="text-sm">
-            <span className="text-amber-200/70">{t("rent_period")}:</span> {fm(ayarlar.kiraTutari)} / {ayarlar.kiraPeriyodu}
+          <p className="flex items-center gap-1.5 text-sm">
+            <I name="bank" size={14} />
+            <span><span className="text-amber-200/70">{t("rent_period")}:</span> {fm(ayarlar.kiraTutari)} / {ayarlar.kiraPeriyodu}</span>
           </p>
-          <p className="text-sm">
-            <span className="text-amber-200/70">{t("monthly_cover")}:</span> {fm(ayarlar.aylikKiraKarsiligi)}
+          <p className="flex items-center gap-1.5 text-sm">
+            <I name="shield" size={14} />
+            <span><span className="text-amber-200/70">{t("monthly_cover")}:</span> {fm(ayarlar.aylikKiraKarsiligi)}</span>
           </p>
           <div className="flex items-center gap-2 text-sm">
+            <I name="clock" size={14} />
             <span className="text-amber-200/70">{t("next_rent")}:</span> {ayarlar.kiraSonrakiTarih ? formatDate(ayarlar.kiraSonrakiTarih, intl) : t("noDate")}
             <button onClick={() => fileInput.current?.click()} className="ml-auto inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] hover:bg-white/20">
               <I name="backup" size={12} /> {t("upload_backup")}
