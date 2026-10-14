@@ -66,5 +66,6 @@ export const ziyaretler = pgTable("ziyaretler", {
   tarih: date("tarih", { mode: "string" }).notNull(),
   not: text("not").notNull().default(""),
   durum: varchar("durum", { length: 20 }).notNull().default("hazirlaniyor"),
+  odenen: numeric("odenen", { precision: 14, scale: 2 }),
   olusturmaZamani: timestamp("olusturma_zamani", { mode: "date" }).notNull(),
 });

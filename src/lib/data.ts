@@ -666,14 +666,18 @@ function kisa(s: unknown, enFazla: number): string {
 }
 
 function mapZiyaret(row: typeof ziyaretler.$inferSelect): Ziyaret {
+  const tutar = num(row.tutar);
+  // NULL = eski satır → ödenmiş say (sürpriz borç yok); sayıysa kalanı sınırla.
+  const odenen = row.odenen == null ? tutar : Math.min(tutar, Math.max(0, num(row.odenen)));
   return {
     id: row.id,
     musteriId: row.musteriId,
     hizmet: row.hizmet,
-    tutar: num(row.tutar),
+    tutar,
     tarih: row.tarih,
     not: row.not,
     durum: gecerliDurum(row.durum),
+    odenen,
     olusturmaZamani: row.olusturmaZamani.toISOString(),
   };
 }
@@ -690,6 +694,7 @@ function mapMusteri(row: typeof musteriler.$inferSelect, tumZiyaretler: Ziyaret[
     not: row.not,
     ziyaretSayisi: zs.length,
     toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)),
+    borc: round2(zs.reduce((s, z) => s + Math.max(0, z.tutar - z.odenen), 0)),
     sonZiyaret: zs.length ? zs[0].tarih : null,
     sonHizmet: zs.length ? zs[0].hizmet : null,
     sonTutar: zs.length ? zs[0].tutar : null,
@@ -735,8 +740,11 @@ async function ensureMusteriTables(): Promise<void> {
       tarih date not null,
       "not" text not null default '',
       durum varchar(20) not null default 'hazirlaniyor',
+      odenen numeric(14,2),
       olusturma_zamani timestamp not null
     );
+    -- NULL = kolon öncesi eski satır (ödenmiş sayılır); yeni satırlar 0 ile açılır.
+    alter table ziyaretler add column if not exists odenen numeric(14,2);
     create index if not exists musteriler_telefon_idx on musteriler (telefon);
     create index if not exists ziyaretler_musteri_idx on ziyaretler (musteri_id);
   `);
@@ -763,14 +771,21 @@ async function musteriDosyaYaz(d: MusteriDosya): Promise<void> {
   await nodeFs.writeFile(path.join(getDataDir(), "musteriler.json"), JSON.stringify(d), "utf-8");
 }
 
-/** Eski dosyalarda olmayan sonHizmet/sonTutar'ı ziyaretlerden türet. */
+/** Eski dosyalarda olmayan sonHizmet/sonTutar'ı ziyaretlerden türet; odenen'siz eski satırı ödenmiş say; borcu her okumada yeniden hesapla. */
 function dosyaZenginlestir(d: MusteriDosya): MusteriDosya {
-  for (const m of d.musteriler) {
-    if (m.sonHizmet === undefined || m.sonTutar === undefined) {
-      const zs = d.ziyaretler.filter((z) => z.musteriId === m.id).sort((a, b) => b.tarih.localeCompare(a.tarih));
-      m.sonHizmet = zs.length ? zs[0].hizmet : null;
-      m.sonTutar = zs.length ? zs[0].tutar : null;
+  for (const z of d.ziyaretler) {
+    if (z.odenen === undefined || z.odenen === null) {
+      z.odenen = z.tutar;
     }
+  }
+  for (const m of d.musteriler) {
+    const zs = d.ziyaretler.filter((z) => z.musteriId === m.id);
+    if (m.sonHizmet === undefined || m.sonTutar === undefined) {
+      const sirali = [...zs].sort((a, b) => b.tarih.localeCompare(a.tarih));
+      m.sonHizmet = sirali.length ? sirali[0].hizmet : null;
+      m.sonTutar = sirali.length ? sirali[0].tutar : null;
+    }
+    m.borc = round2(zs.reduce((s, z) => s + Math.max(0, (Number(z.tutar) || 0) - (Number(z.odenen) || 0)), 0));
   }
   return d;
 }
@@ -814,7 +829,7 @@ export async function getMusteri(id: string): Promise<(Musteri & { ziyaretler: Z
       const m = d.musteriler.find((x) => x.id === id);
       if (!m) return null;
       const zs = d.ziyaretler.filter((z) => z.musteriId === id).sort((a, b) => b.tarih.localeCompare(a.tarih));
-      return { ...m, ziyaretSayisi: zs.length, toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)), sonZiyaret: zs.length ? zs[0].tarih : null, sonHizmet: zs.length ? zs[0].hizmet : null, sonTutar: zs.length ? zs[0].tutar : null, ziyaretler: zs };
+      return { ...m, ziyaretSayisi: zs.length, toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)), borc: round2(zs.reduce((s, z) => s + Math.max(0, (Number(z.tutar) || 0) - (Number(z.odenen ?? z.tutar) || 0)), 0)), sonZiyaret: zs.length ? zs[0].tarih : null, sonHizmet: zs.length ? zs[0].hizmet : null, sonTutar: zs.length ? zs[0].tutar : null, ziyaretler: zs };
     },
   );
 }
@@ -833,7 +848,7 @@ export async function createMusteri(input: MusteriGirdi): Promise<Musteri> {
     },
     async () => {
       const d = await musteriDosyaOku();
-      const m: Musteri = { id: crypto.randomUUID(), ad, soyad, telefon, not, ziyaretSayisi: 0, toplamHarcama: 0, sonZiyaret: null, sonHizmet: null, sonTutar: null, silindi: false, olusturmaZamani: new Date().toISOString() };
+      const m: Musteri = { id: crypto.randomUUID(), ad, soyad, telefon, not, ziyaretSayisi: 0, toplamHarcama: 0, borc: 0, sonZiyaret: null, sonHizmet: null, sonTutar: null, silindi: false, olusturmaZamani: new Date().toISOString() };
       d.musteriler.push(m);
       await musteriDosyaYaz(d);
       return m;
@@ -905,13 +920,13 @@ export async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
   return withDb(
     async () => {
       await ensureMusteriTables();
-      const row = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar: tutar.toFixed(2), tarih, not, durum: "hazirlaniyor", olusturmaZamani: new Date() };
+      const row = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar: tutar.toFixed(2), tarih, not, durum: "hazirlaniyor", odenen: Math.min(tutar, round2(Math.max(0, Number(input.odenen) || 0))).toFixed(2), olusturmaZamani: new Date() };
       await db!.insert(ziyaretler).values(row);
       return mapZiyaret({ ...row });
     },
     async () => {
       const d = await musteriDosyaOku();
-      const z: Ziyaret = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar, tarih, not, durum: "hazirlaniyor", olusturmaZamani: new Date().toISOString() };
+      const z: Ziyaret = { id: crypto.randomUUID(), musteriId: input.musteriId, hizmet, tutar, tarih, not, durum: "hazirlaniyor", odenen: Math.min(tutar, round2(Math.max(0, Number(input.odenen) || 0))), olusturmaZamani: new Date().toISOString() };
       d.ziyaretler.push(z);
       const m = d.musteriler.find((x) => x.id === input.musteriId);
       if (m) {
@@ -942,6 +957,37 @@ export async function updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promi
       const z = dosya.ziyaretler.find((x) => x.id === id);
       if (!z) return null;
       z.durum = d;
+      await musteriDosyaYaz(dosya);
+      return z;
+    },
+  );
+}
+
+/** Veresiye tahsilatı: ödemeyi kalan borca ekler (fazlası kesilir). */
+export async function tahsilatEkle(id: string, tutar: number): Promise<Ziyaret | null> {
+  const odeme = round2(Math.max(0, Number(tutar) || 0));
+  if (odeme <= 0) return null;
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const cur = await db!.select().from(ziyaretler).where(eq(ziyaretler.id, id)).limit(1);
+      if (!cur.length) return null;
+      const z = mapZiyaret(cur[0]);
+      const yeni = Math.min(z.tutar, round2(z.odenen + odeme));
+      if (yeni <= z.odenen) return z;
+      const r = await db!.update(ziyaretler).set({ odenen: yeni.toFixed(2) }).where(eq(ziyaretler.id, id)).returning();
+      if (!r.length) return null;
+      return mapZiyaret(r[0]);
+    },
+    async () => {
+      const dosya = await musteriDosyaOku();
+      const z = dosya.ziyaretler.find((x) => x.id === id);
+      if (!z) return null;
+      const tutar = Number(z.tutar) || 0;
+      const odenen = z.odenen ?? tutar;
+      const yeni = Math.min(tutar, round2(odenen + odeme));
+      if (yeni <= odenen) return z;
+      z.odenen = yeni;
       await musteriDosyaYaz(dosya);
       return z;
     },

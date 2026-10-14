@@ -189,6 +189,7 @@ create table if not exists ziyaretler (
   tarih date not null default CURRENT_DATE,
   "not" text not null default '',
   durum varchar(20) not null default 'hazirlaniyor',
+  odenen numeric(14,2),
   olusturma_zamani timestamptz not null default now()
 );
 

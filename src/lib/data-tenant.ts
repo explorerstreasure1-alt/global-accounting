@@ -66,14 +66,19 @@ const ZDURUM: ZiyaretDurum[] = ["hazirlaniyor", "hazir", "teslim"];
 function mapZiyaret(row: Row): Ziyaret {
   const d = String(row.durum ?? "hazirlaniyor");
   const oz = row.olusturma_zamani;
+  const tutar = num(row.tutar as string | number | null | undefined);
+  // NULL = eski satır → ödenmiş say (sürpriz borç yok); sayıysa kalanı sınırla.
+  const ham = row.odenen as string | number | null | undefined;
+  const odenen = ham == null ? tutar : Math.min(tutar, Math.max(0, num(ham)));
   return {
     id: String(row.id),
     musteriId: String(row.musteri_id ?? ""),
     hizmet: String(row.hizmet ?? ""),
-    tutar: num(row.tutar as string | number | null | undefined),
+    tutar,
     tarih: String(row.tarih ?? ""),
     not: String(row.not ?? ""),
     durum: (ZDURUM as string[]).includes(d) ? (d as ZiyaretDurum) : "hazirlaniyor",
+    odenen,
     olusturmaZamani: oz ? new Date(oz as string).toISOString() : new Date().toISOString(),
   };
 }
@@ -91,6 +96,7 @@ function musteriOzet(row: Row, tum: Ziyaret[]): Musteri {
     not: String(row.not ?? ""),
     ziyaretSayisi: zs.length,
     toplamHarcama: round2(zs.reduce((s, z) => s + z.tutar, 0)),
+    borc: round2(zs.reduce((s, z) => s + Math.max(0, z.tutar - z.odenen), 0)),
     sonZiyaret: zs.length ? zs[0].tarih : null,
     sonHizmet: zs.length ? zs[0].hizmet : null,
     sonTutar: zs.length ? zs[0].tutar : null,
@@ -113,6 +119,7 @@ export type TenantDb = {
   restoreMusteri(id: string): Promise<boolean>;
   addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret>;
   updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null>;
+  tahsilatEkle(id: string, tutar: number): Promise<Ziyaret | null>;
   deleteZiyaret(id: string): Promise<boolean>;
   listAktifZiyaretler(): Promise<AktifZiyaret[]>;
   updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar>;
@@ -456,6 +463,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
 
   async function addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret> {
     const tutar = round2(Math.max(0, Number(input.tutar) || 0));
+    const odenen = Math.min(tutar, round2(Math.max(0, Number(input.odenen) || 0)));
     const { data, error } = await supa
       .from("ziyaretler")
       .insert({
@@ -465,6 +473,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
         tarih: /^\d{4}-\d{2}-\d{2}$/.test(String(input.tarih || "")) ? input.tarih : toISODate(),
         not: String(input.not || "").trim().slice(0, 500),
         durum: "hazirlaniyor",
+        odenen,
         business_id: businessId,
       })
       .select("*")
@@ -485,6 +494,27 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     const rows = (data ?? []) as Row[];
     if (!rows.length) return null;
     return mapZiyaret(rows[0]);
+  }
+
+  /** Veresiye tahsilatı: ödemeyi kalan borca ekler (fazlası kesilir). */
+  async function tahsilatEkle(id: string, tutar: number): Promise<Ziyaret | null> {
+    const odeme = round2(Math.max(0, Number(tutar) || 0));
+    if (odeme <= 0) return null;
+    const cur = await supa.from("ziyaretler").select("*").eq("id", id).eq("business_id", businessId).limit(1).maybeSingle();
+    if (cur.error || !cur.data) return null;
+    const z = mapZiyaret(cur.data as Row);
+    const yeni = Math.min(z.tutar, round2(z.odenen + odeme));
+    if (yeni <= z.odenen) return z;
+    const { data, error } = await supa
+      .from("ziyaretler")
+      .update({ odenen: yeni })
+      .eq("id", id)
+      .eq("business_id", businessId)
+      .select("*");
+    if (error) throw error;
+    const out = (data ?? []) as Row[];
+    if (!out.length) return null;
+    return mapZiyaret(out[0]);
   }
 
   async function deleteZiyaret(id: string): Promise<boolean> {
@@ -514,7 +544,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
       .sort((a, b) => a.tarih.localeCompare(b.tarih));
   }
 
-  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaretDurum, deleteZiyaret, listAktifZiyaretler };
+  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaretDurum, tahsilatEkle, deleteZiyaret, listAktifZiyaretler };
 }
 
 /** Dosya/tek-kullanıcı modu için aynı arayüz (mevcut davranış birebir). */
@@ -541,6 +571,7 @@ export async function fileDb(): Promise<TenantDb> {
     restoreMusteri: d.restoreMusteri,
     addZiyaret: d.addZiyaret,
     updateZiyaretDurum: d.updateZiyaretDurum,
+    tahsilatEkle: d.tahsilatEkle,
     deleteZiyaret: d.deleteZiyaret,
     listAktifZiyaretler: d.listAktifZiyaretler,
   };

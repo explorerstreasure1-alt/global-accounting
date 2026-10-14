@@ -37,14 +37,21 @@ export async function POST(request: Request) {
   return NextResponse.json({ ziyaret }, { status: 201 });
 }
 
-/** Durum ilerlet: hazirlaniyor → hazir → teslim. */
+/** Durum ilerlet: hazirlaniyor → hazir → teslim. tahsilat verilirse borçtan düşer. */
 export async function PATCH(request: Request) {
   const { db, gate } = await resolveDb();
   if (gate) return gate;
   const body = (await request.json()) as Record<string, unknown>;
   const id = String(body.id || "");
-  const durum = String(body.durum || "") as ZiyaretDurum;
   if (!id) return NextResponse.json({ error: "id-gerekli" }, { status: 400 });
+  if (body.tahsilat !== undefined && body.tahsilat !== null) {
+    const tutar = Number(body.tahsilat);
+    if (!Number.isFinite(tutar) || tutar <= 0) return NextResponse.json({ error: "tutar-hatali" }, { status: 400 });
+    const ziyaret = await db.tahsilatEkle(id, tutar);
+    if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
+    return NextResponse.json({ ziyaret });
+  }
+  const durum = String(body.durum || "") as ZiyaretDurum;
   const ziyaret = await db.updateZiyaretDurum(id, durum);
   if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
   return NextResponse.json({ ziyaret });

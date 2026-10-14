@@ -10,7 +10,7 @@ import { maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
 
-type Filtre = "tum" | "bugun" | "tekrar" | "buay" | "uzun";
+type Filtre = "tum" | "bugun" | "tekrar" | "buay" | "uzun" | "borclu";
 type WaAyar = { dukkan: string; alindi: string; hazir: string; yorumLink: string; gonderen: string };
 
 function gunFarki(tarih: string): number {
@@ -148,6 +148,7 @@ export function MusteriSayfasi() {
       if (filtre === "tekrar") return m.ziyaretSayisi > 1;
       if (filtre === "buay") return (m.sonZiyaret ?? "").startsWith(buAy);
       if (filtre === "uzun") return !m.sonZiyaret || gunFarki(m.sonZiyaret) > 60;
+      if (filtre === "borclu") return (m.borc ?? 0) > 0;
       return true;
     });
   }, [liste, filtre, bugun, buAy]);
@@ -279,6 +280,7 @@ export function MusteriSayfasi() {
     { id: "tekrar", ad: t("cm_tekrar") },
     { id: "buay", ad: t("cm_buAy") },
     { id: "uzun", ad: t("cm_uzunSure") },
+    { id: "borclu", ad: t("cm_borclu") },
   ];
 
   return (
@@ -312,6 +314,16 @@ export function MusteriSayfasi() {
             className={`shrink-0 rounded-full px-3 py-2 text-xs font-semibold ${copte ? "bg-rose-700 text-white" : "bg-white/10 text-amber-50"}`}
           >
             {t("mus_deleted")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = `/api/export-musteriler?locale=${locale}&currency=${currency}`;
+            }}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-amber-50 hover:bg-white/20"
+            title={t("excel")}
+          >
+            <I name="excel" size={15} />
           </button>
         </header>
 
@@ -380,7 +392,12 @@ export function MusteriSayfasi() {
                       <span className="text-right tabular-nums">{m.sonTutar ? fm(m.sonTutar) : "—"}</span>
                       <span className="text-center tabular-nums">{m.ziyaretSayisi}×</span>
                       <span className="text-xs text-slate-600">{goreceGun(m.sonZiyaret)}</span>
-                      <span className="text-right font-semibold tabular-nums">{fm(m.toplamHarcama)}</span>
+                      <span className="text-right font-semibold tabular-nums">
+                        {fm(m.toplamHarcama)}
+                        {(m.borc ?? 0) > 0 ? (
+                          <span className="block text-xs font-bold text-rose-700">{t("mus_borc")}: {fm(m.borc)}</span>
+                        ) : null}
+                      </span>
                       <SatirIslem m={m} />
                     </div>
                     <div onClick={() => kartAc(m.id)} className="cursor-pointer rounded-xl px-2 py-2 hover:bg-white/30 lg:hidden">
@@ -391,7 +408,7 @@ export function MusteriSayfasi() {
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold text-[var(--ink)]">{satirAd(m)}</span>
                           <span className="flex items-center gap-1 text-xs text-slate-500">
-                            <span className="block truncate">{satirTel(m)} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}</span>
+                            <span className="block truncate">{satirTel(m)} · {m.ziyaretSayisi} {t("mus_visitCount")} · {fm(m.toplamHarcama)}{(m.borc ?? 0) > 0 ? ` · ${t("mus_borc")}: ${fm(m.borc)}` : ""}</span>
                             <GozDugme id={m.id} />
                           </span>
                         </span>
@@ -555,6 +572,35 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
   const [zTarih, setZTarih] = useState(toISODate());
   const [mesgul, setMesgul] = useState(false);
   const [onaySil, setOnaySil] = useState(false);
+  const [tahsil, setTahsil] = useState("");
+
+  /** Veresiye tahsilatı: tutarı en eski borçlu ziyaretten başlayarak dağıtır. */
+  async function tahsilEt() {
+    const miktar = Number(String(tahsil).replace(",", ".")) || 0;
+    if (miktar <= 0 || !musteri) return;
+    setMesgul(true);
+    try {
+      let kalan = Math.round(miktar * 100) / 100;
+      const borclus = [...musteri.ziyaretler]
+        .filter((z) => z.tutar - z.odenen > 0)
+        .sort((a, b) => a.tarih.localeCompare(b.tarih));
+      for (const z of borclus) {
+        if (kalan <= 0) break;
+        const pay = Math.min(kalan, Math.round((z.tutar - z.odenen) * 100) / 100);
+        const r = await fetch("/api/ziyaretler", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: z.id, tahsilat: pay }),
+        });
+        if (!r.ok) break;
+        kalan = Math.round((kalan - pay) * 100) / 100;
+      }
+      setTahsil("");
+      await yukle();
+    } finally {
+      setMesgul(false);
+    }
+  }
 
   /** Gönderen no kayıtlıysa açılıştan önce onay sorar; olay varsa iptalde durdurur. */
   function gonderOnayDetay(e?: { preventDefault(): void }): boolean {
@@ -718,6 +764,26 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
               })()}
             </div>
           )}
+          {(musteri.borc ?? 0) > 0 ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 ring-1 ring-rose-200">
+              <span className="text-sm font-bold text-rose-700">{t("mus_borc")}: {fm(musteri.borc)}</span>
+              <input
+                value={tahsil}
+                onChange={(e) => setTahsil(e.target.value)}
+                placeholder="0.00"
+                inputMode="decimal"
+                className="w-24 min-w-0 rounded-lg border border-rose-200 bg-white px-2 py-1.5 text-sm outline-none"
+              />
+              <button
+                type="button"
+                disabled={mesgul}
+                onClick={() => void tahsilEt()}
+                className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+              >
+                {t("mus_tahsilEt")}
+              </button>
+            </div>
+          ) : null}
           <p className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">{t("mus_newVisit")}</p>
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-3 ring-1 ring-amber-200 min-[480px]:grid-cols-[1fr_110px_130px_auto]">
             <input value={zHizmet} onChange={(e) => setZHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-lg border border-amber-200 bg-white px-2 py-2 text-sm outline-none" />
@@ -732,7 +798,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
             {musteri.ziyaretler.map((z, zi) => (
               <div key={z.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white/70 px-3 py-2 ring-1 ring-amber-200">
                 <div className="min-w-[140px] flex-1">
-                  <p className="truncate text-sm font-semibold">{z.hizmet || "—"} · {fm(z.tutar)}</p>
+                  <p className="truncate text-sm font-semibold">{z.hizmet || "—"} · {fm(z.tutar)}{z.tutar - z.odenen > 0 ? <span className="font-bold text-rose-700"> · {t("mus_borc")}: {fm(z.tutar - z.odenen)}</span> : null}</p>
                   <p className="text-xs text-slate-500">{formatDate(z.tarih, intl)}</p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${z.durum === "hazirlaniyor" ? "bg-amber-100 text-amber-800" : z.durum === "hazir" ? "bg-sky-100 text-sky-800" : "bg-emerald-100 text-emerald-800"}`}>{t(z.durum === "hazirlaniyor" ? "mus_processing" : z.durum === "hazir" ? "mus_ready" : "mus_delivered")}</span>

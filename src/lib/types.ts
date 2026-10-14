@@ -160,6 +160,8 @@ export type Musteri = {
   not: string;
   ziyaretSayisi: number;
   toplamHarcama: number;
+  /** Kalan veresiye borcu (tutar - odenen toplamı, asla negatif değil). */
+  borc: number;
   sonZiyaret: string | null;
   sonHizmet: string | null;
   sonTutar: number | null;
@@ -182,6 +184,8 @@ export type Ziyaret = {
   tarih: string;
   not: string;
   durum: ZiyaretDurum;
+  /** Tahsil edilen kısım (0 = ödenmedi). Kalan = tutar - odenen. */
+  odenen: number;
   olusturmaZamani: string;
 };
 
@@ -191,6 +195,7 @@ export type ZiyaretGirdi = {
   tutar: number;
   tarih: string;
   not: string;
+  odenen?: number;
 };
 
 /** Aktif iş: teslim edilmemiş ziyaret + müşteri kimliği. */
