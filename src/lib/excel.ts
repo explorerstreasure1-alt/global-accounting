@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import type { Ayarlar, RaporOzet } from "./types";
+import type { Ayarlar, Musteri, RaporOzet } from "./types";
 import { formatDate } from "./format";
 
 const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
@@ -354,5 +354,58 @@ export function buildExcel(
   fis.views = [{ state: "frozen", ySplit: 1 }];
   sayfaKurulum(fis);
 
+  return wb;
+}
+
+/** Müşteri listesi: kart, ziyaret, harcama ve veresiye borcuyla tek sayfa. */
+export function buildMusteriExcel(
+  musteriler: Musteri[],
+  opts?: { locale?: string; currency?: string; isletmeAdi?: string },
+): ExcelJS.Workbook {
+  const locale = opts?.locale ?? "en";
+  const T: Record<string, { baslik: string; kolonlar: string[] }> = {
+    tr: { baslik: "Müşteriler", kolonlar: ["Ad", "Soyad", "Telefon", "Ziyaret", "Toplam", "Borç", "Son ziyaret", "Son hizmet", "Not"] },
+    en: { baslik: "Customers", kolonlar: ["First name", "Last name", "Phone", "Visits", "Total", "Debt", "Last visit", "Last service", "Note"] },
+    de: { baslik: "Kunden", kolonlar: ["Vorname", "Nachname", "Telefon", "Besuche", "Gesamt", "Schulden", "Letzter Besuch", "Letzte Leistung", "Notiz"] },
+    fr: { baslik: "Clients", kolonlar: ["Prénom", "Nom", "Téléphone", "Visites", "Total", "Dette", "Dernière visite", "Dernier service", "Note"] },
+    es: { baslik: "Clientes", kolonlar: ["Nombre", "Apellido", "Teléfono", "Visitas", "Total", "Deuda", "Última visita", "Último servicio", "Nota"] },
+    ar: { baslik: "العملاء", kolonlar: ["الاسم", "اللقب", "الهاتف", "الزيارات", "الإجمالي", "الدين", "آخر زيارة", "آخر خدمة", "ملاحظة"] },
+    ru: { baslik: "Клиенты", kolonlar: ["Имя", "Фамилия", "Телефон", "Визиты", "Итого", "Долг", "Посл. визит", "Посл. услуга", "Заметка"] },
+  };
+  const m = T[locale] ?? T.en;
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Tailor Ledger";
+  wb.created = new Date();
+  const ws = wb.addWorksheet(m.baslik.slice(0, 31));
+  ws.mergeCells("A1:I1");
+  const t = ws.getCell("A1");
+  t.value = `${opts?.isletmeAdi || "Shop"} — ${m.baslik}`;
+  t.font = { bold: true, size: 16, color: { argb: LACI } };
+  t.alignment = { horizontal: "center", vertical: "middle" };
+  ws.getRow(1).height = 28;
+  ws.addRow(m.kolonlar);
+  const ilk = 3;
+  const sirali = [...musteriler].sort((a, b) => `${a.ad} ${a.soyad}`.localeCompare(`${b.ad} ${b.soyad}`));
+  for (const u of sirali) {
+    const row = ws.addRow([u.ad, u.soyad, u.telefon, u.ziyaretSayisi, u.toplamHarcama, u.borc ?? 0, u.sonZiyaret ?? "", u.sonHizmet ?? "", u.not]);
+    row.getCell(4).alignment = { horizontal: "center" };
+    paraHucre(row.getCell(5), u.toplamHarcama, false);
+    paraHucre(row.getCell(6), u.borc ?? 0, false);
+  }
+  if (sirali.length === 0) {
+    ws.addRow([m.kolonlar[0] + " —"]);
+  }
+  const top = ws.rowCount + 1;
+  ws.addRow(["", "", "", "", "", "", "", "", ""]);
+  toplamSatiri(ws, top, 9, m.kolonlar[4]);
+  const topHarcama = sirali.reduce((s, u) => s + u.toplamHarcama, 0);
+  const topBorc = sirali.reduce((s, u) => s + (u.borc ?? 0), 0);
+  paraHucre(ws.getCell(`E${top}`), topHarcama, false);
+  paraHucre(ws.getCell(`F${top}`), topBorc, false);
+  tabloyuSusle(ws, 2, ilk, top - 1, 9);
+  ws.columns = [{ width: 18 }, { width: 18 }, { width: 18 }, { width: 10 }, { width: 14 }, { width: 14 }, { width: 13 }, { width: 24 }, { width: 30 }];
+  ws.autoFilter = { from: "A2", to: `I${top - 1}` };
+  ws.views = [{ state: "frozen", ySplit: 2 }];
+  sayfaKurulum(ws);
   return wb;
 }
