@@ -8,7 +8,7 @@ import { waGonderenOnay } from "@/lib/wa-mesaj";
 import { I } from "./ui-icon";
 import { useT, catLabel } from "@/lib/i18n";
 
-/** Gönderici numarasý ülke kodlarý (ISO ile, dil baðýmsýz). */
+/** GÃ¶nderici numarasÄ± Ã¼lke kodlarÄ± (ISO ile, dil baÄŸÄ±msÄ±z). */
 const ULKE_KODLARI: Array<{ kod: string; etiket: string }> = [
   { kod: "90", etiket: "+90 TR" },
   { kod: "1", etiket: "+1 US" },
@@ -33,10 +33,10 @@ const ULKE_KODLARI: Array<{ kod: string; etiket: string }> = [
   { kod: "966", etiket: "+966 SA" },
   { kod: "971", etiket: "+971 AE" },
   { kod: "20", etiket: "+20 EG" },
-  { kod: "", etiket: "···" },
+  { kod: "", etiket: "Â·Â·Â·" },
 ];
 
-/** Kayýtlý numarayý kod + yerel parçaya ayýr (eþleþmezse +90 varsayýlýr). */
+/** KayÄ±tlÄ± numarayÄ± kod + yerel parÃ§aya ayÄ±r (eÅŸleÅŸmezse +90 varsayÄ±lÄ±r). */
 function kodAyir(ham: string): [string, string] {
   const d = String(ham ?? "").replace(/\D/g, "");
   const sirali = [...ULKE_KODLARI].filter((u) => u.kod).sort((a, b) => b.kod.length - a.kod.length);
@@ -46,7 +46,7 @@ function kodAyir(ham: string): [string, string] {
   return ["90", d.replace(/^0+/, "")];
 }
 
-/** Kod + yazýlaný tek uluslararasý numarada birleþtir (çift kod yazýlmaz). */
+/** Kod + yazÄ±lanÄ± tek uluslararasÄ± numarada birleÅŸtir (Ã§ift kod yazÄ±lmaz). */
 function kodBirlestir(kod: string, ham: string): string {
   if (!kod) return String(ham ?? "").trim().slice(0, 30);
   let d = String(ham ?? "").replace(/\D/g, "").replace(/^0+/, "");
@@ -98,7 +98,7 @@ export function ReportModal({
   const fd = (iso: string) => formatDate(iso, intl);
   if (!open) return null;
 
-  const damgaMetni = damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU");
+  const damgaMetni = damga ?? (singleDate ? "GÃœN SONU" : "Z RAPORU");
 
   function gorselHazirla(): HTMLCanvasElement | null {
     if (!rapor) return null;
@@ -135,7 +135,7 @@ export function ReportModal({
                 onChange={(e) => onBaslangic(e.target.value)}
                 className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm"
               />
-              <span className="text-sm">—</span>
+              <span className="text-sm">â€”</span>
               <input
                 type="date"
                 value={bitis}
@@ -222,7 +222,7 @@ export function ReportModal({
                         tip: pdfTip ?? "z",
                         baslangic,
                         bitis,
-                        // Alýcý alaný kalktý: rapor iþletmenin kendi numarasýna gider.
+                        // AlÄ±cÄ± alanÄ± kalktÄ±: rapor iÅŸletmenin kendi numarasÄ±na gider.
                         alici: ayarlar.whatsappIsletme || ayarlar.whatsappAlici,
                       });
                       setGonderDurum(
@@ -260,11 +260,11 @@ export function ReportModal({
                 <p className="font-hand text-4xl leading-none">{ayarlar.isletmeAdi}</p>
                 <p className="mt-1 text-sm uppercase tracking-[0.2em] text-slate-500">{title}</p>
                 <p className="text-sm text-slate-600">
-                  {rapor ? `${fd(rapor.baslangic)} — ${fd(rapor.bitis)}` : ""}
+                  {rapor ? `${fd(rapor.baslangic)} â€” ${fd(rapor.bitis)}` : ""}
                 </p>
               </div>
             </div>
-            <div className="stamp px-3 py-1 text-xs font-bold">{damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU")}</div>
+            <div className="stamp px-3 py-1 text-xs font-bold">{damga ?? (singleDate ? "GÃœN SONU" : "Z RAPORU")}</div>
           </div>
 
           {rapor ? (
@@ -332,7 +332,7 @@ export function ReportModal({
               <div className="mt-2 grid gap-2 md:grid-cols-2">
                 {rapor.kategoriler.map((k) => (
                   <div key={k.kategori} className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-sm">
-                    <span>{catLabel(k.kategori, locale)} · {k.adet}</span>
+                    <span>{catLabel(k.kategori, locale)} Â· {k.adet}</span>
                     <span className="tabular-nums">{fm(k.net)}</span>
                   </div>
                 ))}
@@ -358,8 +358,8 @@ export function ReportModal({
                       <td>{k.aciklama}</td>
                       <td>{catLabel(k.kategori, locale)}</td>
                       <td>{k.odemeTipi === "Nakit" ? t("pay_cash") : k.odemeTipi === "Havale" ? t("pay_transfer") : t("pay_card")}</td>
-                      <td>{k.gelir ? fm(k.gelir) : "—"}</td>
-                      <td>{k.gider ? fm(k.gider) : "—"}</td>
+                      <td>{k.gelir ? fm(k.gelir) : "â€”"}</td>
+                      <td>{k.gider ? fm(k.gider) : "â€”"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -367,7 +367,7 @@ export function ReportModal({
               </div>
 
               <p className="mt-8 text-right text-xs text-slate-500">
-                {ayarlar.isletmeAdi} · {formatDateLong(rapor.bitis, intl)}
+                {ayarlar.isletmeAdi} Â· {formatDateLong(rapor.bitis, intl)}
               </p>
             </>
           ) : (
@@ -497,9 +497,9 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
       <p className="font-hand text-2xl text-teal-200">{t("sub_title")}</p>
       <p className="mt-1 text-sm">
         {pro ? (
-          <span className="font-semibold text-teal-300">? {t("sub_pro")}</span>
+          <span className="font-semibold text-teal-300">âœ“ {t("sub_pro")}</span>
         ) : (
-          <span>{t("sub_free")} · {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
+          <span>{t("sub_free")} Â· {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
         )}
       </p>
       <p className="mt-1 text-[11px] text-slate-400">{sub.email}</p>
@@ -523,7 +523,7 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
                   onClick={() => void iptalEt()}
                   className="flex-1 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
                 >
-                  {yapiliyor ? "…" : t("sub_cancel")}
+                  {yapiliyor ? "â€¦" : t("sub_cancel")}
                 </button>
                 <button
                   type="button"
@@ -596,7 +596,7 @@ function KiraBolBolumu({ varsayilanAy, onKiraBol }: { varsayilanAy: number; onKi
         }}
         className="rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
       >
-        {yapiliyor ? "…" : t("kirabol_onay")}
+        {yapiliyor ? "â€¦" : t("kirabol_onay")}
       </button>
       <button type="button" onClick={() => setKurulu(false)} className="rounded-lg px-3 py-1.5 text-sm">
         {t("rep_giveUp")}
@@ -821,7 +821,7 @@ type TelefonBilgi = {
   qr: string | null;
 };
 
-/** Telefonda aç: ayný Wi-Fi'den karekodla baðlan. */
+/** Telefonda aÃ§: aynÄ± Wi-Fi'den karekodla baÄŸlan. */
 export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useT();
   const [bilgi, setBilgi] = useState<TelefonBilgi | null>(null);
@@ -860,10 +860,10 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
     try {
       olay.prompt();
       const secim = await olay.userChoice;
-      setKuruldu(secim.outcome === "accepted" ? "Installing — Shop Ledger will appear on your home screen." : "Cancelled — you can also install from the menu.");
+      setKuruldu(secim.outcome === "accepted" ? "Installing â€” Shop Ledger will appear on your home screen." : "Cancelled â€” you can also install from the menu.");
       if (secim.outcome === "accepted") setKurabilir(false);
     } catch {
-      setKuruldu("Failed — try from the menu.");
+      setKuruldu("Failed â€” try from the menu.");
     }
   }
 
@@ -877,7 +877,7 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
       <div className="scroll-thin my-auto max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-[#fafafa] p-6 text-center shadow-2xl">
-        <p className="font-hand text-3xl">?? {t("phone_title")}</p>
+        <p className="font-hand text-3xl">ðŸ“± {t("phone_title")}</p>
         <p className="mt-1 text-xs text-slate-600">{t("phone_sub")}</p>
         {bilgi ? (
           <>
