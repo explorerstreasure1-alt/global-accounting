@@ -21,9 +21,8 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(255, 220, 160, 0.18), transparent 50%),
-    radial-gradient(900px 500px at 100% 0%, rgba(20, 80, 90, 0.22), transparent 45%),
-    #3b2416;
+    radial-gradient(1200px 600px at 20% -10%, rgba(255, 253, 244, 0.5), transparent 50%),
+    #efe3c2;
   background-attachment: fixed;
 }
 
@@ -52,12 +51,17 @@ textarea {
 
 .desk-app {
   min-height: 100vh;
+  color: var(--ink);
+  background-color: #f6efdd;
   background-image:
-    linear-gradient(180deg, rgba(20, 12, 8, 0.28), rgba(20, 12, 8, 0.45)),
-    repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.025) 0 1px, transparent 1px 5px),
-    radial-gradient(ellipse at 50% 35%, #725039 0%, #4e3425 55%, #352217 100%);
-  background-size: cover;
-  background-position: center;
+    radial-gradient(rgba(90, 120, 160, 0.22) 1px, transparent 1.5px),
+    repeating-linear-gradient(to bottom, transparent 0 35px, rgba(90, 140, 190, 0.28) 35px 36px),
+    radial-gradient(ellipse at 50% 0%, #fffdf4 0%, #f6efdd 60%, #eee0bd 100%);
+  background-size:
+    26px 26px,
+    auto,
+    cover;
+  background-attachment: fixed;
 }
 
 .notebook {
@@ -391,4 +395,104 @@ textarea {
     width: 60mm !important;
     height: 40mm !important;
   }
+}
+
+/* === Kâğıt cilt: koyu yüzeyleri fildişine çevir (giriş ekranı bu kapsamın dışındadır) === */
+.desk-app [class*="bg-black/25"],
+.desk-app [class*="bg-white/10"],
+.desk-app [class*="bg-white/5"],
+.desk-app .ai-panel {
+  background-color: rgba(255, 253, 244, 0.78);
+  background-image:
+    radial-gradient(rgba(90, 120, 160, 0.14) 1px, transparent 1.5px);
+  background-size: 26px 26px;
+  color: var(--ink);
+  border: 1px solid rgba(93, 64, 28, 0.18);
+  box-shadow:
+    0 10px 28px rgba(93, 64, 28, 0.1),
+    inset 0 0 40px rgba(120, 80, 20, 0.05);
+  backdrop-filter: none;
+}
+
+.desk-app [class*="hover:bg-white/20"]:hover {
+  background-color: rgba(93, 64, 28, 0.08);
+}
+
+.desk-app [class*="border-white/10"] {
+  border-color: rgba(93, 64, 28, 0.2);
+}
+
+.desk-app [class*="ring-white/10"] {
+  --tw-ring-color: rgba(93, 64, 28, 0.2);
+}
+
+/* Açık zemin yazılarını mürekkebe çevir (renkli düğmelerdeki beyazlar aynen kalır) */
+.desk-app [class*="text-amber-50"] {
+  color: var(--ink);
+}
+
+.desk-app [class*="text-amber-100"] {
+  color: var(--ink-soft);
+}
+
+.desk-app [class*="text-amber-200"] {
+  color: var(--ink-soft);
+}
+
+.desk-app [class*="text-teal-100"],
+.desk-app [class*="text-teal-200"] {
+  color: #0e6b62;
+}
+
+.desk-app [class*="placeholder:text-amber-100"]::placeholder {
+  color: rgba(44, 74, 110, 0.5);
+}
+
+/* Asistan paneli kâğıt uyumu */
+.desk-app .ai-panel .msg-ai {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(93, 64, 28, 0.2);
+  color: var(--ink);
+}
+
+.desk-app .ai-panel .msg-html strong,
+.desk-app .ai-panel .msg-html .msg-baslik {
+  color: #0e6b62;
+}
+
+.desk-app .ai-panel .msg-html code {
+  background: rgba(93, 64, 28, 0.1);
+}
+
+.desk-app .ai-panel .msg-tablo th {
+  background: rgba(14, 107, 98, 0.12);
+  color: #0e6b62;
+}
+
+.desk-app .ai-panel .msg-tablo th,
+.desk-app .ai-panel .msg-tablo td {
+  border-color: rgba(93, 64, 28, 0.28);
+}
+
+.desk-app .ai-panel .scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(80, 60, 30, 0.35);
+}
+
+/* === Kabartma (deftere mühür basılmış hissi) === */
+.desk-app .font-hand {
+  color: var(--ink);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -1px 1px rgba(93, 64, 28, 0.3);
+}
+
+.desk-app button svg,
+.desk-app a svg {
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5));
+}
+
+.kabartma {
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -1px 1px rgba(93, 64, 28, 0.3);
 }
