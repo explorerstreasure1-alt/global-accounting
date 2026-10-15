@@ -100,6 +100,7 @@ export function MusteriSayfasi() {
   const [hizmet, setHizmet] = useState("");
   const [tutar, setTutar] = useState("");
   const adRef = useRef<HTMLInputElement | null>(null);
+  const hizmetRef = useRef<HTMLInputElement | null>(null);
 
   /** "Müşteri ekle" düğmesi: hızlı ekleme alanına odaklar. */
   function musteriOdagina() {
@@ -109,6 +110,29 @@ export function MusteriSayfasi() {
       /* yoksay */
     }
     setTimeout(() => adRef.current?.focus(), 120);
+  }
+
+  /** Tekrar ziyaret: karttaki tam veriyi hızlı eke doldurur, son hizmetle yeni kayda hazırlar. */
+  async function tekrarZiyaret(id: string) {
+    try {
+      const r = await fetch(`/api/musteriler/${id}`);
+      const j = await r.json();
+      const mst = j.musteri;
+      if (!mst) return;
+      setAd(mst.ad ?? "");
+      setSoyad(mst.soyad ?? "");
+      setTelefon(mst.telefon ?? "");
+      setHizmet(mst.sonHizmet ?? "");
+      setTutar(mst.sonTutar != null ? String(mst.sonTutar) : "");
+    } catch {
+      /* yoksay */
+    }
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* yoksay */
+    }
+    setTimeout(() => hizmetRef.current?.focus(), 150);
   }
 
   async function yukle(q = arama, cop = copte) {
@@ -308,7 +332,7 @@ export function MusteriSayfasi() {
                 <input ref={adRef} value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
-                <input value={hizmet} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
+                <input value={hizmet} ref={hizmetRef} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
                 <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
@@ -556,6 +580,9 @@ export function MusteriSayfasi() {
             <I name="star" size={13} />
           </span>
         )}
+        <button type="button" onClick={() => void tekrarZiyaret(m.id)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100" title={t("mus_tekrarZiyaret")}>
+          <I name="refresh" size={13} />
+        </button>
         <button type="button" onClick={() => kartAc(m.id, true)} className="grid place-items-center rounded-lg border border-violet-200 bg-white p-2 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
           <I name="edit" size={13} />
         </button>
