@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ ziyaret }, { status: 201 });
 }
 
-/** Durum ilerlet: hazirlaniyor → hazir → teslim. tahsilat verilirse borçtan düşer. */
+/** Durum ilerlet: hazirlaniyor → hazir → teslim. tahsilat verilirse borçtan düşer. Hizmet/tutar/tarih/not verilirse içeriği düzenler. */
 export async function PATCH(request: Request) {
   const { db, gate } = await resolveDb();
   if (gate) return gate;
@@ -48,6 +48,25 @@ export async function PATCH(request: Request) {
     const tutar = Number(body.tahsilat);
     if (!Number.isFinite(tutar) || tutar <= 0) return NextResponse.json({ error: "tutar-hatali" }, { status: 400 });
     const ziyaret = await db.tahsilatEkle(id, tutar);
+    if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
+    return NextResponse.json({ ziyaret });
+  }
+  // İçerik düzenleme: hizmet adı / tutar / tarih / not (yanlış yazım düzeltmesi)
+  if (body.hizmet !== undefined || body.tutar !== undefined || body.tarih !== undefined || body.not !== undefined) {
+    const patch: { hizmet?: string; tutar?: number; tarih?: string; not?: string } = {};
+    if (body.hizmet !== undefined) patch.hizmet = String(body.hizmet || "").trim().slice(0, 80);
+    if (body.tutar !== undefined) {
+      const tutar = Number(body.tutar);
+      if (!Number.isFinite(tutar) || tutar < 0) return NextResponse.json({ error: "tutar-hatali" }, { status: 400 });
+      patch.tutar = tutar;
+    }
+    if (body.tarih !== undefined) {
+      const tarih = String(body.tarih || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(tarih)) return NextResponse.json({ error: "tarih-hatali" }, { status: 400 });
+      patch.tarih = tarih;
+    }
+    if (body.not !== undefined) patch.not = String(body.not || "").trim().slice(0, 500);
+    const ziyaret = await db.updateZiyaret(id, patch);
     if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
     return NextResponse.json({ ziyaret });
   }

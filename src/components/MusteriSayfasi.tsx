@@ -614,6 +614,11 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
   const [onaySil, setOnaySil] = useState(false);
   const [tahsil, setTahsil] = useState("");
   const [hata, setHata] = useState<string | null>(null);
+  /** Ziyaret satırı düzenleme (hizmet adı / tutar / tarih düzeltmesi). */
+  const [dzId, setDzId] = useState<string | null>(null);
+  const [dzHizmet, setDzHizmet] = useState("");
+  const [dzTutar, setDzTutar] = useState("");
+  const [dzTarih, setDzTarih] = useState(toISODate());
 
   useEffect(() => {
     if (!hata) return;
@@ -717,8 +722,38 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
     }
   }
 
-  async function durumDegis(zid: string, durum: import("@/lib/types").ZiyaretDurum) {
+  /** Ziyaret düzenleme: satırdaki kalem → hizmet/tutar/tarih formu doldurur. */
+  function ziyaretDuzenleBasla(z: import("@/lib/types").Ziyaret) {
+    setDzId(z.id);
+    setDzHizmet(z.hizmet ?? "");
+    setDzTutar(String(z.tutar ?? ""));
+    setDzTarih(z.tarih || toISODate());
+  }
+
+  /** Ziyaret düzenleme kaydet: hizmet adı yanlış yazıldıysa buradan düzeltilir. */
+  async function ziyaretDuzenleKaydet() {
+    if (!dzId) return;
     setMesgul(true);
+    try {
+      const r = await fetch("/api/ziyaretler", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: dzId, hizmet: dzHizmet, tutar: Number(String(dzTutar).replace(",", ".")) || 0, tarih: dzTarih }),
+      });
+      if (!r.ok) {
+        setHata(t("toast_saveFailed"));
+        return;
+      }
+      setDzId(null);
+      await yukle();
+    } catch {
+      setHata(t("toast_saveFailed"));
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  async function durumDegis(zid: string, durum: import("@/lib/types").ZiyaretDurum) {    setMesgul(true);
     try {
       await fetch("/api/ziyaretler", {
         method: "PATCH",
@@ -854,6 +889,21 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
           <p className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">{t("mus_visits")} ({musteri.ziyaretler.length})</p>
           <div className="space-y-1.5">
             {musteri.ziyaretler.map((z, zi) => (
+              dzId === z.id ? (
+                <div key={z.id} className="grid grid-cols-2 gap-2 rounded-xl bg-violet-50/70 px-3 py-2 ring-1 ring-violet-300 min-[480px]:grid-cols-[1fr_110px_130px_auto]">
+                  <input value={dzHizmet} onChange={(e) => setDzHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-lg border border-violet-200 bg-white px-2 py-2 text-sm outline-none" />
+                  <input value={dzTutar} onChange={(e) => setDzTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-lg border border-violet-200 bg-white px-2 py-2 text-sm outline-none" />
+                  <input type="date" value={dzTarih} onChange={(e) => setDzTarih(e.target.value)} className="min-w-0 rounded-lg border border-violet-200 bg-white px-2 py-2 text-sm outline-none" />
+                  <div className="col-span-2 flex gap-2 min-[480px]:col-span-1">
+                    <button type="button" disabled={mesgul} onClick={() => void ziyaretDuzenleKaydet()} className="flex-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                      {t("cm_kaydet")}
+                    </button>
+                    <button type="button" onClick={() => setDzId(null)} className="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-white">
+                      {t("mus_cancel")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
               <div key={z.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white/70 px-3 py-2 ring-1 ring-slate-200">
                 <div className="min-w-[140px] flex-1">
                   <p className="truncate text-sm font-semibold">{z.hizmet || "—"} · {fm(z.tutar)}{z.tutar - z.odenen > 0 ? <span className="font-bold text-rose-700"> · {t("mus_borc")}: {fm(z.tutar - z.odenen)}</span> : null}</p>
@@ -902,7 +952,11 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
                 <button type="button" onClick={() => router.push(`/app/etiket?m=${musteri.id}&z=${z.id}&n=${musteri.ziyaretler.length - zi}`)} className="grid shrink-0 place-items-center rounded-lg p-2 text-slate-500 hover:bg-slate-100" title={t("etiket_print")}>
                   <I name="print" size={14} />
                 </button>
+                <button type="button" onClick={() => ziyaretDuzenleBasla(z)} className="grid shrink-0 place-items-center rounded-lg border border-violet-200 bg-white p-2 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
+                  <I name="edit" size={13} />
+                </button>
               </div>
+              )
             ))}
           </div>
           <div className="mt-4 border-t border-slate-200 pt-3">

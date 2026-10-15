@@ -971,6 +971,46 @@ export async function updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promi
   );
 }
 
+/** Ziyaret içeriğini düzenle: hizmet adı / tutar / tarih / not (yanlış yazım düzeltmesi). */
+export async function updateZiyaret(
+  id: string,
+  patch: Partial<Pick<ZiyaretGirdi, "hizmet" | "tutar" | "tarih" | "not">>,
+): Promise<Ziyaret | null> {
+  return withDb(
+    async () => {
+      await ensureMusteriTables();
+      const cur = await db!.select().from(ziyaretler).where(eq(ziyaretler.id, id)).limit(1);
+      if (!cur.length) return null;
+      const mevcut = mapZiyaret(cur[0]);
+      const next = {
+        hizmet: patch.hizmet !== undefined ? kisa(patch.hizmet, 80) : mevcut.hizmet,
+        tutar: patch.tutar !== undefined ? round2(Math.max(0, Number(patch.tutar) || 0)).toFixed(2) : mevcut.tutar.toFixed(2),
+        tarih: patch.tarih !== undefined ? gecerliTarih(patch.tarih) : mevcut.tarih,
+        not: patch.not !== undefined ? kisa(patch.not, 500) : mevcut.not,
+      };
+      const r = await db!.update(ziyaretler).set(next).where(eq(ziyaretler.id, id)).returning();
+      if (!r.length) return null;
+      return mapZiyaret(r[0]);
+    },
+    async () => {
+      const dosya = await musteriDosyaOku();
+      const z = dosya.ziyaretler.find((x) => x.id === id);
+      if (!z) return null;
+      if (patch.hizmet !== undefined) z.hizmet = kisa(patch.hizmet, 80);
+      if (patch.tutar !== undefined) {
+        const yeni = round2(Math.max(0, Number(patch.tutar) || 0));
+        z.tutar = yeni;
+        // Tutar düşerse ödenen taşmasın (borç negatife inmesin).
+        if ((Number(z.odenen) || 0) > yeni) z.odenen = yeni;
+      }
+      if (patch.tarih !== undefined) z.tarih = gecerliTarih(patch.tarih);
+      if (patch.not !== undefined) z.not = kisa(patch.not, 500);
+      await musteriDosyaYaz(dosya);
+      return z;
+    },
+  );
+}
+
 /** Veresiye tahsilatı: ödemeyi kalan borca ekler (fazlası kesilir). */
 export async function tahsilatEkle(id: string, tutar: number): Promise<Ziyaret | null> {
   const odeme = round2(Math.max(0, Number(tutar) || 0));

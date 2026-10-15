@@ -118,6 +118,7 @@ export type TenantDb = {
   deleteMusteri(id: string): Promise<boolean>;
   restoreMusteri(id: string): Promise<boolean>;
   addZiyaret(input: ZiyaretGirdi): Promise<Ziyaret>;
+  updateZiyaret(id: string, patch: Partial<Pick<ZiyaretGirdi, "hizmet" | "tutar" | "tarih" | "not">>): Promise<Ziyaret | null>;
   updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null>;
   tahsilatEkle(id: string, tutar: number): Promise<Ziyaret | null>;
   deleteZiyaret(id: string): Promise<boolean>;
@@ -486,6 +487,33 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     throw ilk.error;
   }
 
+  async function updateZiyaret(id: string, patch: Partial<Pick<ZiyaretGirdi, "hizmet" | "tutar" | "tarih" | "not">>): Promise<Ziyaret | null> {
+    const cur = await supa.from("ziyaretler").select("*").eq("id", id).eq("business_id", businessId).limit(1).maybeSingle();
+    if (cur.error || !cur.data) return null;
+    const mevcut = mapZiyaret(cur.data as Row);
+    const next: Record<string, unknown> = {};
+    if (patch.hizmet !== undefined) next.hizmet = String(patch.hizmet || "").trim().slice(0, 80);
+    if (patch.tutar !== undefined) {
+      const yeni = round2(Math.max(0, Number(patch.tutar) || 0));
+      next.tutar = yeni;
+      // Tutar düşerse ödenen taşmasın.
+      if (mevcut.odenen > yeni) next.odenen = yeni;
+    }
+    if (patch.tarih !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(String(patch.tarih || ""))) next.tarih = patch.tarih;
+    if (patch.not !== undefined) next.not = String(patch.not || "").trim().slice(0, 500);
+    if (Object.keys(next).length === 0) return mevcut;
+    const { data, error } = await supa
+      .from("ziyaretler")
+      .update(next)
+      .eq("id", id)
+      .eq("business_id", businessId)
+      .select("*");
+    if (error) throw error;
+    const out = (data ?? []) as Row[];
+    if (!out.length) return null;
+    return mapZiyaret(out[0]);
+  }
+
   async function updateZiyaretDurum(id: string, durum: ZiyaretDurum): Promise<Ziyaret | null> {
     const d = (["hazirlaniyor", "hazir", "teslim"] as string[]).includes(durum) ? durum : "hazirlaniyor";
     const { data, error } = await supa
@@ -548,7 +576,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
       .sort((a, b) => a.tarih.localeCompare(b.tarih));
   }
 
-  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaretDurum, tahsilatEkle, deleteZiyaret, listAktifZiyaretler };
+  return { listKayitlar, getAyarlar, createKayit, updateKayit, deleteKayit, updateAyarlar, addMesaj, temizleSohbet, sifirlaTumu, restoreSnapshot, restoreLatestBackup, getInitData, listMusteriler, getMusteri, createMusteri, updateMusteri, deleteMusteri, restoreMusteri, addZiyaret, updateZiyaret, updateZiyaretDurum, tahsilatEkle, deleteZiyaret, listAktifZiyaretler };
 }
 
 /** Dosya/tek-kullanıcı modu için aynı arayüz (mevcut davranış birebir). */
@@ -574,6 +602,7 @@ export async function fileDb(): Promise<TenantDb> {
     deleteMusteri: d.deleteMusteri,
     restoreMusteri: d.restoreMusteri,
     addZiyaret: d.addZiyaret,
+    updateZiyaret: d.updateZiyaret,
     updateZiyaretDurum: d.updateZiyaretDurum,
     tahsilatEkle: d.tahsilatEkle,
     deleteZiyaret: d.deleteZiyaret,
