@@ -98,7 +98,7 @@ export function ReportModal({
   const fd = (iso: string) => formatDate(iso, intl);
   if (!open) return null;
 
-  const damgaMetni = damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU");
+  const damgaMetni = damga ?? (singleDate ? t("stamp_gun") : t("stamp_z"));
 
   function gorselHazirla(): HTMLCanvasElement | null {
     if (!rapor) return null;
@@ -224,6 +224,7 @@ export function ReportModal({
                         bitis,
                         // Alıcı alanı kalktı: rapor işletmenin kendi numarasına gider.
                         alici: ayarlar.whatsappIsletme || ayarlar.whatsappAlici,
+                        locale,
                       });
                       setGonderDurum(
                         sonuc === "whatsapp-acildi"

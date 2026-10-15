@@ -1,6 +1,7 @@
 import { AlignmentType, Document, HeadingLevel, Packer, Paragraph, Table, TableCell, TableRow, TextRun } from "docx";
 import type { Ayarlar, RaporOzet } from "./types";
 import { formatDate, formatMoneyLocale } from "./format";
+import { kategoriEtiketi, odemeEtiketi } from "./rapor-dil";
 
 const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   tr: { intl: "tr-TR", currency: "TRY" },
@@ -116,7 +117,7 @@ export async function buildWord(
               ...[...rapor.kayitlar]
                 .sort((a, b) => a.tarih.localeCompare(b.tarih))
                 .map((k) =>
-                  row([fd(k.tarih), k.aciklama, k.kategori, k.odemeTipi, k.gelir ? fm(k.gelir) : "—", k.gider ? fm(k.gider) : "—"]),
+                  row([fd(k.tarih), k.aciklama, kategoriEtiketi(k.kategori, locale), odemeEtiketi(k.odemeTipi, locale), k.gelir ? fm(k.gelir) : "—", k.gider ? fm(k.gider) : "—"]),
                 ),
             ],
           }),

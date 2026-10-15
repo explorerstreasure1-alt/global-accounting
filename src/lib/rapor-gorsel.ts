@@ -5,6 +5,7 @@ import { parsePhoneNumberFromString } from "libphonenumber-js";
 import type { Ayarlar, RaporOzet } from "./types";
 import { formatMoneyLocale, formatDate } from "./format";
 import { LOCALE_META, type LocaleCode } from "./i18n";
+import { dilAl, kategoriEtiketi } from "./rapor-dil";
 
 const W = 1080;
 const PAD = 48;
@@ -30,6 +31,7 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   const currency = opts?.currency ?? LOCALE_META[loc]?.currency ?? "USD";
   const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
   const fd = (iso: string) => formatDate(iso, intl);
+  const d = dilAl(loc);
   const canvas = document.createElement("canvas");
   const kats = [...rapor.kategoriler].sort((a, b) => b.gelir + b.gider - (a.gelir + a.gider)).slice(0, 8);
   const gunler = rapor.gunler.slice(-20);
@@ -88,19 +90,20 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   kes();
 
   // İstatistik ızgarası
+  const k = d.kutu;
   const kutular: Array<[string, string, string?]> = [
-    ["Nakit Gelir", fm(rapor.nakitGelir)],
-    ["Nakit Gider", fm(rapor.nakitGider)],
-    ["Kart Gelir", fm(rapor.kartGelir)],
-    ["Kart Gider", fm(rapor.kartGider)],
-    ["Havale Gelir", fm(rapor.havaleGelir)],
-    ["Havale Gider", fm(rapor.havaleGider)],
-    ["Nakit Net", fm(rapor.nakitNet), YESIL],
-    ["Kart Net", fm(rapor.kartNet), YESIL],
-    ["Havale Net", fm(rapor.havaleNet), YESIL],
-    ["Toplam Gelir", fm(rapor.gelir)],
-    ["Toplam Gider", fm(rapor.gider)],
-    ["Kayıt", `${rapor.adet} satır`],
+    [k[0], fm(rapor.nakitGelir)],
+    [k[1], fm(rapor.nakitGider)],
+    [k[2], fm(rapor.kartGelir)],
+    [k[3], fm(rapor.kartGider)],
+    [k[4], fm(rapor.havaleGelir)],
+    [k[5], fm(rapor.havaleGider)],
+    [k[6], fm(rapor.nakitNet), YESIL],
+    [k[7], fm(rapor.kartNet), YESIL],
+    [k[8], fm(rapor.havaleNet), YESIL],
+    [k[9], fm(rapor.gelir)],
+    [k[10], fm(rapor.gider)],
+    [d.kayitSayi(rapor.adet), String(rapor.adet)],
   ];
   const sutun = 4;
   const kutuW = (W - PAD * 2 - (sutun - 1) * 14) / sutun;
@@ -126,9 +129,9 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
 
   // Net şeridi
   const serit: Array<[string, string, string]> = [
-    ["GENEL NET", fm(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
-    ["AÇILIŞ", fm(rapor.acilisBakiyesi), INK],
-    ["KAPANIŞ", fm(rapor.kapanisBakiyesi), LACIVERT],
+    [d.serit[0], fm(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
+    [d.serit[1], fm(rapor.acilisBakiyesi), INK],
+    [d.serit[2], fm(rapor.kapanisBakiyesi), LACIVERT],
   ];
   serit.forEach(([etiket, deger, renk], i) => {
     const cx = PAD + i * ((W - PAD * 2 - 28) / 3 + 14);
@@ -153,14 +156,14 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   // Kategoriler
   ctx.fillStyle = INK;
   ctx.font = "700 30px system-ui, sans-serif";
-  ctx.fillText("Kategoriler", PAD, y + 20);
+  ctx.fillText(d.katSec, PAD, y + 20);
   y += 52;
   kes();
   ctx.font = "24px system-ui, sans-serif";
   for (const k of kats) {
     const oran = (k.gelir + k.gider) / maxKat;
     ctx.fillStyle = INK;
-    ctx.fillText(kisalt(ctx, `${k.kategori} · ${k.adet} kayıt`, 330), PAD, y + 16);
+    ctx.fillText(kisalt(ctx, `${kategoriEtiketi(k.kategori, loc)} · ${d.kayitSayi(k.adet)}`, 330), PAD, y + 16);
     ctx.fillStyle = "#E7DFC9";
     ctx.fillRect(400, y - 6, 420, 26);
     ctx.fillStyle = LACIVERT;
@@ -178,7 +181,7 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
     y += 8;
     ctx.fillStyle = INK;
     ctx.font = "700 30px system-ui, sans-serif";
-    ctx.fillText("Günlük net", PAD, y + 20);
+    ctx.fillText(d.gunSec, PAD, y + 20);
     y += 52;
     kes();
     ctx.font = "23px system-ui, sans-serif";
@@ -203,14 +206,14 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   y += 8;
   ctx.fillStyle = INK;
   ctx.font = "700 30px system-ui, sans-serif";
-  ctx.fillText(`Fiş listesi (${rapor.kayitlar.length} kayıt)`, PAD, y + 20);
+  ctx.fillText(d.fisSayi(rapor.kayitlar.length), PAD, y + 20);
   y += 56;
   kes();
   ctx.font = "24px system-ui, sans-serif";
   ctx.fillStyle = SOLUK;
-  ctx.fillText("TARİH", PAD, y);
-  ctx.fillText("AÇIKLAMA", 220, y);
-  ctx.fillText("TUTAR", W - PAD - 170, y);
+  ctx.fillText(d.thead[0], PAD, y);
+  ctx.fillText(d.thead[1], 220, y);
+  ctx.fillText(d.thead[2], W - PAD - 170, y);
   y += 8;
   ctx.strokeStyle = CIZGI;
   ctx.beginPath();
@@ -234,7 +237,7 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   }
   if (rapor.kayitlar.length > fisler.length) {
     ctx.fillStyle = SOLUK;
-    ctx.fillText(`… ve ${rapor.kayitlar.length - fisler.length} kayıt daha (tümü Excel'de)`, PAD, y);
+    ctx.fillText(d.dahaFazla(rapor.kayitlar.length - fisler.length), PAD, y);
     y += 42;
     kes();
   }
@@ -249,8 +252,8 @@ export function raporCanvas(rapor: RaporOzet, ayarlar: Ayarlar, baslik: string, 
   ctx.stroke();
   ctx.fillStyle = SOLUK;
   ctx.font = "22px system-ui, sans-serif";
-  const simdi = new Date().toLocaleString("en-US");
-  ctx.fillText(`${ayarlar.isletmeAdi} · prepared with LedgerAI · ${simdi}`, PAD, y + 30);
+  const simdi = new Date().toLocaleString(intl);
+  ctx.fillText(`${ayarlar.isletmeAdi} · ${d.footerOrta} · ${simdi}`, PAD, y + 30);
 
   (canvas as HTMLCanvasElement & { _kesimler?: number[] })._kesimler = [...kesimler, H];
   return canvas;
@@ -362,8 +365,10 @@ export async function gonderRapor(opts: {
   baslangic: string;
   bitis: string;
   alici: string;
+  locale?: string;
 }): Promise<"whatsapp-acildi" | "indirildi" | "hata"> {
   const { format, canvas, rapor, isletmeAdi, baslik, tip, baslangic, bitis, alici } = opts;
+  const d = dilAl(opts.locale);
   try {
     let blob: Blob | null = null;
     let ad = "";
@@ -402,7 +407,7 @@ export async function gonderRapor(opts: {
     if (hedef) {
       const cerceve = document.createElement("iframe");
       cerceve.style.display = "none";
-      cerceve.src = `whatsapp://send?phone=${hedef}&text=${encodeURIComponent(`${ozet} — dosya ektedir.`)}`;
+      cerceve.src = `whatsapp://send?phone=${hedef}&text=${encodeURIComponent(`${ozet} — ${d.ektedir}`)}`;
       document.body.appendChild(cerceve);
       setTimeout(() => cerceve.remove(), 5000);
       return "whatsapp-acildi";

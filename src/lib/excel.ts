@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import type { Ayarlar, Musteri, RaporOzet } from "./types";
 import { formatDate } from "./format";
+import { dilAl, kategoriEtiketi, odemeEtiketi, paraSembol } from "./rapor-dil";
 
 const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   tr: { intl: "tr-TR", currency: "TRY" },
@@ -25,6 +26,9 @@ const BANT = "FFF7F3E8";
 const YESIL = "FF15803D";
 const KIRMIZI = "FFB91C1C";
 const PARA_FMT = '#,##0.00 "₺"';
+
+/** Oluşturma anındaki para birimi biçimi (builder'lar senkron çalışır, yarış yok). */
+let fmtAktif = PARA_FMT;
 
 export function raporBasligi(tip: string, locale = "en"): string {
   const T: Record<string, Record<string, string>> = {
@@ -90,7 +94,7 @@ function toplamSatiri(ws: ExcelJS.Worksheet, rowNo: number, colCount: number, et
 
 function paraHucre(cell: ExcelJS.Cell, deger: number, negatifKirmizi = true) {
   cell.value = Math.round(deger * 100) / 100;
-  cell.numFmt = PARA_FMT;
+  cell.numFmt = fmtAktif;
   cell.alignment = { horizontal: "right" };
   if (negatifKirmizi) {
     cell.font = { color: { argb: deger < 0 ? KIRMIZI : "FF111111" }, bold: deger < 0 ? true : false };
@@ -108,8 +112,10 @@ function kapakYaz(
   rapor: RaporOzet,
   uretim: string,
   intl = "en-US",
+  loc = "en",
 ): number {
   const fdLocal = (iso: string) => formatDate(iso, intl);
+  const d = dilAl(loc);
   ws.mergeCells("A1:E1");
   const t = ws.getCell("A1");
   t.value = `${ayarlar.isletmeAdi} — ${baslik}`;
@@ -124,31 +130,31 @@ function kapakYaz(
   alt.alignment = { horizontal: "center" };
 
   const satirlar: Array<[string, number, boolean?]> = [
-    ["Toplam Gelir", rapor.gelir],
-    ["Toplam Gider", rapor.gider],
-    ["GENEL NET", rapor.net, true],
-    ["Nakit Gelir", rapor.nakitGelir],
-    ["Nakit Gider", rapor.nakitGider],
-    ["Nakit Net", rapor.nakitNet, true],
-    ["Kart Gelir", rapor.kartGelir],
-    ["Kart Gider", rapor.kartGider],
-    ["Kart Net", rapor.kartNet, true],
-    ["Havale Gelir", rapor.havaleGelir],
-    ["Havale Gider", rapor.havaleGider],
-    ["Havale Net", rapor.havaleNet, true],
-    ["Açılış Bakiyesi", rapor.acilisBakiyesi],
-    ["Kapanış Bakiyesi", rapor.kapanisBakiyesi, true],
-    ["İşlem Adedi", rapor.adet],
+    [d.satir[0], rapor.gelir],
+    [d.satir[1], rapor.gider],
+    [d.satir[2], rapor.net, true],
+    [d.satir[3], rapor.nakitGelir],
+    [d.satir[4], rapor.nakitGider],
+    [d.satir[5], rapor.nakitNet, true],
+    [d.satir[6], rapor.kartGelir],
+    [d.satir[7], rapor.kartGider],
+    [d.satir[8], rapor.kartNet, true],
+    [d.satir[9], rapor.havaleGelir],
+    [d.satir[10], rapor.havaleGider],
+    [d.satir[11], rapor.havaleNet, true],
+    [d.satir[12], rapor.acilisBakiyesi],
+    [d.satir[13], rapor.kapanisBakiyesi, true],
+    [d.satir[14], rapor.adet],
   ];
-  ws.getCell("A4").value = "Gösterge";
-  ws.getCell("B4").value = "Tutar";
+  ws.getCell("A4").value = d.gosterge;
+  ws.getCell("B4").value = d.tutarCol;
   baslikStili(ws, 4, 2);
   let r = 5;
-  for (const [etiket, deger, vurgu] of satirlar) {
+  satirlar.forEach(([etiket, deger, vurgu], i) => {
     ws.getCell(`A${r}`).value = etiket;
     ws.getCell(`A${r}`).border = sinir();
     ws.getCell(`B${r}`).border = sinir();
-    if (etiket === "İşlem Adedi") {
+    if (i === satirlar.length - 1) {
       ws.getCell(`B${r}`).value = deger;
       ws.getCell(`B${r}`).alignment = { horizontal: "right" };
     } else {
@@ -161,7 +167,7 @@ function kapakYaz(
       ws.getCell(`B${r}`).fill = { type: "pattern", pattern: "solid", fgColor: { argb: ALTIN_ACIK } };
     }
     r += 1;
-  }
+  });
   ws.columns = [{ width: 22 }, { width: 22 }, { width: 4 }, { width: 4 }, { width: 4 }];
   sayfaKurulum(ws);
   return r;
@@ -175,6 +181,8 @@ export function buildExcel(
 ): ExcelJS.Workbook {
   const locale = opts?.locale ?? "en";
   const intl = LOCALE_INTL[locale]?.intl ?? "en-US";
+  const d = dilAl(locale);
+  fmtAktif = '#,##0.00 "' + paraSembol(opts?.currency) + '"';
   const fd = (iso: string) => formatDate(iso, intl);
   const wb = new ExcelJS.Workbook();
   wb.creator = "Tailor Ledger";
@@ -183,15 +191,15 @@ export function buildExcel(
   const uretim = new Date().toLocaleString(intl);
 
   // --- 1) Kapak / Özet ---
-  const kapak = wb.addWorksheet("Summary");
-  const ozetSon = kapakYaz(kapak, baslik, ayarlar, rapor, uretim, intl);
+  const kapak = wb.addWorksheet(d.sayfaKapak);
+  const ozetSon = kapakYaz(kapak, baslik, ayarlar, rapor, uretim, intl, locale);
 
   // --- 1b) Özet sayfasına fiş listesi (sekmeye geçmeden görünsün) ---
   const fisBaslik = ozetSon + 2;
-  kapak.getCell(`A${fisBaslik}`).value = "Fiş Listesi (ödeme tipiyle)";
+  kapak.getCell(`A${fisBaslik}`).value = d.fisBaslik;
   kapak.getCell(`A${fisBaslik}`).font = { bold: true, size: 13, color: { argb: LACI } };
   const fisTabloBas = fisBaslik + 1;
-  const fisKolonlar = ["Tarih", "Açıklama", "Kategori", "Ödeme", "Gelir", "Gider"];
+  const fisKolonlar = d.fisKolon;
   fisKolonlar.forEach((baslikHucre, i) => {
     kapak.getCell(fisTabloBas, i + 1).value = baslikHucre;
   });
@@ -201,19 +209,19 @@ export function buildExcel(
     kapak.getCell(fr, 1).value = fd(k.tarih);
     kapak.getCell(fr, 1).alignment = { horizontal: "center" };
     kapak.getCell(fr, 2).value = k.aciklama;
-    kapak.getCell(fr, 3).value = k.kategori;
-    kapak.getCell(fr, 4).value = k.odemeTipi;
+    kapak.getCell(fr, 3).value = kategoriEtiketi(k.kategori, locale);
+    kapak.getCell(fr, 4).value = odemeEtiketi(k.odemeTipi, locale);
     kapak.getCell(fr, 4).alignment = { horizontal: "center" };
     paraHucre(kapak.getCell(fr, 5), k.gelir);
     paraHucre(kapak.getCell(fr, 6), k.gider);
     fr += 1;
   }
   if (sirali.length === 0) {
-    kapak.getCell(fr, 1).value = "Bu aralıkta fiş yok.";
+    kapak.getCell(fr, 1).value = d.bosFis;
     fr += 1;
   }
   kapak.addRow([]);
-  toplamSatiri(kapak, fr, 6, "TOPLAM");
+  toplamSatiri(kapak, fr, 6, d.toplam);
   paraHucre(kapak.getCell(fr, 5), rapor.gelir);
   paraHucre(kapak.getCell(fr, 6), rapor.gider);
   tabloyuSusle(kapak, fisTabloBas, fisTabloBas + 1, fr - 1, 6);
@@ -227,8 +235,8 @@ export function buildExcel(
   ];
 
   // --- 2) Günlük döküm ---
-  const gun = wb.addWorksheet("Günlük Döküm");
-  const gunBaslik = ["Tarih", "Nakit Net", "Kart Net", "Havale Net", "Gelir", "Gider", "Net", "Durum", "Adet"];
+  const gun = wb.addWorksheet(d.sayfaGun);
+  const gunBaslik = d.gunKolon;
   gun.addRow(gunBaslik);
   const gunIlk = 2;
   for (const gd of rapor.gunler) {
@@ -257,11 +265,11 @@ export function buildExcel(
     row.getCell(9).alignment = { horizontal: "center" };
   }
   if (rapor.gunler.length === 0) {
-    gun.addRow(["Bu aralıkta kayıt yok.", "", "", "", "", "", "", "", ""]);
+    gun.addRow([d.bosGun, "", "", "", "", "", "", "", ""]);
   }
   const gunTop = gun.rowCount + 1;
-  gun.addRow(["TOPLAM", "", "", "", "", "", "", "", ""]);
-  toplamSatiri(gun, gunTop, 9, "TOPLAM");
+  gun.addRow([d.toplam, "", "", "", "", "", "", "", ""]);
+  toplamSatiri(gun, gunTop, 9, d.toplam);
   paraHucre(gun.getCell(`B${gunTop}`), rapor.nakitNet);
   paraHucre(gun.getCell(`C${gunTop}`), rapor.kartNet);
   paraHucre(gun.getCell(`D${gunTop}`), rapor.havaleNet);
@@ -287,13 +295,13 @@ export function buildExcel(
   sayfaKurulum(gun);
 
   // --- 3) Kategoriler ---
-  const kat = wb.addWorksheet("Kategoriler");
-  kat.addRow(["Kategori", "Adet", "Gelir", "Gider", "Net", "Gider Payı %"]);
+  const kat = wb.addWorksheet(d.sayfaKat);
+  kat.addRow(d.katKolon);
   const katIlk = 2;
   const topGider = rapor.kategoriler.reduce((s, k) => s + k.gider, 0);
   for (const k of rapor.kategoriler) {
     const row = kat.addRow([
-      k.kategori,
+      kategoriEtiketi(k.kategori, locale),
       k.adet,
       k.gelir,
       k.gider,
@@ -309,8 +317,8 @@ export function buildExcel(
     row.getCell(6).alignment = { horizontal: "right" };
   }
   const katTop = kat.rowCount + 1;
-  kat.addRow(["TOPLAM", "", "", "", "", ""]);
-  toplamSatiri(kat, katTop, 6, "TOPLAM");
+  kat.addRow([d.toplam, "", "", "", "", ""]);
+  toplamSatiri(kat, katTop, 6, d.toplam);
   kat.getCell(`B${katTop}`).value = rapor.adet;
   kat.getCell(`B${katTop}`).alignment = { horizontal: "center" };
   paraHucre(kat.getCell(`C${katTop}`), rapor.gelir);
@@ -326,11 +334,11 @@ export function buildExcel(
   sayfaKurulum(kat);
 
   // --- 4) Fişler ---
-  const fis = wb.addWorksheet("Fişler");
-  fis.addRow(["Tarih", "Açıklama", "Kategori", "Ödeme", "Gelir", "Gider"]);
+  const fis = wb.addWorksheet(d.sayfaFis);
+  fis.addRow(d.fisKolon);
   const fisIlk = 2;
   for (const k of rapor.kayitlar) {
-    const row = fis.addRow([fd(k.tarih), k.aciklama, k.kategori, k.odemeTipi, k.gelir, k.gider]);
+    const row = fis.addRow([fd(k.tarih), k.aciklama, kategoriEtiketi(k.kategori, locale), odemeEtiketi(k.odemeTipi, locale), k.gelir, k.gider]);
     row.getCell(1).alignment = { horizontal: "center" };
     row.getCell(4).alignment = { horizontal: "center" };
     for (const c of [5, 6]) {
@@ -341,11 +349,11 @@ export function buildExcel(
     }
   }
   if (rapor.kayitlar.length === 0) {
-    fis.addRow(["Bu aralıkta fiş yok.", "", "", "", "", ""]);
+    fis.addRow([d.bosFis, "", "", "", "", ""]);
   }
   const fisTop = fis.rowCount + 1;
-  fis.addRow(["TOPLAM", "", "", "", "", ""]);
-  toplamSatiri(fis, fisTop, 6, "TOPLAM");
+  fis.addRow([d.toplam, "", "", "", "", ""]);
+  toplamSatiri(fis, fisTop, 6, d.toplam);
   paraHucre(fis.getCell(`E${fisTop}`), rapor.gelir);
   paraHucre(fis.getCell(`F${fisTop}`), rapor.gider);
   tabloyuSusle(fis, 1, fisIlk, fisTop - 1, 6);
@@ -373,6 +381,7 @@ export function buildMusteriExcel(
     ru: { baslik: "Клиенты", kolonlar: ["Имя", "Фамилия", "Телефон", "Визиты", "Итого", "Долг", "Посл. визит", "Посл. услуга", "Заметка"] },
   };
   const m = T[locale] ?? T.en;
+  fmtAktif = '#,##0.00 "' + paraSembol(opts?.currency) + '"';
   const wb = new ExcelJS.Workbook();
   wb.creator = "Tailor Ledger";
   wb.created = new Date();
@@ -393,7 +402,7 @@ export function buildMusteriExcel(
     paraHucre(row.getCell(6), u.borc ?? 0, false);
   }
   if (sirali.length === 0) {
-    ws.addRow([m.kolonlar[0] + " —"]);
+    ws.addRow(["—", "", "", "", "", "", "", "", ""]);
   }
   const top = ws.rowCount + 1;
   ws.addRow(["", "", "", "", "", "", "", "", ""]);

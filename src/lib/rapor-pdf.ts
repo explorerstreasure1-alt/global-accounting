@@ -3,6 +3,7 @@ import path from "node:path";
 import { jsPDF } from "jspdf";
 import type { Ayarlar, RaporOzet } from "./types";
 import { formatMoneyLocale, formatDate } from "./format";
+import { dilAl, kategoriEtiketi, odemeEtiketi } from "./rapor-dil";
 
 const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   tr: { intl: "tr-TR", currency: "TRY" },
@@ -63,6 +64,7 @@ export async function raporPdfUret(
   const loc = opts?.locale ?? "en";
   const intl = LOCALE_INTL[loc]?.intl ?? "en-US";
   const currency = opts?.currency ?? LOCALE_INTL[loc]?.currency ?? "USD";
+  const d = dilAl(loc);
   const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
   const fd = (iso: string) => formatDate(iso, intl);
   const fontlar = await fontlariYukle();
@@ -99,19 +101,20 @@ export async function raporPdfUret(
   y += 7;
 
   // Özet kutuları (4 sütun)
+  const k = d.kutu;
   const kutular: Array<[string, string, boolean?]> = [
-    ["Nakit Gelir", fm(rapor.nakitGelir)],
-    ["Nakit Gider", fm(rapor.nakitGider)],
-    ["Kart Gelir", fm(rapor.kartGelir)],
-    ["Kart Gider", fm(rapor.kartGider)],
-    ["Havale Gelir", fm(rapor.havaleGelir)],
-    ["Havale Gider", fm(rapor.havaleGider)],
-    ["Nakit Net", fm(rapor.nakitNet), true],
-    ["Kart Net", fm(rapor.kartNet), true],
-    ["Havale Net", fm(rapor.havaleNet), true],
-    ["Toplam Gelir", fm(rapor.gelir)],
-    ["Toplam Gider", fm(rapor.gider)],
-    [`Kayıt (${rapor.adet})`, fm(rapor.net, false)],
+    [k[0], fm(rapor.nakitGelir)],
+    [k[1], fm(rapor.nakitGider)],
+    [k[2], fm(rapor.kartGelir)],
+    [k[3], fm(rapor.kartGider)],
+    [k[4], fm(rapor.havaleGelir)],
+    [k[5], fm(rapor.havaleGider)],
+    [k[6], fm(rapor.nakitNet), true],
+    [k[7], fm(rapor.kartNet), true],
+    [k[8], fm(rapor.havaleNet), true],
+    [k[9], fm(rapor.gelir)],
+    [k[10], fm(rapor.gider)],
+    [d.kayitSayi(rapor.adet), fm(rapor.net, false)],
   ];
   const sutun = 4;
   const kutuW = (GENIS - (sutun - 1) * 3) / sutun;
@@ -134,9 +137,9 @@ export async function raporPdfUret(
 
   // Net şeridi
   const serit: Array<[string, string, [number, number, number]]> = [
-    ["GENEL NET", fm(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
-    ["AÇILIŞ", fm(rapor.acilisBakiyesi), INK],
-    ["KAPANIŞ", fm(rapor.kapanisBakiyesi), LACI],
+    [d.serit[0], fm(rapor.net), rapor.net >= 0 ? YESIL : KIRMIZI],
+    [d.serit[1], fm(rapor.acilisBakiyesi), INK],
+    [d.serit[2], fm(rapor.kapanisBakiyesi), LACI],
   ];
   {
     const sw = (GENIS - 6) / 3;
@@ -166,7 +169,7 @@ export async function raporPdfUret(
     doc.setFont("arial", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...INK);
-    doc.text("Kategoriler", SOL, y);
+    doc.text(d.katSec, SOL, y);
     y += 6;
     const maxKat = Math.max(1, ...kats.map((k) => k.gelir + k.gider));
     doc.setFont("arial", "normal");
@@ -174,7 +177,7 @@ export async function raporPdfUret(
     for (const k of kats) {
       y = yeniSayfaGerekirse(doc, y, 8);
       doc.setTextColor(...INK);
-      doc.text(`${k.kategori} · ${k.adet} kayıt`, SOL, y);
+      doc.text(`${kategoriEtiketi(k.kategori, loc)} · ${d.kayitSayi(k.adet)}`, SOL, y);
       const barX = SOL + 62;
       const barW = 72;
       doc.setFillColor(...BANT);
@@ -196,7 +199,7 @@ export async function raporPdfUret(
     doc.setFont("arial", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...INK);
-    doc.text("Günlük net", SOL, y);
+    doc.text(d.gunSec, SOL, y);
     y += 6;
     const maxGun = Math.max(1, ...gunler.map((g) => Math.abs(g.net)));
     doc.setFont("arial", "normal");
@@ -225,14 +228,14 @@ export async function raporPdfUret(
   doc.setFont("arial", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...INK);
-  doc.text(`Fiş listesi (${rapor.kayitlar.length} kayıt)`, SOL, y);
+  doc.text(d.fisSayi(rapor.kayitlar.length), SOL, y);
   y += 6;
   const fisBaslik = () => tabloBasligi(doc, y, [
-    { x: SOL, yazi: "TARİH" },
-    { x: SOL + 24, yazi: "AÇIKLAMA" },
-    { x: SOL + 108, yazi: "KATEGORİ" },
-    { x: SOL + 138, yazi: "ÖDEME" },
-    { x: SOL + 186, yazi: "TUTAR" },
+    { x: SOL, yazi: d.fisKolon[0] },
+    { x: SOL + 24, yazi: d.fisKolon[1] },
+    { x: SOL + 108, yazi: d.fisKolon[2] },
+    { x: SOL + 138, yazi: d.fisKolon[3] },
+    { x: SOL + 186, yazi: d.tutarCol },
   ]);
   fisBaslik();
   y += 5;
@@ -253,8 +256,8 @@ export async function raporPdfUret(
     doc.setTextColor(...INK);
     const aciklama = k.aciklama.length > 42 ? `${k.aciklama.slice(0, 41)}…` : k.aciklama;
     doc.text(aciklama, SOL + 24, y);
-    doc.text(k.kategori, SOL + 108, y);
-    doc.text(k.odemeTipi, SOL + 138, y);
+    doc.text(kategoriEtiketi(k.kategori, loc), SOL + 108, y);
+    doc.text(odemeEtiketi(k.odemeTipi, loc), SOL + 138, y);
     doc.setFont("arial", "bold");
     doc.text(fm(k.gelir || k.gider), SOL + 186, y, { align: "right" });
     doc.setFont("arial", "normal");
@@ -266,15 +269,15 @@ export async function raporPdfUret(
   doc.setFont("arial", "bold");
   doc.setFontSize(10);
   doc.setTextColor(...INK);
-  doc.text("Alt toplam", SOL, y);
+  doc.text(d.altToplam, SOL, y);
   y += 6;
   doc.setFont("arial", "normal");
   doc.setFontSize(9.5);
   const toplamlar = [
-    `Nakit toplam: ${fm(rapor.nakitNet)}   (gelir ${fm(rapor.nakitGelir)} – gider ${fm(rapor.nakitGider)})`,
-    `Kart toplamı: ${fm(rapor.kartNet)}   (gelir ${fm(rapor.kartGelir)} – gider ${fm(rapor.kartGider)})`,
-    `Havale toplamı: ${fm(rapor.havaleNet)}   (gelir ${fm(rapor.havaleGelir)} – gider ${fm(rapor.havaleGider)})`,
-    `GENEL TOPLAM: ${fm(rapor.net)}`,
+    `${d.topNakit}: ${fm(rapor.nakitNet)}   (${d.gelirW} ${fm(rapor.nakitGelir)} – ${d.giderW} ${fm(rapor.nakitGider)})`,
+    `${d.topKart}: ${fm(rapor.kartNet)}   (${d.gelirW} ${fm(rapor.kartGelir)} – ${d.giderW} ${fm(rapor.kartGider)})`,
+    `${d.topHavale}: ${fm(rapor.havaleNet)}   (${d.gelirW} ${fm(rapor.havaleGelir)} – ${d.giderW} ${fm(rapor.havaleGider)})`,
+    `${d.topGenel}: ${fm(rapor.net)}`,
   ];
   for (const satir of toplamlar) {
     doc.text(satir, SOL, y);
@@ -289,7 +292,7 @@ export async function raporPdfUret(
     doc.setFont("arial", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...SOLUK);
-    doc.text(`${ayarlar.isletmeAdi} · prepared with LedgerAI · ${simdi}`, SOL, 290);
+    doc.text(`${ayarlar.isletmeAdi} · ${d.footerOrta} · ${simdi}`, SOL, 290);
     doc.text(`${i} / ${sayfaSayisi}`, SOL + GENIS, 290, { align: "right" });
   }
 

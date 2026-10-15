@@ -521,7 +521,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         onRefresh={() => setToast(t("toast_monthReady"))}
         onExcel={() => downloadExcel("aysonu", ayBas, ayBit)}
         pdfTip="aysonu"
-        damga="AY SONU"
+        damga={t("stamp_ay")}
       />
 
       {toast ? (
