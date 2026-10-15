@@ -67,16 +67,6 @@ export function monthPrefix(year: number, month: number): string {
   return `${year}-${pad2(month)}`;
 }
 
-export const CURRENCIES = [
-  { code: "TRY", symbol: "₺", label: "TRY ₺" },
-  { code: "USD", symbol: "$", label: "USD $" },
-  { code: "EUR", symbol: "€", label: "EUR €" },
-  { code: "GBP", symbol: "£", label: "GBP £" },
-  { code: "SAR", symbol: "ر.س", label: "SAR ر.س" },
-  { code: "RUB", symbol: "₽", label: "RUB ₽" },
-  { code: "AED", symbol: "د.إ", label: "AED د.إ" },
-] as const;
-
 export function formatMoneyLocale(value: number, intl = "tr-TR", currency = "TRY", withSymbol = true): string {
   const v = Number.isFinite(value) ? value : 0;
   if (!withSymbol) {

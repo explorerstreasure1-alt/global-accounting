@@ -19,7 +19,15 @@ async function verifySignature(raw: string, sig: string | null): Promise<boolean
     false,
     ["verify"],
   );
-  const bytes = Uint8Array.from(sig.match(/.{2}/g)!.map((b) => parseInt(b, 16)));
+  let bytes: Uint8Array;
+  try {
+    const cift = sig.match(/.{2}/g);
+    if (!cift) return false;
+    bytes = Uint8Array.from(cift.map((b) => parseInt(b, 16)));
+    if (bytes.some((n) => Number.isNaN(n))) return false;
+  } catch {
+    return false;
+  }
   return crypto.subtle.verify("HMAC", key, bytes.buffer as ArrayBuffer, new TextEncoder().encode(raw));
 }
 

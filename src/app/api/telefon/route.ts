@@ -1,5 +1,6 @@
 import { networkInterfaces } from "node:os";
 import QRCode from "qrcode";
+import { resolveDb } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,8 @@ function kablosuzIp(): string {
 }
 
 export async function GET() {
+  const { gate } = await resolveDb();
+  if (gate) return gate;
   const port = Number(process.env.PORT || 3001);
   const ip = kablosuzIp();
   const url = `http://${ip}:${port}/`;

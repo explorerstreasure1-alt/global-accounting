@@ -9,9 +9,9 @@ function env(name: string): string {
 }
 
 export function billingEnv() {
-  const apiKey = env("LEMONSQUEEZY_API_KEY") || env("LEMONSQUEEZY_API_KEY");
-  const storeId = env("LEMONSQUEEZY_STORE_ID") || env("LEMONSQUEEZY_STORE_ID");
-  const variantId = env("LEMONSQUEEZY_VARIANT_ID") || env("LEMONSQUEEZY_VARIANT_ID");
+  const apiKey = env("LEMONSQUEEZY_API_KEY");
+  const storeId = env("LEMONSQUEEZY_STORE_ID");
+  const variantId = env("LEMONSQUEEZY_VARIANT_ID");
   return { apiKey, storeId, variantId };
 }
 
