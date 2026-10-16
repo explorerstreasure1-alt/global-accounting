@@ -316,7 +316,7 @@ export function MusteriSayfasi() {
 
         <header className="no-print mb-3 rounded-[24px] bg-black/25 px-4 py-3 backdrop-blur-md">
           <div className="flex flex-wrap gap-4">
-            <div className="flex min-w-[210px] items-center gap-3">
+            <div className="flex w-full min-w-0 items-center justify-center gap-3 min-[480px]:w-auto min-[480px]:min-w-[210px] min-[480px]:justify-start">
               <a href="/app" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" title={t("mus_back")}>
                 ‹
               </a>
@@ -327,7 +327,10 @@ export function MusteriSayfasi() {
               </div>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-2 text-sm font-semibold text-amber-100">{t("cm_hizliEkle")}</p>
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-bold text-amber-100">
+                <I name="add" size={14} />
+                {t("cm_hizliEkle")}
+              </p>
               <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-4">
                 <input ref={adRef} value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
