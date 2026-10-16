@@ -54,38 +54,33 @@ export function iosMu(): boolean {
 }
 
 /** Toolbar'ın en başına konan göz önünde kurulum düğmesi. Kuruluysa kendini gizler. */
-export function PwaInstallBtn({ onRehber }: { onRehber?: () => void }) {
+export function PwaInstallBtn() {
   const { t } = useT();
   const { davet, kurulu, kur } = usePwaKur();
-  const [ios, setIos] = useState(false);
-
-  useEffect(() => {
-    setIos(iosMu());
-  }, []);
 
   if (kurulu) return null;
 
   const dugme =
     "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-emerald-500 sm:py-1.5";
 
-  if (davet) {
-    return (
-      <button type="button" onClick={() => void kur()} title={t("install_app")} className={dugme}>
-        <I name="download" size={15} /> {t("install_app")}
-      </button>
-    );
+  // Davet varsa tek dokunuşla kur; yoksa kurulum panelini aç (adımlar orada).
+  async function tikla() {
+    if (davet) {
+      const s = await kur();
+      if (s === "ok") return;
+    }
+    try {
+      window.dispatchEvent(new CustomEvent("tailor-kurulum-ac"));
+    } catch {
+      /* yoksay */
+    }
   }
 
-  // iPhone: sistem daveti vermez, telefon penceresindeki adımlara yönlendir
-  if (ios && onRehber) {
-    return (
-      <button type="button" onClick={onRehber} title={t("install_app")} className={dugme}>
-        <I name="download" size={15} /> {t("install_app")}
-      </button>
-    );
-  }
-
-  return null;
+  return (
+    <button type="button" onClick={() => void tikla()} title={t("install_app")} className={dugme}>
+      <I name="download" size={15} /> {t("install_app")}
+    </button>
+  );
 }
 
 function pcMi(): boolean {
@@ -109,18 +104,23 @@ export function KurulumModal() {
   useEffect(() => {
     setIos(iosMu());
     setPc(pcMi());
+    const disaridanAc = () => setAcik(true);
+    window.addEventListener("tailor-kurulum-ac", disaridanAc);
     let iptal = false;
+    let h: ReturnType<typeof setTimeout> | undefined;
     try {
-      if (window.localStorage.getItem("tailor-kurulum-kapali")) return;
+      if (!window.localStorage.getItem("tailor-kurulum-kapali")) {
+        h = setTimeout(() => {
+          if (!iptal) setAcik(true);
+        }, 1500);
+      }
     } catch {
-      return;
+      /* yoksay */
     }
-    const h = setTimeout(() => {
-      if (!iptal) setAcik(true);
-    }, 1500);
     return () => {
       iptal = true;
-      clearTimeout(h);
+      if (h) clearTimeout(h);
+      window.removeEventListener("tailor-kurulum-ac", disaridanAc);
     };
   }, []);
 

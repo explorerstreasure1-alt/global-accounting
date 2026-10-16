@@ -357,7 +357,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
           </div>
 
           <div className="scroll-thin flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
-            <PwaInstallBtn onRehber={() => setTelefonOpen(true)} />
+            <PwaInstallBtn />
             <ToolBtn onClick={() => router.push("/app/musteriler")}><I name="scissors" /> {t("mus_addCustomer")}</ToolBtn>
             <ToolBtn onClick={() => setTakvimOpen(true)}><I name="calendar" /> {t("calendar")}</ToolBtn>
             <ToolBtn onClick={() => setGunOpen(true)}><I name="day" /> {t("day_end")}</ToolBtn>
