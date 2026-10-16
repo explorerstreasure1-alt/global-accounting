@@ -300,7 +300,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         <div className="mb-2">
           <GlobalBar userEmail={trial?.email || sub?.email} />
         </div>
-        {trial ? <ProBanner gun={trial.gun} email={trial.email} /> : null}
+        {trial && trial.gun <= 2 ? <ProBanner gun={trial.gun} email={trial.email} /> : null}
         <header className="no-print mb-3 flex flex-wrap items-center gap-3 rounded-[24px] bg-black/25 px-3 py-2 text-amber-50 backdrop-blur-md">
           <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40 sm:h-12 sm:w-12" />
           <div className="min-w-0">

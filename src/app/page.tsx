@@ -33,7 +33,7 @@ export default function Landing() {
             <a href="/app" className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700">
               {t("land_open")}
             </a>
-            <a href="#pricing" className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold hover:border-slate-900">
+            <a href="#pricing" className="hidden rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold hover:border-slate-900 md:inline-block">
               {t("land_pricing_btn")}
             </a>
           </div>
@@ -61,7 +61,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="pricing" className="mt-12">
+        <section id="pricing" className="mt-12 hidden md:block">
           <h2 className="text-center text-2xl font-bold">{t("land_price_t")}</h2>
           <p className="mt-1 text-center text-sm text-slate-500">{t("land_price_sub")}</p>
           <div className="mt-6">

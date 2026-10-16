@@ -143,7 +143,6 @@ export default function GirisPage() {
         >
           G {t("giris_google")}
         </button>
-        <p className="mt-3 text-center text-[11px] text-slate-400">{t("giris_trial")}</p>
       </div>
     </div>
   );

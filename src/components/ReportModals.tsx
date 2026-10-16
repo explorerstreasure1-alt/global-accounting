@@ -475,6 +475,8 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
   const [sonuc, setSonuc] = useState<string | null>(null);
   if (!sub) return null;
   const pro = sub.plan === "pro";
+  // İlk günler satış kokmasın: ücretsiz denemenin ilk 3 gününde abonelik kartı gizli.
+  if (!pro && sub.gun > 2) return null;
 
   async function iptalEt() {
     setYapiliyor(true);

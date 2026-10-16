@@ -36,9 +36,9 @@ export function ProBanner({ gun, email }: { gun: number; email: string }) {
   }
 
   return (
-    <div className="no-print mb-3 flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-700 to-emerald-600 px-4 py-2.5 text-white shadow-lg">
+    <div className="no-print mb-3 flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-r from-teal-700 to-emerald-600 px-3 py-1.5 text-white shadow-lg sm:px-4 sm:py-2.5">
       <I name="spark" size={16} />
-      <p className="text-sm font-medium">{t("trial_msg").replace("{n}", String(Math.max(gun, 0)))}</p>
+      <p className="text-xs font-medium sm:text-sm">{t("trial_msg").replace("{n}", String(Math.max(gun, 0)))}</p>
       <button
         onClick={() => void proOl()}
         disabled={busy}
@@ -49,7 +49,7 @@ export function ProBanner({ gun, email }: { gun: number; email: string }) {
       {hata ? <p className="w-full text-[11px] text-amber-200">{hata}</p> : null}
       <button
         onClick={() => setKapali(true)}
-        className="grid h-6 w-6 place-items-center rounded-full bg-white/15 text-xs hover:bg-white/25"
+        className="grid h-8 w-8 place-items-center rounded-full bg-white/15 text-xs hover:bg-white/25"
         aria-label="×"
       >
         <I name="close" size={12} />
