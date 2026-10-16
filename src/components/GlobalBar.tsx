@@ -67,7 +67,7 @@ export function GlobalBar({ compact = false, userEmail }: { compact?: boolean; u
       </label>
       ) : null}
       {!compact ? (
-      <span className="text-[11px] text-amber-100/60">7 languages · RTL ready · Notebook</span>
+      <span className="hidden text-[11px] text-amber-100/60 sm:inline">7 languages · RTL ready · Notebook</span>
       ) : null}
       {!compact && userEmail ? (
         <span className="relative ml-auto">
