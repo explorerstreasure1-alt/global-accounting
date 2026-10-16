@@ -87,3 +87,89 @@ export function PwaInstallBtn({ onRehber }: { onRehber?: () => void }) {
 
   return null;
 }
+
+function pcMi(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return !/mobi|android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+/**
+ * Giriş-sonrası kurulum paneli: kurulu değilse ve daha önce kapatılmadıysa
+ * bir kez otomatik açılır. Tek dokunuşla kurar (davet varsa), yoksa
+ * cihaza göre adımları gösterir (iPhone paylaş menüsü / PC tarayıcı menüsü).
+ */
+export function KurulumModal() {
+  const { t } = useT();
+  const { davet, kurulu, kur } = usePwaKur();
+  const [acik, setAcik] = useState(false);
+  const [ios, setIos] = useState(false);
+  const [pc, setPc] = useState(false);
+  const [sonuc, setSonuc] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIos(iosMu());
+    setPc(pcMi());
+    let iptal = false;
+    try {
+      if (window.localStorage.getItem("tailor-kurulum-kapali")) return;
+    } catch {
+      return;
+    }
+    const h = setTimeout(() => {
+      if (!iptal) setAcik(true);
+    }, 1500);
+    return () => {
+      iptal = true;
+      clearTimeout(h);
+    };
+  }, []);
+
+  if (kurulu || !acik) return null;
+
+  function kapat() {
+    setAcik(false);
+    try {
+      window.localStorage.setItem("tailor-kurulum-kapali", "1");
+    } catch {
+      /* yoksay */
+    }
+  }
+
+  async function yukle() {
+    const s = await kur();
+    if (s === "ok") {
+      kapat();
+    } else if (s === "iptal") {
+      setSonuc(t("pwa_iptal"));
+    } else {
+      setSonuc(t("pwa_menu"));
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="scroll-thin my-auto max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-[#fafafa] p-6 text-center shadow-2xl">
+        <img src="/images/logo-192.png" alt="Shop Ledger" className="mx-auto h-16 w-16 rounded-2xl shadow" />
+        <p className="font-hand mt-2 text-3xl text-slate-900">{t("pwa_baslik")}</p>
+        <p className="mt-1 text-xs text-slate-600">{t("pwa_tek")}</p>
+        {davet ? (
+          <button
+            type="button"
+            onClick={() => void yukle()}
+            className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow hover:bg-emerald-500"
+          >
+            <I name="download" size={16} /> {t("install_app")}
+          </button>
+        ) : (
+          <p className="mt-4 rounded-xl bg-white px-3 py-2 text-xs leading-relaxed text-slate-700 ring-1 ring-slate-200">
+            {ios ? t("pwa_ios") : pc ? t("pwa_pc") : t("pwa_menu")}
+          </p>
+        )}
+        {sonuc ? <p className="mt-2 text-xs text-slate-600">{sonuc}</p> : null}
+        <button type="button" onClick={kapat} className="mt-3 rounded-lg px-4 py-2 text-sm text-slate-600">
+          {t("common_close")}
+        </button>
+      </div>
+    </div>
+  );
+}
