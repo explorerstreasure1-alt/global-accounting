@@ -374,13 +374,13 @@ export function EtiketStudyosu() {
           <p className="mr-auto text-sm font-bold">
             Shop Ledger <span className="font-normal text-amber-100/60">· {t("et_studio")}</span>
           </p>
-          <button type="button" onClick={pngIndir} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold hover:bg-white/20">
+          <button type="button" onClick={pngIndir} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold ring-1 ring-slate-900/10 hover:bg-white/20">
             ↓ {t("et_png")}
           </button>
-          <button type="button" onClick={pdfIndir} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold hover:bg-white/20">
+          <button type="button" onClick={pdfIndir} className="rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold ring-1 ring-slate-900/10 hover:bg-white/20">
             ↓ {t("et_pdf")}
           </button>
-          <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs tabular-nums">
+          <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs tabular-nums ring-1 ring-slate-900/10">
             <span className="min-w-9 text-center">%{yak}</span>
             <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-8 w-8 place-items-center rounded-md hover:bg-white/20" title="−">
               <I name="zoomOut" size={13} />
@@ -500,9 +500,12 @@ export function EtiketStudyosu() {
 
           <main className="scroll-thin min-w-0 overflow-auto rounded-2xl bg-[#e9e9ed] p-4 ring-1 ring-slate-300">
             {!bilgi ? (
-              <p className="py-16 text-center text-sm text-amber-100/60">
-                <a href="/app/musteriler" className="text-sky-700 underline">‹ {t("mus_title")}</a>
-              </p>
+              <div className="py-16 text-center">
+                <I name="print" size={40} className="mx-auto mb-2 block opacity-50" />
+                <p className="text-sm text-amber-100/60">
+                  <a href="/app/musteriler" className="text-sky-700 underline">‹ {t("mus_title")}</a>
+                </p>
+              </div>
             ) : onizleme ? (
               <div className="flex min-h-[320px] items-center justify-center overflow-auto">
                 <div>
