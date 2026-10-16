@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Caveat, DM_Sans, Literata } from "next/font/google";
 import "./globals.css";
@@ -22,7 +22,6 @@ export const metadata: Metadata = {
   title: "Shop Ledger — Global Small Business Accounting",
   description: "Global small business accounting: ledger, day/month close, Z-report, Excel, backup. 7 languages.",
   manifest: "/manifest.webmanifest",
-  themeColor: "#0f172a",
   applicationName: "Shop Ledger",
   other: { google: "notranslate" },
   appleWebApp: {
@@ -38,6 +37,14 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/images/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#f4f4f2",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

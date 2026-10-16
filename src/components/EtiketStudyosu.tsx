@@ -382,13 +382,13 @@ export function EtiketStudyosu() {
           </button>
           <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 text-xs tabular-nums">
             <span className="min-w-9 text-center">%{yak}</span>
-            <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-6 w-6 place-items-center rounded-md hover:bg-white/20" title="−">
+            <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-8 w-8 place-items-center rounded-md hover:bg-white/20" title="−">
               <I name="zoomOut" size={13} />
             </button>
-            <button type="button" onClick={() => setYak((v) => Math.min(200, v + 10))} className="grid h-6 w-6 place-items-center rounded-md hover:bg-white/20" title="+">
+            <button type="button" onClick={() => setYak((v) => Math.min(200, v + 10))} className="grid h-8 w-8 place-items-center rounded-md hover:bg-white/20" title="+">
               <I name="zoomIn" size={13} />
             </button>
-            <button type="button" onClick={() => setYak(100)} className="grid h-6 w-6 place-items-center rounded-md hover:bg-white/20" title="100%">
+            <button type="button" onClick={() => setYak(100)} className="grid h-8 w-8 place-items-center rounded-md hover:bg-white/20" title="100%">
               <I name="rotate" size={12} />
             </button>
           </span>
@@ -567,11 +567,11 @@ export function EtiketStudyosu() {
                   })}
                   </div>
                   <div className="mt-2 flex items-center justify-center gap-1 text-xs text-slate-600">
-                    <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-7 w-7 place-items-center rounded-lg bg-white ring-1 ring-slate-900/10 hover:bg-slate-50">
+                    <button type="button" onClick={() => setYak((v) => Math.max(50, v - 10))} className="grid h-9 w-9 place-items-center rounded-lg bg-white ring-1 ring-slate-900/10 hover:bg-slate-50">
                       <I name="zoomOut" size={13} />
                     </button>
                     <span className="min-w-11 text-center tabular-nums">%{yak}</span>
-                    <button type="button" onClick={() => setYak((v) => Math.min(200, v + 10))} className="grid h-7 w-7 place-items-center rounded-lg bg-white ring-1 ring-slate-900/10 hover:bg-slate-50">
+                    <button type="button" onClick={() => setYak((v) => Math.min(200, v + 10))} className="grid h-9 w-9 place-items-center rounded-lg bg-white ring-1 ring-slate-900/10 hover:bg-slate-50">
                       <I name="zoomIn" size={13} />
                     </button>
                   </div>

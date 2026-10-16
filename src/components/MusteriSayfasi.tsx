@@ -364,7 +364,7 @@ export function MusteriSayfasi() {
               key={f.id}
               type="button"
               onClick={() => setFiltre(f.id)}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${filtre === f.id ? "bg-slate-900 text-white" : "bg-white/10 text-amber-50"}`}
+              className={`rounded-full px-3 py-2 text-xs font-semibold ${filtre === f.id ? "bg-slate-900 text-white" : "bg-white/10 text-amber-50"}`}
             >
               {f.ad}
             </button>
@@ -559,31 +559,31 @@ export function MusteriSayfasi() {
     const waNeden = !telTam ? t("mus_eyeFirst") : `${t("mus_waSend")} · ${t("mus_waAlindi")}`;
     return (
       <span className="flex max-w-[190px] shrink-0 flex-wrap items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={() => void etiketAcListe(m.id)} className="grid place-items-center rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-100" title={t("etiket_print")}>
+        <button type="button" onClick={() => void etiketAcListe(m.id)} className="grid place-items-center rounded-lg border border-slate-300 bg-white p-2.5 text-slate-600 hover:bg-slate-100" title={t("etiket_print")}>
           <I name="print" size={13} />
         </button>
         {hrefAlindi ? (
-          <a href={hrefAlindi} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100" title={`${t("mus_waSend")} · ${t("mus_waAlindi")}`}>
+          <a href={hrefAlindi} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-emerald-600 hover:bg-emerald-100" title={`${t("mus_waSend")} · ${t("mus_waAlindi")}`}>
             <span className="text-[10px] font-black leading-none">WA</span>
           </a>
         ) : (
-          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-emerald-100 bg-emerald-50/50 p-2 text-emerald-300" title={waNeden}>
+          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-emerald-100 bg-emerald-50/50 p-2.5 text-emerald-300" title={waNeden}>
             <span className="text-[10px] font-black leading-none">WA</span>
           </span>
         )}
         {hrefYorum ? (
-          <a href={hrefYorum} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100" title={t("mus_yorum")}>
+          <a href={hrefYorum} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnay(e); }} className="grid place-items-center rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-slate-500 hover:bg-slate-100" title={t("mus_yorum")}>
             <I name="star" size={13} />
           </a>
         ) : (
-          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-slate-200 bg-slate-50/60 p-2 text-slate-400" title={yildizNeden}>
+          <span className="grid cursor-not-allowed place-items-center rounded-lg border border-slate-200 bg-slate-50/60 p-2.5 text-slate-400" title={yildizNeden}>
             <I name="star" size={13} />
           </span>
         )}
-        <button type="button" onClick={() => void tekrarZiyaret(m.id)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100" title={t("mus_tekrarZiyaret")}>
+        <button type="button" onClick={() => void tekrarZiyaret(m.id)} className="grid place-items-center rounded-lg border border-sky-200 bg-white p-2.5 text-sky-700 hover:bg-sky-100" title={t("mus_tekrarZiyaret")}>
           <I name="refresh" size={13} />
         </button>
-        <button type="button" onClick={() => kartAc(m.id, true)} className="grid place-items-center rounded-lg border border-violet-200 bg-white p-2 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
+        <button type="button" onClick={() => kartAc(m.id, true)} className="grid place-items-center rounded-lg border border-violet-200 bg-white p-2.5 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
           <I name="edit" size={13} />
         </button>
       </span>
@@ -921,7 +921,7 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
                 ) : null}
                 {(() => {
                    const yh = yorumHref(); return yh ? (
-                    <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100" title={t("mus_yorum")}>
+                    <a href={yh} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-slate-500 hover:bg-slate-100" title={t("mus_yorum")}>
                       <I name="star" size={13} />
                     </a>
                   ) : null;
@@ -937,22 +937,22 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
                       body: JSON.stringify({ musteriId: musteri.id, hizmet: z.hizmet, tutar: z.tutar, tarih: toISODate() }),
                     }).then(() => yukle()).finally(() => setMesgul(false));
                   }}
-                  className="grid shrink-0 place-items-center rounded-lg border border-sky-200 bg-white p-2 text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+                  className="grid shrink-0 place-items-center rounded-lg border border-sky-200 bg-white p-2.5 text-sky-700 hover:bg-sky-100 disabled:opacity-50"
                   title={t("mus_repeat")}
                 >
                   <I name="refresh" size={13} />
                 </button>
                 {(() => {
                    const href = waHref(z, zi, musteri.ziyaretler.length); return href ? (
-                    <a href={href} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-500" title={t("mus_waSend")}>
+                    <a href={href} target="_blank" rel="noreferrer" onClick={(e) => { gonderOnayDetay(e); }} className="grid shrink-0 place-items-center rounded-lg bg-emerald-600 p-2.5 text-white hover:bg-emerald-500" title={t("mus_waSend")}>
                       <I name="send" size={14} />
                     </a>
                   ) : null;
                 })()}
-                <button type="button" onClick={() => router.push(`/app/etiket?m=${musteri.id}&z=${z.id}&n=${musteri.ziyaretler.length - zi}`)} className="grid shrink-0 place-items-center rounded-lg p-2 text-slate-500 hover:bg-slate-100" title={t("etiket_print")}>
+                <button type="button" onClick={() => router.push(`/app/etiket?m=${musteri.id}&z=${z.id}&n=${musteri.ziyaretler.length - zi}`)} className="grid shrink-0 place-items-center rounded-lg p-2.5 text-slate-500 hover:bg-slate-100" title={t("etiket_print")}>
                   <I name="print" size={14} />
                 </button>
-                <button type="button" onClick={() => ziyaretDuzenleBasla(z)} className="grid shrink-0 place-items-center rounded-lg border border-violet-200 bg-white p-2 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
+                <button type="button" onClick={() => ziyaretDuzenleBasla(z)} className="grid shrink-0 place-items-center rounded-lg border border-violet-200 bg-white p-2.5 text-violet-700 hover:bg-violet-100" title={t("cm_duzenle")}>
                   <I name="edit" size={13} />
                 </button>
               </div>

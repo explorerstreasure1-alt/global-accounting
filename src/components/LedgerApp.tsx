@@ -309,7 +309,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
           </div>
 
           <div className="flex items-center gap-1 rounded-full bg-black/20 p-1 ring-1 ring-slate-900/10">
-            <button onClick={() => shiftMonth(-1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10">
+            <button onClick={() => shiftMonth(-1)} className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/10">
               ‹
             </button>
             <select
@@ -334,7 +334,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
                 </option>
               ))}
             </select>
-            <button onClick={() => shiftMonth(1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10">
+            <button onClick={() => shiftMonth(1)} className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/10">
               ›
             </button>
           </div>

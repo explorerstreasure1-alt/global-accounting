@@ -107,7 +107,7 @@ export function KlavuzPaneli() {
       <div className="flex items-center justify-center gap-2 border-t border-white/10 px-4 py-3">
         <button
           onClick={() => setSayfa((s) => (s + SAYFA_SAYISI - 1) % SAYFA_SAYISI)}
-          className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sm hover:bg-white/20"
+          className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-sm hover:bg-white/20"
           aria-label="←"
         >
           ‹
@@ -124,7 +124,7 @@ export function KlavuzPaneli() {
         ))}
         <button
           onClick={() => setSayfa((s) => (s + 1) % SAYFA_SAYISI)}
-          className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-sm hover:bg-white/20"
+          className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-sm hover:bg-white/20"
           aria-label="→"
         >
           ›
