@@ -328,19 +328,19 @@ export function MusteriSayfasi() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="mb-2 text-sm font-semibold text-amber-100">{t("cm_hizliEkle")}</p>
-              <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4">
+              <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-4">
                 <input ref={adRef} value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <input value={hizmet} ref={hizmetRef} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
               </div>
-              <div className="mt-2 grid grid-cols-2 gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
                 <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none" />
                 <button type="button" disabled={mesgul} onClick={() => void hizliEkle()} className="rounded-xl bg-emerald-600 px-8 py-2 text-sm font-bold text-white disabled:opacity-50">
                   {t("mus_add")}
                 </button>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex flex-col items-stretch gap-2 min-[480px]:flex-row min-[480px]:items-center">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-white/10 px-3 py-2">
                   <I name="search" size={15} className="shrink-0 text-amber-100/70" />
                   <input
@@ -350,7 +350,7 @@ export function MusteriSayfasi() {
                     className="w-full min-w-0 bg-transparent text-sm text-amber-50 outline-none placeholder:text-amber-100/50"
                   />
                 </div>
-                <button type="button" onClick={musteriOdagina} className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 hover:bg-slate-50">
+                <button type="button" onClick={musteriOdagina} className="w-full rounded-full bg-white px-4 py-2.5 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 hover:bg-slate-50 min-[480px]:w-auto min-[480px]:py-2">
                   {t("mus_addCustomer")}
                 </button>
               </div>
