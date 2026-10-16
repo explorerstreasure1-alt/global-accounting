@@ -476,7 +476,7 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
   if (!sub) return null;
   const pro = sub.plan === "pro";
   // İlk günler satış kokmasın: ücretsiz denemenin ilk 3 gününde abonelik kartı gizli.
-  if (!pro && sub.gun > 2) return null;
+  if (!pro && sub.gun > 4) return null;
 
   async function iptalEt() {
     setYapiliyor(true);

@@ -1,7 +1,7 @@
 -- ============================================================
 -- Tailor Ledger — çok kiracılı SaaS şeması (Supabase SQL editor'e yapıştır)
 -- Project: lwujklmjjoaubjbxaukn
--- 5 gün free trial + sonra kilit + işletme başına izole veri
+-- 7 gün free trial + sonra kilit + işletme başına izole veri
 -- ============================================================
 
 -- 1) KULLANICI PROFİLİ (Supabase Auth ile birebir)
@@ -20,7 +20,7 @@ create table if not exists businesses (
   currency text not null default 'USD',
   plan text not null default 'free' check (plan in ('free', 'pro')),
   status text not null default 'active',
-  trial_ends_at timestamptz not null default (now() + interval '5 days'),
+  trial_ends_at timestamptz not null default (now() + interval '7 days'),
   lemon_customer_id text,
   lemon_subscription_id text,
   created_at timestamptz not null default now()
@@ -137,7 +137,7 @@ create policy "own sohbet" on "sohbetMesajlari"
     business_id in (select id from businesses where owner_id = auth.uid())
   );
 
--- 6) YENİ ÜYE: Auth kaydında otomatik profil + işletme + 5 günlük trial
+-- 6) YENİ ÜYE: Auth kaydında otomatik profil + işletme + 7 günlük trial
 create or replace function handle_new_user()
 returns trigger
 language plpgsql security definer
@@ -150,7 +150,7 @@ begin
   on conflict (id) do update set email = excluded.email;
 
   insert into businesses(owner_id, name, trial_ends_at)
-  values (new.id, 'My Tailor Shop', now() + interval '5 days')
+  values (new.id, 'My Tailor Shop', now() + interval '7 days')
   returning id into b_id;
 
   insert into ayarlar(isletme_adi, kira_tutari, kira_periyodu, aylik_kira_karsiligi, para_birimi, kira_sonraki_tarih, acilis_bakiyesi, ai_motor, ollama_model, whatsapp_alici, whatsapp_isletme, wa_sablon_alindi, wa_sablon_hazir, google_yorum_link, business_id)
