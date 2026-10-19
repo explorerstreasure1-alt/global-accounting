@@ -35,7 +35,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-powershell -ExecutionPolicy Bypass -Command "$proje = (Get-Location).Path; Start-Process -FilePath 'node' -ArgumentList 'node_modules\next\dist\bin\next','start','-p','3001' -WorkingDirectory $proje -WindowStyle Hidden -RedirectStandardOutput (Join-Path $proje 'server.log') -RedirectStandardError (Join-Path $proje 'server-hata.log'); $hazir = $false; for ($i = 0; $i -lt 30; $i++) { try { $h = Invoke-RestMethod 'http://localhost:3001/api/health' -TimeoutSec 2; if ($h.ok) { $hazir = $true; break } } catch {}; Start-Sleep -Seconds 1 }; if (-not $hazir) { Write-Error 'Guncel sunucu 3001 portunda hazir olmadi.'; exit 1 }; Write-Host 'Guncel Defterdar sunucusu hazir: http://localhost:3001'"
+powershell -ExecutionPolicy Bypass -File "scripts\sunucu-baslat.ps1"
 if errorlevel 1 (
   echo Yeni sunucu baslatilamadi. Defterdar-Gizli.ps1 ile tekrar acmayi deneyin.
   pause

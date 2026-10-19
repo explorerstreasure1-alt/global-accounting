@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Caveat, DM_Sans, Literata } from "next/font/google";
+import { Caveat, DM_Sans, Literata, Noto_Sans, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
+import { LocaleSync } from "@/components/LocaleSync";
 
 const caveat = Caveat({
   subsets: ["latin", "latin-ext"],
@@ -17,6 +18,34 @@ const dmSans = DM_Sans({
   subsets: ["latin", "latin-ext"],
   variable: "--font-dm",
 });
+
+// Kiril (Rusça vb.) glifleri: DM Sans bu sürümde Kiril subset'i desteklemiyor,
+// Noto Sans destekliyor.
+const notoSans = Noto_Sans({
+  subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext", "greek"],
+  variable: "--font-noto",
+  weight: ["400", "500", "600", "700"],
+});
+
+// Arapça alfabe için ayrı yazı tipi (Latin yazı tipleri Arapça glif içermiyor).
+const notoArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  variable: "--font-arabic",
+  weight: ["400", "500", "600", "700"],
+});
+
+// İlk boyamadan önce dil/yön ayarını uygula: aksi halde Arapça (RTL) ve
+// Kiril metinler ilk karede İngilizce (LTR) görünür, sonra kayar.
+const localeInitScript = `
+(function(){
+  try {
+    var code = localStorage.getItem("tailor-locale") || "en";
+    var rtl = { ar: 1 };
+    document.documentElement.lang = code;
+    document.documentElement.dir = rtl[code] ? "rtl" : "ltr";
+  } catch (e) {}
+})();
+`;
 
 export const metadata: Metadata = {
   title: "Shop Ledger — Global Small Business Accounting",
@@ -49,8 +78,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable}`}>
-      <body className="font-ui antialiased notranslate">{children}</body>
+    <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable} ${notoSans.variable} ${notoArabic.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
+      </head>
+      <body className="font-ui antialiased notranslate">
+        <LocaleSync />
+        {children}
+      </body>
     </html>
   );
 }

@@ -6,5 +6,8 @@ data/yedekler/
 .env
 *.log
 
+# Derleme onbellegi
+*.tsbuildinfo
+
 # bozuk adli klasor (sonunda bosluk)
 data\ 

@@ -470,6 +470,13 @@ export function setLocale(code: LocaleCode) {
   const meta = LOCALES.find((l) => l.code === code);
   document.documentElement.lang = code;
   document.documentElement.dir = meta?.dir || "ltr";
+  // Çok dilli klavye: giriş alanlarının dil/yönünü seçili dile göre ayarla
+  // ki mobil klavyeler doğru alfabeyle açılsın (Kiril, Arapça vb.).
+  const dir = meta?.dir || "ltr";
+  document.querySelectorAll("input, textarea, select").forEach((el) => {
+    (el as HTMLElement).setAttribute("lang", code);
+    (el as HTMLElement).setAttribute("dir", dir);
+  });
   // Kullanıcı elle para birimi seçmediyse dilin varsayılanına geç
   try {
     if (!window.localStorage.getItem("tailor-currency")) {
