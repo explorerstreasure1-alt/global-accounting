@@ -66,9 +66,9 @@ export function Pricing() {
         </a>
       </div>
       <div className="rounded-3xl border-2 border-slate-900 bg-slate-900 p-6 text-white shadow-xl">
-        <p className="text-sm font-semibold uppercase tracking-wider text-teal-300">{t("pro_plan")} · $3{t("per_month")}</p>
+        <p className="text-sm font-semibold uppercase tracking-wider text-teal-300">{t("pro_plan")} · $5{t("per_month")}</p>
         <p className="mt-2 text-4xl font-bold">
-          $3<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
+          $5<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
         </p>
         <ul className="mt-4 space-y-2 text-sm text-slate-200">
           <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_p1")}</li>

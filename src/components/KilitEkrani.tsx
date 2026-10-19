@@ -42,7 +42,7 @@ export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: num
           {trialLeft < 0 ? ` (${Math.abs(trialLeft)})` : ""}
         </p>
         <div className="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <p className="text-4xl font-extrabold">$3<span className="text-base font-normal text-slate-500">{t("kilit_per")}</span></p>
+          <p className="text-4xl font-extrabold">$5<span className="text-base font-normal text-slate-500">{t("kilit_per")}</span></p>
           <p className="mt-1 text-xs text-slate-500">{t("kilit_feat")}</p>
         </div>
         {hata ? <p className="mt-2 text-xs text-rose-700">{hata}</p> : null}

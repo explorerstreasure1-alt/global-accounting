@@ -4,7 +4,7 @@ EN-first ledger for tailor shops worldwide. 7 languages (EN TR RU DE FR ES AR, R
 (Notebook Classic / Pro Light / Pro Dark), day/month close, Z-report, Excel, backup, AI assistant.
 
 - App: `/app` — ledger + assistant
-- Landing + pricing ($3/mo Pro): `/`
+- Landing + pricing ($5/mo Pro): `/`
 - Billing: Lemon Squeezy checkout + webhook skeleton (`/api/billing/*`)
 - AI: Groq primary, Ollama local, HuggingFace fallback (`src/lib/hf.ts`)
 - DB: Postgres via `DATABASE_URL` (Vercel: Neon/Supabase). Without DB it runs on file mirror (local only).

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { globalDicts } from "./i18n-dict";
@@ -79,7 +79,7 @@ const en: Dict = {
   pro_plan: "Pro",
   per_month: "/month",
   start_free: "Open app",
-  go_pro: "Go Pro — $3/mo",
+  go_pro: "Go Pro — $5/mo",
   pro_active: "Pro active",
   payment: "Payment",
 };
@@ -134,7 +134,7 @@ const tr: Dict = {
   pro_plan: "Pro",
   per_month: "/ay",
   start_free: "Uygulamayı aç",
-  go_pro: "Pro'ya geç — $3/ay",
+  go_pro: "Pro'ya geç — $5/ay",
   pro_active: "Pro aktif",
   payment: "Ödeme",
 };
@@ -189,7 +189,7 @@ const ru: Dict = {
   pro_plan: "Про",
   per_month: "/мес",
   start_free: "Открыть",
-  go_pro: "Про — $3/мес",
+  go_pro: "Про — $5/мес",
   pro_active: "Про активен",
   payment: "Оплата",
 };
@@ -245,7 +245,7 @@ const de: Dict = {
   pro_plan: "Pro",
   per_month: "/Monat",
   start_free: "App öffnen",
-  go_pro: "Pro — $3/Monat",
+  go_pro: "Pro — $5/Monat",
   pro_active: "Pro aktiv",
   payment: "Zahlung",
 };
@@ -300,7 +300,7 @@ const fr: Dict = {
   pro_plan: "Pro",
   per_month: "/mois",
   start_free: "Ouvrir l'app",
-  go_pro: "Pro — $3/mois",
+  go_pro: "Pro — $5/mois",
   pro_active: "Pro actif",
   payment: "Paiement",
 };
@@ -355,7 +355,7 @@ const es: Dict = {
   pro_plan: "Pro",
   per_month: "/mes",
   start_free: "Abrir app",
-  go_pro: "Pro — $3/mes",
+  go_pro: "Pro — $5/mes",
   pro_active: "Pro activo",
   payment: "Pago",
 };
@@ -410,7 +410,7 @@ const ar: Dict = {
   pro_plan: "احترافي",
   per_month: "/شهر",
   start_free: "افتح التطبيق",
-  go_pro: "احترافي — $3/شهر",
+  go_pro: "احترافي — $5/شهر",
   pro_active: "احترافي مفعّل",
   payment: "الدفع",
 };
@@ -520,7 +520,7 @@ const he: Dict = {
   pro_plan: "Pro",
   per_month: "/חודש",
   start_free: "פתח את האפליקציה",
-  go_pro: "Pro — $3/חודש",
+  go_pro: "Pro — $5/חודש",
   pro_active: "Pro פעיל",
   payment: "תשלום",
 };
@@ -575,7 +575,7 @@ const ku: Dict = {
   pro_plan: "Pro",
   per_month: "/meh",
   start_free: "Sepanê veke",
-  go_pro: "Pro — $3/meh",
+  go_pro: "Pro — $5/meh",
   pro_active: "Pro çalak",
   payment: "Drav",
 };
