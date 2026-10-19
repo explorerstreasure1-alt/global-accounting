@@ -126,19 +126,19 @@ const FR: RaporMetin = {
 
 const ES: RaporMetin = {
   sayfaKapak: "Resumen", sayfaGun: "Diario", sayfaKat: "Categorías", sayfaFis: "Recibos",
-  fisBaslik: "Lista de recibos (por pago)",
+  fisBaslik: "Lista de Receipts (por pago)",
   fisKolon: ["Fecha", "Descripción", "Categoría", "Pago", "Ingresos", "Gastos"],
   gunKolon: ["Fecha", "Neto efectivo", "Neto tarjeta", "Neto transferencia", "Ingresos", "Gastos", "Neto", "Tendencia", "Cantidad"],
   katKolon: ["Categoría", "Cantidad", "Ingresos", "Gastos", "Neto", "Gastos %"],
-  toplam: "TOTAL", bosFis: "Sin recibos en el período.", bosGun: "Sin registros en el período.",
+  toplam: "TOTAL", bosFis: "Sin Receipts en el período.", bosGun: "Sin registros en el período.",
   gosterge: "Métrica", tutarCol: "Importe",
   satir: ["Ingresos totales", "Gastos totales", "NETO GENERAL", "Ingresos efectivo", "Gastos efectivo", "Neto efectivo", "Ingresos tarjeta", "Gastos tarjeta", "Neto tarjeta", "Ingresos transferencia", "Gastos transferencia", "Neto transferencia", "Saldo inicial", "Saldo final", "Registros"],
   kutu: ["Ingresos efectivo", "Gastos efectivo", "Ingresos tarjeta", "Gastos tarjeta", "Ingresos transferencia", "Gastos transferencia", "Neto efectivo", "Neto tarjeta", "Neto transferencia", "Ingresos totales", "Gastos totales", "Ingresos totales"],
   serit: ["NETO GENERAL", "APERTURA", "CIERRE"],
-  katSec: "Categorías", gunSec: "Neto diario", fisSec: "Lista de recibos",
+  katSec: "Categorías", gunSec: "Neto diario", fisSec: "Lista de Receipts",
   thead: ["FECHA", "DESCRIPCIÓN", "IMPORTE"],
   kayitTekil: "registros", footerOrta: "preparado con LedgerAI", ektedir: "archivo adjunto.",
-  fisSayi: (n) => `Lista de recibos (${n} registros)`,
+  fisSayi: (n) => `Lista de Receipts (${n} registros)`,
   dahaFazla: (n) => `… y ${n} registros más (todo en Excel)`,
   kayitSayi: (n) => `${n} registros`,
   topNakit: "Total efectivo", topKart: "Total tarjeta", topHavale: "Total transferencia", topGenel: "TOTAL GENERAL",
@@ -187,7 +187,70 @@ const RU: RaporMetin = {
   gelirW: "доход", giderW: "расход", altToplam: "Подытог",
 };
 
-const HEPSI: Record<string, RaporMetin> = { tr: TR, en: EN, de: DE, fr: FR, es: ES, ar: AR, ru: RU };
+const FA: RaporMetin = {
+  sayfaKapak: "خلاصه", sayfaGun: "روزانه", sayfaKat: "دسته‌ها", sayfaFis: "فیش‌ها",
+  fisBaslik: "فهرست فیش‌ها (بر اساس پرداخت)",
+  fisKolon: ["تاریخ", "توضیح", "دسته", "پرداخت", "درآمد", "هزینه"],
+  gunKolon: ["تاریخ", "خالص نقد", "خالص کارت", "خالص انتقال", "درآمد", "هزینه", "خالص", "روند", "تعداد"],
+  katKolon: ["دسته", "تعداد", "درآمد", "هزینه", "خالص", "هزینه %"],
+  toplam: "جمع", bosFis: "در این بازه فیشی نیست.", bosGun: "در این بازه رکوردی نیست.",
+  gosterge: "شاخص", tutarCol: "مبلغ",
+  satir: ["کل درآمد", "کل هزینه", "خالص کل", "درآمد نقد", "هزینه نقد", "خالص نقد", "درآمد کارت", "هزینه کارت", "خالص کارت", "درآمد انتقال", "هزینه انتقال", "خالص انتقال", "افتتاحیه", "اختتامیه", "رکوردها"],
+  kutu: ["درآمد نقد", "هزینه نقد", "درآمد کارت", "هزینه کارت", "درآمد انتقال", "هزینه انتقال", "خالص نقد", "خالص کارت", "خالص انتقال", "کل درآمد", "کل هزینه", "کل درآمد"],
+  serit: ["خالص کل", "افتتاحیه", "اختتامیه"],
+  katSec: "دسته‌ها", gunSec: "خالص روزانه", fisSec: "فهرست فیش‌ها",
+  thead: ["تاریخ", "توضیح", "مبلغ"],
+  kayitTekil: "رکورد", footerOrta: "آماده‌شده با LedgerAI", ektedir: "فایل پیوست.",
+  fisSayi: (n) => `فهرست فیش‌ها (${n} رکورد)`,
+  dahaFazla: (n) => `… و ${n} رکورد دیگر (همه در Excel)`,
+  kayitSayi: (n) => `${n} رکورد`,
+  topNakit: "جمع نقد", topKart: "جمع کارت", topHavale: "جمع انتقال", topGenel: "جمع کل",
+  gelirW: "درآمد", giderW: "هزینه", altToplam: "جمع جزء",
+};
+
+const HE: RaporMetin = {
+  sayfaKapak: "סיכום", sayfaGun: "יומי", sayfaKat: "קטגוריות", sayfaFis: " Receipts",
+  fisBaslik: "רשימת Receipts (לפי תשלום)",
+  fisKolon: ["תאריך", "תיאור", "קטגוריה", "תשלום", "הכנסה", "הוצאה"],
+  gunKolon: ["תאריך", "נטו מזומן", "נטו כרטיס", "נטו העברה", "הכנסה", "הוצאה", "נטו", "מגמה", "כמות"],
+  katKolon: ["קטגוריה", "כמות", "הכנסה", "הוצאה", "נטו", "הוצאה %"],
+  toplam: "סה\"כ", bosFis: "אין Receipts בתקופה.", bosGun: "אין רשומות בתקופה.",
+  gosterge: "מדד", tutarCol: "סכום",
+  satir: ["הכנסה סה\"כ", "הוצאה סה\"כ", "נטו כללי", "הכנסה מזומן", "הוצאה מזומן", "נטו מזומן", "הכנסה כרטיס", "הוצאה כרטיס", "נטו כרטיס", "הכנסה העברה", "הוצאה העברה", "נטו העברה", "פתיחה", "סגירה", "רשומות"],
+  kutu: ["הכנסה מזומן", "הוצאה מזומן", "הכנסה כרטיס", "הוצאה כרטיס", "הכנסה העברה", "הוצאה העברה", "נטו מזומן", "נטו כרטיס", "נטו העברה", "הכנסה סה\"כ", "הוצאה סה\"כ", "הכנסה סה\"כ"],
+  serit: ["נטו כללי", "פתיחה", "סגירה"],
+  katSec: "קטגוריות", gunSec: "נטו יומי", fisSec: "רשימת Receipts",
+  thead: ["תאריך", "תיאור", "סכום"],
+  kayitTekil: "רשומות", footerOrta: "הוכן עם LedgerAI", ektedir: "קובץ מצורף.",
+  fisSayi: (n) => `רשימת Receipts (${n} רשומות)`,
+  dahaFazla: (n) => `… ועוד ${n} רשומות (הכל ב-Excel)`,
+  kayitSayi: (n) => `${n} רשומות`,
+  topNakit: "סה\"כ מזומן", topKart: "סה\"כ כרטיס", topHavale: "סה\"כ העברה", topGenel: "סה\"כ כללי",
+  gelirW: "הכנסה", giderW: "הוצאה", altToplam: "סכום ביניים",
+};
+
+const KU: RaporMetin = {
+  sayfaKapak: "Kurte", sayfaGun: "Rojane", sayfaKat: "Kategorî", sayfaFis: "Fiş",
+  fisBaslik: "Lîsteya fişan (li gorî dravdanê)",
+  fisKolon: ["Dîrok", "Danasîn", "Kategorî", "Dravdan", "Dahat", "Xerc"],
+  gunKolon: ["Dîrok", "Neta nakit", "Neta kart", "Neta veguhestin", "Dahat", "Xerc", "Net", "Rê", "Hejmar"],
+  katKolon: ["Kategorî", "Hejmar", "Dahat", "Xerc", "Net", "Xerc %"],
+  toplam: "GIŞTÎ", bosFis: "Vê demê fiş tune.", bosGun: "Vê demê tomar tune.",
+  gosterge: "Nîşan", tutarCol: "Miqdar",
+  satir: ["Giştî dahat", "Giştî xerc", "NETA GIŞTÎ", "Dahata nakit", "Xerca nakit", "Neta nakit", "Dahata kart", "Xerca kart", "Neta kart", "Dahata veguhestin", "Xerca veguhestin", "Neta veguhestin", "Destpêk", "Dawî", "Tomar"],
+  kutu: ["Dahata nakit", "Xerca nakit", "Dahata kart", "Xerca kart", "Dahata veguhestin", "Xerca veguhestin", "Neta nakit", "Neta kart", "Neta veguhestin", "Giştî dahat", "Giştî xerc", "Giştî dahat"],
+  serit: ["NETA GIŞTÎ", "DESTPÊK", "DAWÎ"],
+  katSec: "Kategorî", gunSec: "Neta rojane", fisSec: "Lîsteya fişan",
+  thead: ["DÎROK", "DANASÎN", "MIQDAR"],
+  kayitTekil: "tomar", footerOrta: "bi Defterdar hat amadekirin", ektedir: "pel pêvek.",
+  fisSayi: (n) => `Lîsteya fişan (${n} tomar)`,
+  dahaFazla: (n) => `… û ${n} tomarên din (hemû di Excelê)`,
+  kayitSayi: (n) => `${n} tomar`,
+  topNakit: "Giştî nakit", topKart: "Giştî kart", topHavale: "Giştî veguhestin", topGenel: "GIŞTÎ GIŞTÎ",
+  gelirW: "dahat", giderW: "xerc", altToplam: "Bin-total",
+};
+
+const HEPSI: Record<string, RaporMetin> = { tr: TR, en: EN, de: DE, fr: FR, es: ES, ar: AR, ru: RU, fa: FA, he: HE, ku: KU };
 
 /** Seçili dilin rapor sözlüğü (bilinmeyende İngilizce). */
 export function dilAl(locale?: string): RaporMetin {
@@ -202,6 +265,9 @@ const ODEME: Record<string, Record<string, string>> = {
   es: { Nakit: "Efectivo", Kart: "Tarjeta", Havale: "Transferencia" },
   ar: { Nakit: "نقدي", Kart: "بطاقة", Havale: "تحويل" },
   ru: { Nakit: "Наличные", Kart: "Карта", Havale: "Перевод" },
+  fa: { Nakit: "نقد", Kart: "کارت", Havale: "انتقال" },
+  he: { Nakit: "מזומן", Kart: "כרטיס", Havale: "העברה" },
+  ku: { Nakit: "Nakit", Kart: "Kart", Havale: "Veguhestin" },
 };
 
 /** Saklanan ödeme tipi → seçili dilde etiket. */
@@ -225,7 +291,7 @@ export function kategoriEtiketi(kategori: string, locale?: string): string {
 export function paraSembol(currency?: string): string {
   const m: Record<string, string> = {
     USD: "$", EUR: "€", TRY: "₺", GBP: "£", SAR: "ر.س",
-    RUB: "₽", AED: "د.إ", AZN: "₼", GEL: "₾", UAH: "₴", EGP: "E£",
+    RUB: "₽", AED: "د.إ", AZN: "₼", GEL: "₾", UAH: "₴", EGP: "E£", IRR: "﷼", ILS: "₪", IQD: "ع.د",
   };
   const c = String(currency ?? "USD").toUpperCase();
   return m[c] ?? c;
