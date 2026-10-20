@@ -70,6 +70,10 @@ export type Ayarlar = {
   waSablonHazir: string;
   /** Google yorum linki (yıldız düğmesi için). */
   googleYorumLink: string;
+  /** Meslek / iş kolu (kayıt anketinden). */
+  meslek: string;
+  /** Hizmet seçimi açık mı? false ise tümü "Hizmet" işaretlenir, kullanıcı kendisi yazar. */
+  hizmetSecimiAcik: boolean;
 };
 
 export type SohbetMesaji = {

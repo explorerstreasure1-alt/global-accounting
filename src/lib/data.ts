@@ -53,6 +53,8 @@ function mapAyarlar(row: typeof ayarlar.$inferSelect): Ayarlar {
     waSablonAlindi: typeof raw.waSablonAlindi === "string" ? raw.waSablonAlindi.slice(0, 500) : "",
     waSablonHazir: typeof raw.waSablonHazir === "string" ? raw.waSablonHazir.slice(0, 500) : "",
     googleYorumLink: typeof raw.googleYorumLink === "string" ? raw.googleYorumLink.trim().slice(0, 300) : "",
+    meslek: typeof raw.meslek === "string" ? raw.meslek.trim().slice(0, 60) : "",
+    hizmetSecimiAcik: raw.hizmetSecimiAcik === false ? false : true,
   };
 }
 
@@ -74,6 +76,8 @@ function normalAyarlar(a: Partial<Ayarlar>): Ayarlar {
     waSablonAlindi: typeof a.waSablonAlindi === "string" ? a.waSablonAlindi.slice(0, 500) : "",
     waSablonHazir: typeof a.waSablonHazir === "string" ? a.waSablonHazir.slice(0, 500) : "",
     googleYorumLink: a.googleYorumLink?.trim() ? a.googleYorumLink.trim().slice(0, 300) : "",
+    meslek: a.meslek?.trim() ? a.meslek.trim().slice(0, 60) : "",
+    hizmetSecimiAcik: a.hizmetSecimiAcik === false ? false : true,
   };
 }
 
@@ -395,6 +399,14 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
       patch.googleYorumLink !== undefined
         ? patch.googleYorumLink.trim().slice(0, 300)
         : (current.googleYorumLink || ""),
+    meslek:
+      patch.meslek !== undefined
+        ? patch.meslek.trim().slice(0, 60)
+        : (current.meslek || ""),
+    hizmetSecimiAcik:
+      patch.hizmetSecimiAcik !== undefined
+        ? patch.hizmetSecimiAcik
+        : (current.hizmetSecimiAcik ?? true),
   };
   return withDb(
     async () => {
@@ -413,6 +425,8 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
         waSablonAlindi: nextAyar.waSablonAlindi,
         waSablonHazir: nextAyar.waSablonHazir,
         googleYorumLink: nextAyar.googleYorumLink,
+        meslek: nextAyar.meslek,
+        hizmetSecimiAcik: nextAyar.hizmetSecimiAcik,
       };
       await db!.update(ayarlar).set(next).where(eq(ayarlar.id, 1));
       void fileSaveAyarlar(nextAyar).catch(() => undefined);

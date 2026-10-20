@@ -1,4 +1,5 @@
 ﻿import {
+  boolean,
   date,
   integer,
   numeric,
@@ -37,6 +38,8 @@ export const ayarlar = pgTable("ayarlar", {
   waSablonAlindi: text("wa_sablon_alindi").notNull().default(""),
   waSablonHazir: text("wa_sablon_hazir").notNull().default(""),
   googleYorumLink: text("google_yorum_link").notNull().default(""),
+  meslek: varchar("meslek", { length: 60 }).notNull().default(""),
+  hizmetSecimiAcik: boolean("hizmet_secimi_acik").notNull().default(true),
 });
 
 export const sohbetMesajlari = pgTable("sohbet_mesajlari", {

@@ -738,6 +738,8 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             waSablonAlindi: String(data.get("waSablonAlindi") || "").slice(0, 500),
             waSablonHazir: String(data.get("waSablonHazir") || "").slice(0, 500),
             googleYorumLink: String(data.get("googleYorumLink") || "").trim().slice(0, 300),
+            meslek: String(data.get("meslek") || "").trim().slice(0, 60),
+            hizmetSecimiAcik: data.get("hizmetSecimiAcik") === "on",
           });
           onClose();
         }}
@@ -791,6 +793,31 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
           <label className="text-sm">
             {t("set_googleYorum")}
             <input name="googleYorumLink" defaultValue={ayarlar.googleYorumLink} placeholder="https://" dir="ltr" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+          </label>
+          <label className="text-sm">
+            {t("set_meslek") || "Meslek / iş kolu"}
+            <select name="meslek" defaultValue={ayarlar.meslek || ""} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+              <option value="">{t("set_meslek_sec") || "Seçin"}</option>
+              <option value="terzi">Terzi / Dikim</option>
+              <option value="berber">Berber / Kuaför</option>
+              <option value="tamirci">Tamirci</option>
+              <option value="market">Market / Bakkal</option>
+              <option value="kafe">Kafe / Restoran</option>
+              <option value="atolye">Atölye / Üretim</option>
+              <option value="freelancer">Serbest çalışan</option>
+              <option value="diger">Diğer</option>
+            </select>
+          </label>
+          <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <span>
+              <span className="font-semibold text-slate-800">{t("set_hizmet_secimi") || "Hizmet seçimi"}</span>
+              <span className="block text-xs text-slate-500">
+                {ayarlar.hizmetSecimiAcik
+                  ? (t("set_hizmet_acik") || "Açık: hizmet çeşitlerini seçebilirsiniz.")
+                  : (t("set_hizmet_kapali") || "Kapalı: tümü 'Hizmet' işaretlenir, ne olduğunu siz yazarsınız.")}
+              </span>
+            </span>
+            <input type="checkbox" name="hizmetSecimiAcik" defaultChecked={ayarlar.hizmetSecimiAcik} className="h-5 w-5 accent-teal-600" />
           </label>
           <label className="text-sm">
             {t("set_waSablonAlindi")}

@@ -256,6 +256,8 @@ function seedAyarlar(today: string): Ayarlar {
     waSablonAlindi: "",
     waSablonHazir: "",
     googleYorumLink: "",
+    meslek: "",
+    hizmetSecimiAcik: true,
   };
 }
 
@@ -322,6 +324,8 @@ export async function fileGetAll(): Promise<{ kayitlar: Kayit[]; ayarlar: Ayarla
     if (!ayarlar.aiMotor) ayarlar.aiMotor = "otomatik";
     if (!ayarlar.ollamaModel) ayarlar.ollamaModel = "gemma3:4b";
     if (!ayarlar.whatsappAlici) ayarlar.whatsappAlici = "";
+    if (ayarlar.meslek === undefined) ayarlar.meslek = "";
+    if (ayarlar.hizmetSecimiAcik === undefined) ayarlar.hizmetSecimiAcik = true;
     yaz = true;
   }
   // Eski Türkçe varsayılan işletme adı → İngilizce (kullanıcı ayarlardan değiştirebilir).
