@@ -797,15 +797,15 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
           <label className="text-sm">
             {t("set_meslek") || "Meslek / iş kolu"}
             <select name="meslek" defaultValue={ayarlar.meslek || ""} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
-              <option value="">{t("set_meslek_sec") || "Seçin"}</option>
-              <option value="terzi">Terzi / Dikim</option>
-              <option value="berber">Berber / Kuaför</option>
-              <option value="tamirci">Tamirci</option>
-              <option value="market">Market / Bakkal</option>
-              <option value="kafe">Kafe / Restoran</option>
-              <option value="atolye">Atölye / Üretim</option>
-              <option value="freelancer">Serbest çalışan</option>
-              <option value="diger">Diğer</option>
+              <option value="">{t("set_meslek_sec")}</option>
+              <option value="terzi">{t("meslek_terzi")}</option>
+              <option value="berber">{t("meslek_berber")}</option>
+              <option value="tamirci">{t("meslek_tamirci")}</option>
+              <option value="market">{t("meslek_market")}</option>
+              <option value="kafe">{t("meslek_kafe")}</option>
+              <option value="atolye">{t("meslek_atolye")}</option>
+              <option value="freelancer">{t("meslek_freelancer")}</option>
+              <option value="diger">{t("meslek_diger")}</option>
             </select>
           </label>
           <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">

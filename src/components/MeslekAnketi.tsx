@@ -67,8 +67,8 @@ export function MeslekAnketi({ open, ilkMeslek, onKaydet, onAtla }: Props) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-        <p className="font-hand text-3xl text-slate-900">{t("anket_baslik") || "Mesleğiniz nedir?"}</p>
-        <p className="mt-1 text-xs text-slate-500">{t("anket_aciklama") || "Uygulama hizmet çeşitlerini mesleğinize göre ayarlar."}</p>
+        <p className="font-hand text-3xl text-slate-900">{t("anket_baslik")}</p>
+        <p className="mt-1 text-xs text-slate-500">{t("anket_aciklama")}</p>
 
         <div className="mt-4 grid gap-2">
           {MESLEKLER.map((m) => (
@@ -86,7 +86,7 @@ export function MeslekAnketi({ open, ilkMeslek, onKaydet, onAtla }: Props) {
                 onChange={() => setSecim(m)}
                 className="accent-teal-600"
               />
-              <span>{MESLEK_ETIKET[m]}</span>
+              <span>{t(`meslek_${m}`)}</span>
             </label>
           ))}
         </div>
