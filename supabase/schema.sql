@@ -81,6 +81,10 @@ alter table ayarlar
   add column if not exists wa_sablon_hazir text not null default '';
 alter table ayarlar
   add column if not exists google_yorum_link text not null default '';
+alter table ayarlar
+  add column if not exists meslek varchar(60) not null default '';
+alter table ayarlar
+  add column if not exists hizmet_secimi_acik boolean not null default true;
 
 create index if not exists kayitlar_business_idx on kayitlar(business_id);
 create index if not exists sohbet_business_idx on "sohbetMesajlari"(business_id);
@@ -153,8 +157,8 @@ begin
   values (new.id, 'My Tailor Shop', now() + interval '7 days')
   returning id into b_id;
 
-  insert into ayarlar(isletme_adi, kira_tutari, kira_periyodu, aylik_kira_karsiligi, para_birimi, kira_sonraki_tarih, acilis_bakiyesi, ai_motor, ollama_model, whatsapp_alici, whatsapp_isletme, wa_sablon_alindi, wa_sablon_hazir, google_yorum_link, business_id)
-  values ('My Tailor Shop', 1500, 6, 250, 'USD', null, 125, 'otomatik', 'gemma3:4b', '', '', '', '', '', b_id);
+  insert into ayarlar(isletme_adi, kira_tutari, kira_periyodu, aylik_kira_karsiligi, para_birimi, kira_sonraki_tarih, acilis_bakiyesi, ai_motor, ollama_model, whatsapp_alici, whatsapp_isletme, wa_sablon_alindi, wa_sablon_hazir, google_yorum_link, meslek, hizmet_secimi_acik, business_id)
+  values ('My Tailor Shop', 1500, 6, 250, 'USD', null, 125, 'otomatik', 'gemma3:4b', '', '', '', '', '', '', true, b_id);
 
   return new;
 end;
