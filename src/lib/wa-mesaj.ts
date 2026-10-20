@@ -74,6 +74,30 @@ const SBLN: Record<string, Record<WaKind, string>> = {
     bilgi: "Здравствуйте, {ad}, ваша запись: {hizmet}. {dukkan}",
     yorum: "Здравствуйте, {ad}, спасибо, что выбрали {dukkan}. Короткий отзыв в Google очень нам поможет: {link}",
   },
+  fa: {
+    alindi: "سلام {ad}، سفارش شما ({hizmet}) دریافت شد (در حال پردازش). پس از آماده شدن به شما اطلاع می‌دهیم. {dukkan}",
+    azkaldi: "سلام {ad}، کالای شما ({hizmet}) تقریباً آماده است. لحظاتی دیگر آماده می‌شود. {dukkan}",
+    hazir: "سلام {ad}، سفارش شما ({hizmet}) آماده است. می‌توانید تحویل بگیرید. {dukkan}",
+    teslim: "سلام {ad}، سفارش شما ({hizmet}) تکمیل / تحویل داده شد. از اعتماد شما متشکریم. {dukkan}",
+    bilgi: "سلام {ad}، ثبت شما: {hizmet}. {dukkan}",
+    yorum: "سلام {ad}، از انتخاب {dukkan} متشکریم. یک نظر کوتاه در Google برای ما بسیار ارزشمند است: {link}",
+  },
+  he: {
+    alindi: "שלום {ad}، הזמנתך ({hizmet}) התקבלה (בעיבוד). נעדכן כשית准备好. {dukkan}",
+    azkaldi: "שלום {ad}، הפריט שלך ({hizmet}) 거의 מוכן. עוד רגע. {dukkan}",
+    hazir: "שלום {ad}، הזמנתך ({hizmet}) מוכנה. אפשר לבוא לקחת. {dukkan}",
+    teslim: "שלום {ad}، הזמנתך ({hizmet}) הושלמה / נמסרה. תודה על האמון. {dukkan}",
+    bilgi: "שלום {ad}، הרשומה שלך: {hizmet}. {dukkan}",
+    yorum: "שלום {ad}، תודה שבחרת ב-{dukkan}. ביקורת Google קצרה תעזור לנו מאוד: {link}",
+  },
+  ku: {
+    alindi: "Silav {ad}, siparişa te ({hizmet}) hat wergirtin (tê pêvajo). Dema amade bibe em ê agahdar bikin. {dukkan}",
+    azkaldi: "Silav {ad}, tiştê te ({hizmet}) hema hema amade ye. Çend deqe maye. {dukkan}",
+    hazir: "Silav {ad}, siparişa te ({hizmet}) amade ye. Dikarî were wergire. {dukkan}",
+    teslim: "Silav {ad}, siparişa te ({hizmet}) temam / hat radestkirin. Spas ji bo baweriya te. {dukkan}",
+    bilgi: "Silav {ad}, tomara te: {hizmet}. {dukkan}",
+    yorum: "Silav {ad}, spas ku te {dukkan} hilbijart. Şiroveyek kurt a Google ji bo me pir girîng e: {link}",
+  },
 };
 
 /** Şablondaki {değişken}leri değerlerle doldurur. */
