@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Caveat, DM_Sans, Literata, Noto_Sans, Noto_Sans_Arabic, Noto_Sans_Hebrew } from "next/font/google";
 import "./globals.css";
 import { LocaleSync } from "@/components/LocaleSync";
+import { GeoLocale } from "@/components/GeoLocale";
 
 const caveat = Caveat({
   subsets: ["latin", "latin-ext"],
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="font-ui antialiased notranslate">
         <LocaleSync />
+        <GeoLocale />
         {children}
       </body>
     </html>
