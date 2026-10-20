@@ -27,10 +27,14 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [anketOpen, setAnketOpen] = useState(false);
-  useEffect(() => {
-    if (!ayarlar.meslek) setAnketOpen(true);
-  }, [ayarlar.meslek]);
+  const [anketOpen, setAnketOpen] = useState<boolean>(() => {
+    try {
+      const a = yerelAyarDoldur(initial.ayarlar);
+      return !a.meslek;
+    } catch {
+      return false;
+    }
+  });
   const [telefonOpen, setTelefonOpen] = useState(false);
   const router = useRouter();
   const [zOpen, setZOpen] = useState(false);

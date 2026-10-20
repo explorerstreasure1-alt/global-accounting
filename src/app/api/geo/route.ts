@@ -1,5 +1,3 @@
-// Ülke tespiti: Vercel geo başlığı (x-vercel-ip-country) veya ücretsiz IP API.
-// İlk açılışta seçili dil yoksa bu uçtan gelen ülke koduna göre dil seçilir.
 export const dynamic = "force-dynamic";
 
 const ULKE_DIL: Record<string, string> = {
@@ -14,21 +12,35 @@ const ULKE_DIL: Record<string, string> = {
 };
 
 export async function GET(request: Request) {
-  // 1) Vercel geo başlığı
-  let ulke = request.headers.get("x-vercel-ip-country") || "";
-  // 2) Yerel geliştirme / Vercel dışı: ücretsiz IP API
+  let ulke = (request.headers.get("x-vercel-ip-country") || "").toUpperCase();
+
+  // 2) Yerel geliştirme / Vercel dışı: birden fazla ücretsiz API (yedekli)
   if (!ulke) {
-    try {
-      const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
-      if (res.ok) {
-        const j = (await res.json()) as { country_code?: string };
-        ulke = j.country_code || "";
+    const kaynaklar = [
+      async () => {
+        const r = await fetch("http://ip-api.com/json/?fields=countryCode", { cache: "no-store" });
+        if (!r.ok) return "";
+        const j = (await r.json()) as { countryCode?: string };
+        return (j.countryCode || "").toUpperCase();
+      },
+      async () => {
+        const r = await fetch("https://ipinfo.io/json", { cache: "no-store" });
+        if (!r.ok) return "";
+        const j = (await r.json()) as { country?: string };
+        return (j.country || "").toUpperCase();
+      },
+    ];
+    for (const k of kaynaklar) {
+      try {
+        const kod = await k();
+        if (kod) { ulke = kod; break; }
+      } catch {
+        /* sıradaki kaynağa geç */
       }
-    } catch {
-      ulke = "";
     }
   }
-  const code = (ulke || "").toUpperCase();
-  const dil = ULKE_DIL[code] || "en";
-  return Response.json({ country: code || null, locale: dil });
+
+  const code = ulke || null;
+  const dil = code ? (ULKE_DIL[code] || "en") : "en";
+  return Response.json({ country: code, locale: dil });
 }

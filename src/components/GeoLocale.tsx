@@ -10,7 +10,10 @@ import { getLocale, setLocale, type LocaleCode } from "@/lib/i18n";
 export function GeoLocale() {
   useEffect(() => {
     try {
-      if (window.localStorage.getItem("tailor-locale")) return; // kullanıcı seçmiş
+      const mevcut = window.localStorage.getItem("tailor-locale");
+      // Kullanıcı elle seçmişse (en değilse) ezme. "en" varsayılan ise ülke
+      // tespitiyle değiştirilebilir — böylece ilk ziyarette doğru dile geçer.
+      if (mevcut && mevcut !== "en") return;
     } catch {
       return;
     }
