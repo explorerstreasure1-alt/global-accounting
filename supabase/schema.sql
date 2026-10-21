@@ -221,3 +221,41 @@ create policy "own ziyaretler" on ziyaretler
   ) with check (
     business_id in (select id from businesses where owner_id = auth.uid())
   );
+
+-- ============================================================
+-- Supabase Data API grants (30 Ekim 2026 itibariyle yeni tablolar
+-- icin otomatik grant verilmiyor; her tablo icin acikca grant gerekir.
+-- Mevcut tablolar etkilenmez, ama yeni projeler / preview branch /
+-- 'supabase db reset' akislarinda bu grant'ler olmadan "permission
+-- denied" hatasi alinir.
+-- ============================================================
+grant select on public.profiles to anon;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant all on public.profiles to service_role;
+
+grant select on public.businesses to anon;
+grant select, insert, update, delete on public.businesses to authenticated;
+grant all on public.businesses to service_role;
+
+grant select on public.kayitlar to anon;
+grant select, insert, update, delete on public.kayitlar to authenticated;
+grant all on public.kayitlar to service_role;
+
+grant select on public."sohbetMesajlari" to anon;
+grant select, insert, update, delete on public."sohbetMesajlari" to authenticated;
+grant all on public."sohbetMesajlari" to service_role;
+
+grant select on public.ayarlar to anon;
+grant select, insert, update, delete on public.ayarlar to authenticated;
+grant all on public.ayarlar to service_role;
+
+grant select on public.musteriler to anon;
+grant select, insert, update, delete on public.musteriler to authenticated;
+grant all on public.musteriler to service_role;
+
+grant select on public.ziyaretler to anon;
+grant select, insert, update, delete on public.ziyaretler to authenticated;
+grant all on public.ziyaretler to service_role;
+
+-- sequences (id generation)
+grant usage, select on all sequences in schema public to anon, authenticated, service_role;
