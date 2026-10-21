@@ -595,3 +595,121 @@ select {
     0 1px 0 rgba(255, 255, 255, 0.85),
     0 -1px 1px rgba(75, 72, 66, 0.32);
 }
+
+/* ============================================================================
+   MOBİL TEMA KATMANI (telefonda gerçek uygulama hissi)
+   - Alt hızlı eylem çubuğu (başparmak bölgesi) + safe-area (çentik) desteği
+   - Tam ekran modallar (bottom sheet düzeni olmadan tek nefes tabaka)
+   - Uygulama benzeri kaydırma: çubuk gizle, snap, momentum
+   - 300 ms dokunma gecikmesi ve iOS zoom titremeleri kapalı
+   ========================================================================= */
+
+:root {
+  --mobil-bar-h: 0px;
+}
+
+/* İçerik çubuğun altında kaybolmasın diye alt pay (telefonda doldurulur) */
+.mobil-alt-bos {
+  padding-bottom: var(--mobil-bar-h);
+}
+
+/* Alt hızlı eylem çubuğu: yalnızca telefonlarda gösterilir */
+.mobil-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 45;
+  display: none;
+  padding-bottom: max(env(safe-area-inset-bottom), 5px);
+  background: linear-gradient(180deg, rgba(246, 246, 243, 0.96), rgba(238, 238, 234, 0.98));
+  border-top: 1px solid rgba(75, 72, 66, 0.2);
+  box-shadow: 0 -14px 34px rgba(75, 72, 66, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mobil-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mobil-btn:active {
+  background: rgba(75, 72, 66, 0.1);
+}
+
+/* Dokunma cihazlarında iyileştirmeler */
+@media (hover: none) and (pointer: coarse) {
+  .desk-app,
+  .desk-app * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .desk-app button,
+  .desk-app [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --mobil-bar-h: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .mobil-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  /* iOS Safari: sabit zemin kayarken titreme yapmaz (background-attachment: fixed desteklenmez) */
+  body,
+  .desk-app {
+    background-attachment: scroll;
+  }
+
+  .desk-app {
+    min-height: 100dvh; /* Tarayıcı adres çubuğu açılırken taşmayı önler */
+  }
+
+  /* Uygulama hissi: yatay buton şeridinde kaydırma çubuğu görünmez, snap yapılıdır */
+  .scroll-thin {
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    scroll-behavior: smooth;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    display: none;
+  }
+  .scroll-thin > * {
+    scroll-snap-align: start;
+  }
+
+  /* Defter satırı telefonda 1-2 px daha geniş nefes alır */
+  .notebook-row {
+    min-height: 40px;
+  }
+
+  /* Modallar telefondaki tam ekran tabaka (calendar, rapor, ayarlar, anket) */
+  .desk-app [class~="fixed"][class~="inset-0"] {
+    padding: 0;
+  }
+  .desk-app [class~="fixed"][class~="inset-0"] > div {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+
+  /* Bildirim: çubuğun üstünde kalsın */
+  .mobil-toast {
+    bottom: calc(var(--mobil-bar-h) + 10px) !important;
+  }
+}

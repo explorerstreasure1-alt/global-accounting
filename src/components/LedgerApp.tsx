@@ -317,7 +317,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
 
   return (
     <div className="desk-app min-h-screen">
-      <div className={`mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4 ${zOpen || gunOpen ? "no-print" : ""}`}>
+      <div className={`mobil-alt-bos mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4 ${zOpen || gunOpen ? "no-print" : ""}`}>
         <div className="mb-2">
           <GlobalBar userEmail={trial?.email || sub?.email} />
         </div>
@@ -553,10 +553,17 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       />
 
       {toast ? (
-        <div className="no-print fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">
+        <div className="no-print mobil-toast fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">
           {toast}
         </div>
       ) : null}
+      <MobilEylemBar
+        onTakvim={() => setTakvimOpen(true)}
+        onGun={() => setGunOpen(true)}
+        onAy={() => setAyOpen(true)}
+        onZ={() => setZOpen(true)}
+        onAyarlar={() => setSettingsOpen(true)}
+      />
     </div>
   );
 }
@@ -578,5 +585,46 @@ function ToolBtn({ children, onClick }: { children: ReactNode; onClick: () => vo
     >
       {children}
     </button>
+  );
+}
+
+/** Telefonda başparmak bölgesine yerleşen alt hızlı eylem çubuğu. Masaüstünde görünmez. */
+function MobilEylemBar({
+  onTakvim,
+  onGun,
+  onAy,
+  onZ,
+  onAyarlar,
+}: {
+  onTakvim: () => void;
+  onGun: () => void;
+  onAy: () => void;
+  onZ: () => void;
+  onAyarlar: () => void;
+}) {
+  const { t } = useT();
+  return (
+    <nav className="mobil-bar no-print">
+      <button type="button" className="mobil-btn" onClick={onTakvim}>
+        <I name="calendar" size={19} />
+        {t("calendar")}
+      </button>
+      <button type="button" className="mobil-btn" onClick={onGun}>
+        <I name="day" size={19} />
+        {t("day_end")}
+      </button>
+      <button type="button" className="mobil-btn" onClick={onAy}>
+        <I name="month" size={19} />
+        {t("month_end")}
+      </button>
+      <button type="button" className="mobil-btn" onClick={onZ}>
+        <I name="report" size={19} />
+        {t("z_report")}
+      </button>
+      <button type="button" className="mobil-btn" onClick={onAyarlar}>
+        <I name="settings" size={19} />
+        {t("set_title")}
+      </button>
+    </nav>
   );
 }
