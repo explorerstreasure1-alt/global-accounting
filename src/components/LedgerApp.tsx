@@ -50,7 +50,10 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [kilavuzOpen, setKilavuzOpen] = useState(true);
   // Telefonda kılavuz paneli defterin altında kalmasın diye kapalı gelsin (hydration sonrası kapatılır, kayma olmaz)
   useEffect(() => {
-    if (window.innerWidth < 1280) setKilavuzOpen(false);
+    const h = setTimeout(() => {
+      if (window.innerWidth < 1280) setKilavuzOpen(false);
+    }, 0);
+    return () => clearTimeout(h);
   }, []);
   const [yazilacakTarih, setYazilacakTarih] = useState<string | null>(null);
   const [hafizaMod, setHafizaMod] = useState<string>("dosya");

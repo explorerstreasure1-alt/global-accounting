@@ -861,11 +861,12 @@ export function TelefonModal({ open, onClose }: { open: boolean; onClose: () => 
 
   useEffect(() => {
     if (!open) return;
-    setBilgi(null);
+    const h = setTimeout(() => setBilgi(null), 0);
     fetch("/api/telefon")
       .then((r) => r.json())
       .then((j) => setBilgi(j as TelefonBilgi))
       .catch(() => undefined);
+    return () => clearTimeout(h);
   }, [open ]);
 
   useEffect(() => {

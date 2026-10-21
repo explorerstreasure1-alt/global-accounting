@@ -165,7 +165,8 @@ export function MusteriSayfasi() {
   }
 
   useEffect(() => {
-    void yukle("", false);
+    const h = setTimeout(() => void yukle("", false), 0);
+    return () => clearTimeout(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

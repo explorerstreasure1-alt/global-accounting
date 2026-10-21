@@ -13,12 +13,17 @@ export function GlobalBar({ compact = false, userEmail }: { compact?: boolean; u
 
   useEffect(() => {
     const l = getLocale();
-    setLoc(l);
-    setCur(getCurrency(l));
+    // setState'i 0 ms sonraya bırakır: mount sırasında senkron render zincirini engeller,
+    // görsel olarak tek kare fark oluşmaz.
+    const h = setTimeout(() => {
+      setLoc(l);
+      setCur(getCurrency(l));
+    }, 0);
     setLocale(l);
     // Tek tema: kâğıt defter kilitlidir.
     setTheme("notebook");
     document.documentElement.dataset.theme = "notebook";
+    return () => clearTimeout(h);
   }, []);
 
   return (

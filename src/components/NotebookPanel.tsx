@@ -47,20 +47,22 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
   const [arama, setArama] = useState("");
 
   // Ay değişince yeni satır tarihini o aya çek (geçmişe yazım)
-  useEffect(() => {
-    setDraft((d) => {
-      if (d.tarih.startsWith(prefix)) return d;
-      return { ...d, tarih: `${prefix}-01` };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefix]);
+  // React'in önerdiği "render fazında durumu düzelt" deseni: efekt yerine
+  // render sırasında önceki ay ile karşılaştırır, tek adımda güncellenir.
+  const [oncekiPrefix, setOncekiPrefix] = useState(prefix);
+  if (oncekiPrefix !== prefix) {
+    setOncekiPrefix(prefix);
+    setDraft((d) => (d.tarih.startsWith(prefix) ? d : { ...d, tarih: `${prefix}-01` }));
+  }
 
   // Takvimden "Bu güne yaz" gelirse yeni satırı o tarihe kur
-  useEffect(() => {
-    if (focusDate) {
-      setDraft((d) => ({ ...d, tarih: focusDate }));
-    }
-  }, [focusDate]);
+  // Takvimden "Bu güne yaz" gelirse yeni satırı o tarihe kur
+  // (efekt yerine render fazında türetme: tek render, ziplayan ek olmaz)
+  const [oncekiFocusDate, setOncekiFocusDate] = useState(focusDate);
+  if (oncekiFocusDate !== focusDate) {
+    setOncekiFocusDate(focusDate);
+    if (focusDate) setDraft((d) => ({ ...d, tarih: focusDate }));
+  }
 
   // Defter içi arama (açıklama / kategori / ödeme tipi)
   const süzülmüş = useMemo(() => {

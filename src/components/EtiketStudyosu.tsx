@@ -126,29 +126,30 @@ export function EtiketStudyosu() {
   }, []);
 
   // Ziyaret verisi gelince düzenlenebilir alanı kur
-  useEffect(() => {
-    if (!bilgi) {
-      setAlan(null);
-      return;
-    }
-    const dk = bilgi.ziyaret.durum;
+  // (React'in "render fazında durumu türetme" deseni: bilgi değişince tek render'da kurulur,
+  // sayaç olarak önceki bilgi ile karşılaştırılır; efekt + ek render zinciri gerektirmez.)
+  const [oncekiBilgi, setOncekiBilgi] = useState<typeof bilgi>(null);
+  if (oncekiBilgi !== bilgi) {
+    setOncekiBilgi(bilgi);
     setQrOzel("");
-    setAlan({
-      // Etikette isim yıldızlı (TAN** G*****), numara tam görünür.
-      adSoyad: `${maskAd(bilgi.musteri.ad)} ${maskSoyad(bilgi.musteri.soyad)}`.trim().toUpperCase() || "—",
-      telefon: bilgi.musteri.telefon,
-      siparisNo: `#${bilgi.siraNo}`,
-      kod: ziyaretKodu(bilgi.musteri.id, bilgi.siraNo),
-      sira: String(bilgi.siraNo).padStart(4, "0"),
-      tarih: bilgi.ziyaret.tarih.split("-").reverse().join("."),
-      durum: dk === "teslim" ? t("mus_delivered") : dk === "hazir" ? t("mus_ready") : t("mus_processing"),
-      durumRenk: "#4a9b6f",
-      // Kaydedilmiş başlık varsa o gelir (tekrar yazmaya gerek yok), yoksa Ayarlar'daki işletme adı.
-      dukkan: varsayilan?.dukkan || bilgi.dukkan,
-      dukkanAlt: varsayilan?.dukkanAlt || t("etiket_service"),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bilgi]);
+    if (bilgi) {
+      const dk = bilgi.ziyaret.durum;
+      setAlan({
+        // Etikette isim yıldızlı (TAN** G*****), numara tam görünür.
+        adSoyad: `${maskAd(bilgi.musteri.ad)} ${maskSoyad(bilgi.musteri.soyad)}`.trim().toUpperCase() || "—",
+        telefon: bilgi.musteri.telefon,
+        siparisNo: `#${bilgi.siraNo}`,
+        kod: ziyaretKodu(bilgi.musteri.id, bilgi.siraNo),
+        sira: String(bilgi.siraNo).padStart(4, "0"),
+        tarih: bilgi.ziyaret.tarih.split("-").reverse().join("."),
+        durum: dk === "teslim" ? t("mus_delivered") : dk === "hazir" ? t("mus_ready") : t("mus_processing"),
+        durumRenk: "#4a9b6f",
+        // Kaydedilmiş başlık varsa o gelir (tekrar yazmaya gerek yok), yoksa Ayarlar'daki işletme adı.
+        dukkan: varsayilan?.dukkan || bilgi.dukkan,
+        dukkanAlt: varsayilan?.dukkanAlt || t("etiket_service"),
+      });
+    }
+  }
 
   /** QR: özel yazıldıysa o, yoksa güncel alanlardan otomatik. */
   function qrEfektif(): string {
@@ -233,9 +234,10 @@ export function EtiketStudyosu() {
     );
   }
 
+  // alan başlangıçta zaten null ve onizleme yalnızca alan varken gösterilir;
+  // boş efekt kolunda senkron reset gereksizdir.
   useEffect(() => {
     if (!alan) {
-      setOnizleme("");
       return;
     }
     let canli = true;

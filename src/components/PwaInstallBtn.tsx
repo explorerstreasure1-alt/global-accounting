@@ -14,7 +14,9 @@ export function usePwaKur() {
   useEffect(() => {
     const mq = window.matchMedia("(display-mode: standalone)");
     const iosKurulu = (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (mq.matches || iosKurulu) setKurulu(true);
+    const h = setTimeout(() => {
+      if (mq.matches || iosKurulu) setKurulu(true);
+    }, 0);
     const degisim = (e: MediaQueryListEvent) => {
       if (e.matches) setKurulu(true);
     };
@@ -25,6 +27,7 @@ export function usePwaKur() {
     };
     window.addEventListener("beforeinstallprompt", yakala);
     return () => {
+      clearTimeout(h);
       mq.removeEventListener("change", degisim);
       window.removeEventListener("beforeinstallprompt", yakala);
     };
@@ -102,15 +105,15 @@ export function KurulumModal() {
   const [sonuc, setSonuc] = useState<string | null>(null);
 
   useEffect(() => {
-    setIos(iosMu());
-    setPc(pcMi());
+    const h = setTimeout(() => setIos(iosMu()), 0);
+    const h2 = setTimeout(() => setPc(pcMi()), 0);
     const disaridanAc = () => setAcik(true);
     window.addEventListener("tailor-kurulum-ac", disaridanAc);
     let iptal = false;
-    let h: ReturnType<typeof setTimeout> | undefined;
+    let hAuto: ReturnType<typeof setTimeout> | undefined;
     try {
       if (!window.localStorage.getItem("tailor-kurulum-kapali")) {
-        h = setTimeout(() => {
+        hAuto = setTimeout(() => {
           if (!iptal) setAcik(true);
         }, 1500);
       }
@@ -119,7 +122,9 @@ export function KurulumModal() {
     }
     return () => {
       iptal = true;
-      if (h) clearTimeout(h);
+      clearTimeout(h);
+      clearTimeout(h2);
+      if (hAuto) clearTimeout(hAuto);
       window.removeEventListener("tailor-kurulum-ac", disaridanAc);
     };
   }, []);
