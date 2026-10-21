@@ -1,29 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LOCALES, CURRENCIES, getLocale, setLocale, setTheme, getCurrency, setCurrency, useT, type LocaleCode } from "@/lib/i18n";
+import { LOCALES, CURRENCIES, setLocale, setTheme, setCurrency, useT, type LocaleCode } from "@/lib/i18n";
 import { I } from "./ui-icon";
 
 /** Dil + para birimi seçici. Tema tekdir: fildişi defter (değiştirilemez). */
 export function GlobalBar({ compact = false, userEmail }: { compact?: boolean; userEmail?: string }) {
-  const [locale, setLoc] = useState<LocaleCode>("en");
-  const [currency, setCur] = useState<string>("USD");
   const [menu, setMenu] = useState(false);
-  const { t } = useT();
+  // Dil/para değerleri useT'den gelir: ülke tespiti (GeoLocale) bazı başka yerden
+  // dile geçse seçiciler canlı güncellenir, artık yalnız onun state'i çoğul.
+  const { t, locale, currency } = useT();
 
   useEffect(() => {
-    const l = getLocale();
-    // setState'i 0 ms sonraya bırakır: mount sırasında senkron render zincirini engeller,
-    // görsel olarak tek kare fark oluşmaz.
-    const h = setTimeout(() => {
-      setLoc(l);
-      setCur(getCurrency(l));
-    }, 0);
-    setLocale(l);
     // Tek tema: kâğıt defter kilitlidir.
     setTheme("notebook");
     document.documentElement.dataset.theme = "notebook";
-    return () => clearTimeout(h);
   }, []);
 
   return (
@@ -36,8 +27,8 @@ export function GlobalBar({ compact = false, userEmail }: { compact?: boolean; u
           value={locale}
           onChange={(e) => {
             const v = e.target.value as LocaleCode;
-            setLoc(v);
-            setLocale(v);
+            // Kullanıcı elle seçti: kilidi devreye al, ülke tespiti artık ezmez.
+            setLocale(v, { lock: true });
           }}
           className={compact
             ? "rounded-full bg-white/80 px-2 py-1 text-xs font-semibold text-teal-800 outline-none ring-1 ring-slate-300 hover:ring-teal-500 [&>option]:text-slate-900"
@@ -57,8 +48,9 @@ export function GlobalBar({ compact = false, userEmail }: { compact?: boolean; u
         <select
           value={currency}
           onChange={(e) => {
-            setCur(e.target.value);
             setCurrency(e.target.value);
+            // Kullanıcı para birimini elle seçti: dil/ülke artık ezmeyecek.
+            try { window.localStorage.setItem("tailor-currency-lock", "1"); } catch { /* yoksay */ }
           }}
           className="rounded-full bg-white/10 px-2 py-1 text-xs outline-none [&>option]:text-slate-900"
           title="Currency / Para birimi"

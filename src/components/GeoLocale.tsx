@@ -9,15 +9,14 @@ import { getLocale, setLocale, type LocaleCode } from "@/lib/i18n";
  */
 export function GeoLocale() {
   useEffect(() => {
+    let iptal = false;
     try {
-      const mevcut = window.localStorage.getItem("tailor-locale");
-      // Kullanıcı elle seçmişse (en değilse) ezme. "en" varsayılan ise ülke
-      // tespitiyle değiştirilebilir — böylece ilk ziyarette doğru dile geçer.
-      if (mevcut && mevcut !== "en") return;
+      // Kullanıcı dile elle dokunduysa (kilit) ülke tespiti karışmaz.
+      if (window.localStorage.getItem("tailor-locale-lock") === "1") return;
     } catch {
       return;
     }
-    let iptal = false;
+    // Kilitsizduyru: her ziyarette ülkeye göre dil yenilenir.
     fetch("/api/geo", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j: { locale?: string } | null) => {

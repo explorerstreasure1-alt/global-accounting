@@ -641,9 +641,15 @@ export function getLocale(): LocaleCode {
   return "en";
 }
 
-export function setLocale(code: LocaleCode) {
+export function setLocale(code: LocaleCode, opt?: { lock?: boolean }) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("tailor-locale", code);
+  // Kullanıcı dil barından elle seçim yaptıysa kilit: bundan sonra ülke tespiti
+  // (GeoLocale) dile dokunmaz. Kilitsiz çağrılar (açılış geri yükleme, geo) her
+  // ziyarette ülkeye göre yenilenebilir.
+  try {
+    if (opt?.lock) window.localStorage.setItem("tailor-locale-lock", "1");
+  } catch { /* ignore */ }
   const meta = LOCALES.find((l) => l.code === code);
   document.documentElement.lang = code;
   document.documentElement.dir = meta?.dir || "ltr";
@@ -654,9 +660,9 @@ export function setLocale(code: LocaleCode) {
     (el as HTMLElement).setAttribute("lang", code);
     (el as HTMLElement).setAttribute("dir", dir);
   });
-  // Kullanıcı elle para birimi seçmediyse dilin varsayılanına geç
+  // Kullanıcı para birimini elle seçmediyse (kilit yoksa) dile/ülkeye göre geç
   try {
-    if (!window.localStorage.getItem("tailor-currency")) {
+    if (!window.localStorage.getItem("tailor-currency-lock")) {
       const cur = LOCALE_META[code]?.currency ?? "USD";
       window.localStorage.setItem("tailor-currency", cur);
       window.dispatchEvent(new CustomEvent("tailor-currency-change", { detail: cur }));
