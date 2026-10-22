@@ -230,8 +230,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         meslekDiger: meslek === "diger" ? (digerHizmet || "").trim().slice(0, 300) : "",
       });
     } catch {
-      // saveAyarlar zaten toast ile hata gösterdi; anket açık kalsın, kullanıcı tekrar denesin.
-      return;
+      // saveAyarlar zaten toast ile hata gösterdi; anketi kapat, kullanıcı tekrar denesin.
     }
     setAnketOpen(false);
   }
