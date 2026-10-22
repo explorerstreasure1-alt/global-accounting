@@ -18,7 +18,17 @@ type Veri = {  ok: boolean;
   googleBuAy: number;
   parolaBuAy: number;
   kullananBuAy: number;
+  bugunZiyaret: number;
+  bugunGiris: number;
   gunluk: { gun: string; ziyaret: number; giris: number; google: number; parola: number; kullanan: number }[];
+  gunDetay: {
+    gun: string;
+    ziyaret: number;
+    giris: number;
+    google: number;
+    parola: number;
+    kisiler: { email: string; adet: number; ulke: string; kaynak: string; son: string }[];
+  }[];
   kullanicilar: { email: string; adet: number; sonGiris: string; ulke: string; kaynak: string }[];
   ulkeler: { ulke: string; adet: number }[];
   sonUlke: { ulke: string; zaman: string };
@@ -152,6 +162,11 @@ export default function AdminPanel() {
     satirlar.push("gün;ziyaret;giris;google;parola;kullanan");
     for (const g of veri.gunluk) satirlar.push(`${g.gun};${g.ziyaret};${g.giris};${g.google};${g.parola};${g.kullanan}`);
     satirlar.push("");
+    satirlar.push("gün;kim;giriş_adedi;ülke");
+    for (const g of veri.gunDetay) {
+      for (const k of g.kisiler) satirlar.push(`${g.gun};${k.email};${k.adet};${k.ulke}`);
+    }
+    satirlar.push("");
     satirlar.push("bu_ay;kisi;giris_adet;son_giris;ulke");
     for (const k of veri.kullanicilar) satirlar.push(`${veri.buAy};${k.email};${k.adet};${k.sonGiris};${k.ulke}`);
     const blob = new Blob(["\ufeff" + satirlar.join("\n")], { type: "text/csv;charset=utf-8" });
@@ -230,16 +245,68 @@ export default function AdminPanel() {
         ) : veri ? (
           <>
             {/* Üst KPI */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              <Kpi etiket="Ziyaret (bu ay)" deger={veri.ziyaretBuAy} alt="Sayfa açılışı" />
-              <Kpi etiket="Giriş (bu ay)" deger={veri.girisBuAy} alt="Oturum açma" />
-              <Kpi etiket="Google girişi" deger={veri.googleBuAy} alt="G ile giriş" />
-              <Kpi etiket="Şifreli giriş" deger={veri.parolaBuAy} alt="E-posta + şifre" />
-              <Kpi etiket="Kullanan kişi" deger={veri.kullananBuAy} alt="Farklı e-posta" />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Kpi etiket="Bugün ziyaret" deger={veri.bugunZiyaret} alt="Sayfa açılışı" />
+              <Kpi etiket="Bugün giriş" deger={veri.bugunGiris} alt="Oturum açma" />
+              <Kpi etiket="Kullanan kişi (bu ay)" deger={veri.kullananBuAy} alt="Farklı e-posta" />
+              <Kpi etiket="En son giriş ülkesi" deger={veri.sonUlke.ulke || "??"} alt={veri.sonUlke.zaman ? saatZaman(veri.sonUlke.zaman) : ""} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Kpi etiket="Aylık ziyaret" deger={veri.ziyaretBuAy} alt={`${veri.buAy} toplam`} />
+              <Kpi etiket="Aylık giriş" deger={veri.girisBuAy} alt="Oturum açma toplamı" />
+              <Kpi etiket="Google girişi (ay)" deger={veri.googleBuAy} alt="G ile giriş" />
+              <Kpi etiket="Şifreli giriş (ay)" deger={veri.parolaBuAy} alt="E-posta + şifre" />
             </div>
 
             {/* Grafik */}
             <GunGrafigi gunluk={veri.gunluk} />
+
+            {/* Her gün kim girmiş */}
+            <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+              <p className="border-b border-slate-100 px-4 py-3 text-sm font-bold text-slate-900">
+                Her gün kim girmiş (gün bazında ziyaret + girenler, son 30 gün)
+              </p>
+              <div className="max-h-[26rem] overflow-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 z-10 bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2">Gün</th>
+                      <th className="px-4 py-2">Ziyaret</th>
+                      <th className="px-4 py-2">Giriş</th>
+                      <th className="px-4 py-2">Girenler (e-posta × adet)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...veri.gunDetay].reverse().map((g) => (
+                      <tr key={g.gun} className="border-t border-slate-100 align-top">
+                        <td className="whitespace-nowrap px-4 py-2">{gunYaz(g.gun)}</td>
+                        <td className="px-4 py-2 tabular-nums font-bold">{g.ziyaret}</td>
+                        <td className="px-4 py-2 tabular-nums">{g.giris}</td>
+                        <td className="px-4 py-2">
+                          {g.kisiler.length === 0 ? (
+                            <span className="text-xs text-slate-300">—</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {g.kisiler.map((k) => (
+                                <span
+                                  key={`${g.gun}:${k.email}`}
+                                  title={`${saatZaman(k.son)} · ${k.ulke || "??"} · ${k.kaynak === "google" ? "Google" : k.kaynak === "parola" ? "Şifre" : ""}`}
+                                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700"
+                                >
+                                  {k.email}
+                                  <b className="text-slate-900">×{k.adet}</b>
+                                  {k.ulke ? <span className="text-[10px] text-teal-700">{k.ulke}</span> : null}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/* Son ülke */}
             <div className="gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:grid sm:grid-cols-2">

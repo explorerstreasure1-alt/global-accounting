@@ -210,3 +210,74 @@ export function distinctEpostalar(olaylar: TakipOlayi[]): { email: string; sonZa
   }
   return [...harita.values()].sort((a, b) => (a.sonZaman < b.sonZaman ? 1 : -1));
 }
+
+export type GunKisi = {
+  email: string;
+  adet: number; // o gün kaç kez giriş
+  ulke: string;
+  kaynak: string;
+  son: string;
+};
+
+export type GunDetaySatiri = {
+  gun: string;
+  ziyaret: number; // o günaçılan sayfa sayısı
+  giris: number; // o gün toplam oturum
+  google: number;
+  parola: number;
+  kisiler: GunKisi[]; // o gün girenler (e-posta bazında)
+};
+
+/** "Her gün kim girmiş": gün bazında ziyaret + giriş + kullanıcı kırılımı */
+export function gunDetay(olaylar: TakipOlayi[], gunSayisi: number): GunDetaySatiri[] {
+  const sonlar = guneBol(olaylar, gunSayisi); // ziyaret/giriş sayaçları hazır
+
+  const harita = new Map<string, Map<string, GunKisi>>();
+  for (const o of olaylar) {
+    if (o.olay !== "giris" || !o.email) continue;
+    const g = gunEtiketi(o.olusturma);
+    let gunluk = harita.get(g);
+    if (!gunluk) {
+      gunluk = new Map();
+      harita.set(g, gunluk);
+    }
+    const a = o.email.toLowerCase();
+    const mevcut = gunluk.get(a);
+    if (mevcut) {
+      mevcut.adet++;
+      if (o.olusturma > mevcut.son) {
+        mevcut.son = o.olusturma;
+        if (o.ulke) mevcut.ulke = o.ulke;
+      }
+    } else {
+      gunluk.set(a, {
+        email: a,
+        adet: 1,
+        ulke: o.ulke || "",
+        kaynak: o.kaynak === "google" ? "google" : o.kaynak === "parola" ? "parola" : "",
+        son: o.olusturma,
+      });
+    }
+  }
+  return sonlar.map((s) => ({
+    gun: s.gun,
+    ziyaret: s.ziyaret,
+    giris: s.giris,
+    google: s.google,
+    parola: s.parola,
+    kisiler: [...(harita.get(s.gun)?.values() ?? [])].sort((x, y) => (x.son < y.son ? 1 : -1)),
+  }));
+}
+
+/** Bugünün satırı: günü değil push'bir Tarih karşılaştırmayla bugüne süz */
+export function bugunku(olaylar: TakipOlayi[]): { ziyaret: number; giris: number } {
+  const bugun = gunEtiketi(new Date().toISOString());
+  let ziyaret = 0;
+  let giris = 0;
+  for (const o of olaylar) {
+    if (gunEtiketi(o.olusturma) !== bugun) continue;
+    if (o.olay === "ziyaret") ziyaret++;
+    else giris++;
+  }
+  return { ziyaret, giris };
+}

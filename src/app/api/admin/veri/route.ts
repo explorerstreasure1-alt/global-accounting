@@ -11,6 +11,8 @@ import {
   sonUlke,
   distinctEpostalar,
   gunEtiketi,
+  gunDetay,
+  bugunku,
 } from "@/lib/site-takip";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +51,8 @@ export async function GET() {
       ? "SUPABASE_SERVICE_ROLE_KEY eksik — kayıtlar sunucunun geçici hafızasına gidiyor; bulut kalıcılığı için Vercel env'ine anahtarı ekle."
       : "";
 
+  const bugun = bugunku(olaylar);
+
   return NextResponse.json(
     {
       ok: true,
@@ -58,7 +62,10 @@ export async function GET() {
       googleBuAy,
       parolaBuAy: girisBuAy - googleBuAy,
       kullananBuAy: kullanan.size,
+      bugunZiyaret: bugun.ziyaret,
+      bugunGiris: bugun.giris,
       gunluk: guneBol(olaylar, 30),
+      gunDetay: gunDetay(olaylar, 30),
       kullanicilar: buAyKullanicilari(olaylar),
       ulkeler: ulkeDagilimi(olaylar),
       sonUlke: sonUlke(olaylar),
