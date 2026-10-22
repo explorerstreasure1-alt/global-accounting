@@ -130,7 +130,8 @@ export async function takipTanisi(): Promise<string> {
   if (!takipServisiAcik()) return "";
   try {
     const supa = await supaVe();
-    const { error } = await supa.from("site_takip").select("id", { count: "exact", head: true });
+    // head/count yerine gerçek satır okuması: eksik tabloyu güvenilir şekilde yakalar.
+    const { error } = await supa.from("site_takip").select("id").limit(1);
     if (error) return `Supabase okuma hatası: ${error.message}`;
     return "";
   } catch (e) {

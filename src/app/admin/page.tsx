@@ -167,7 +167,11 @@ export default function AdminPanel() {
         setTestMesaj(`Test kaydı yazıldı (${j.mod === "supabase" ? "Supabase" : "dosya"}). Veriler yenilendi.`);
         await yukle();
       } else {
-        setTestMesaj(`Test kaydı BAŞARISIZ: ${j.hata || "bilinmeyen hata"}`);
+        const ham = j.hata || "bilinmeyen hata";
+        const ipucu = /Could not find the table|schema cache/i.test(ham)
+          ? " → SQL'i Vercel'deki Supabase projesinde çalıştırıp ardından `notify pgrst, 'reload schema';` komutunu da çalıştır."
+          : "";
+        setTestMesaj(`Test kaydı BAŞARISIZ: ${ham}${ipucu}`);
       }
     } catch {
       setTestMesaj("Test kaydı BAŞARISIZ: bağlantı sorunu.");
