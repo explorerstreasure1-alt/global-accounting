@@ -5,6 +5,7 @@ import { saasConfigured } from "@/lib/tenant";
 import {
   takipHam,
   takipServisiAcik,
+  takipTanisi,
   guneBol,
   buAyKullanicilari,
   ulkeDagilimi,
@@ -45,7 +46,8 @@ export async function GET() {
 
   const uyari = takipServisiAcik()
     ? olaylar.length === 0
-      ? "Supabase açık ama henüz kayıt yok. Tablo yoksa otomatik oluşturulur; Vercel'de DATABASE_URL tanımlı değilse schema.sql içindeki site_takip SQL'ini Supabase SQL Editor'de bir kez çalıştır."
+      ? (await takipTanisi()) ||
+        "Henüz kayıt yok. Tablo hazır; yeni bir sekmede siteyi bir kez gezince sayaçlar dolmaya başlar."
       : ""
     : saasConfigured()
       ? "SUPABASE_SERVICE_ROLE_KEY eksik — kayıtlar sunucunun geçici hafızasına gidiyor; bulut kalıcılığı için Vercel env'ine anahtarı ekle."

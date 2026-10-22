@@ -95,6 +95,19 @@ export async function takipKaydet(olay: Omit<TakipOlayi, "olusturma">): Promise<
   await fs.appendFile(dosya, JSON.stringify(satir) + "\n", "utf8");
 }
 
+/** Yönetici paneli için teşhis: Supabase'ten okuma gerçekten çalışıyor mu? */
+export async function takipTanisi(): Promise<string> {
+  if (!takipServisiAcik()) return "";
+  try {
+    const supa = await supaVe();
+    const { error } = await supa.from("site_takip").select("id", { count: "exact", head: true });
+    if (error) return `Supabase okuma hatası: ${error.message}`;
+    return "";
+  } catch (e) {
+    return `Supabase bağlantı hatası: ${e instanceof Error ? e.message : String(e)}`;
+  }
+}
+
 /** Ham olaylar (son N gün). Yerel modda tam dosya okunup süzülür. */
 export async function takipHam(gun: number): Promise<TakipOlayi[]> {
   await takipTablosunuKur();
