@@ -6,6 +6,7 @@ import "./globals.css";
 import { LocaleSync } from "@/components/LocaleSync";
 import { GeoLocale } from "@/components/GeoLocale";
 import { SiteTakip } from "@/components/SiteTakip";
+import { CascadeScript } from "@/components/CascadeScript";
 
 const caveat = Caveat({
   subsets: ["latin", "latin-ext"],
@@ -89,13 +90,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable} ${notoSans.variable} ${notoArabic.variable} ${notoHebrew.variable}`} suppressHydrationWarning>
-      <head>
+      <head suppressHydrationWarning>
         <Script id="locale-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: localeInitScript }} />
       </head>
       <body className="font-ui antialiased notranslate">
         <LocaleSync />
         <GeoLocale />
         <SiteTakip />
+        <CascadeScript />
         {children}
       </body>
     </html>
