@@ -21,11 +21,41 @@ export type TakipOlayi = {
   yol: string;
 };
 
+/** JWT / yeni Supabase anahtarından rolü çöz (imza doğrulamadan). */
+function anahtarRolu(anahtar: string): string {
+  if (anahtar.startsWith("sb_secret_")) return "service_role";
+  if (anahtar.startsWith("sb_publishable_")) return "anon";
+  const parcalar = anahtar.split(".");
+  if (parcalar.length === 3) {
+    try {
+      const govde = Buffer.from(parcalar[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+      const j = JSON.parse(govde) as { role?: string };
+      return String(j.role || "");
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+/** Servis anahtarı tanımlı ama yanlış türde mi? (ör. anon anahtarı yazılmış) */
+export function servisAnahtariSorunu(): string {
+  const anahtar = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!anahtar) return "SUPABASE_SERVICE_ROLE_KEY tanımlı değil — Vercel env'ine Supabase service_role (secret) anahtarını ekle.";
+  const rol = anahtarRolu(anahtar);
+  if (rol && rol !== "service_role") {
+    return `SUPABASE_SERVICE_ROLE_KEY yanlış: bu bir "${rol}" anahtarı. Supabase → Settings → API (Keys) → service_role / secret anahtarını kullan.`;
+  }
+  return "";
+}
+
 /** Sadece sunucu: service-role anahtarı var mı? */
 export function takipServisiAcik(): boolean {
+  const anahtar = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY &&
+      anahtar &&
+      anahtarRolu(anahtar) === "service_role" &&
       saasConfigured(),
   );
 }
@@ -147,6 +177,17 @@ export async function takipHam(gun: number): Promise<TakipOlayi[]> {
     return liste;
   } catch {
     return [];
+  }
+}
+
+/** Yönetici panelindeki "Test kaydı" düğmesi: gerçek hatayı yüzeye çıkarır. */
+export async function takipTest(): Promise<{ ok: boolean; mod: "supabase" | "dosya"; hata?: string }> {
+  const mod = takipServisiAcik() ? "supabase" : "dosya";
+  try {
+    await takipKaydet({ olay: "ziyaret", kaynak: "", email: null, ulke: "", yol: "/admin-test" });
+    return { ok: true, mod };
+  } catch (e) {
+    return { ok: false, mod, hata: e instanceof Error ? e.message : String(e) };
   }
 }
 

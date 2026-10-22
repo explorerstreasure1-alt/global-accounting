@@ -6,6 +6,7 @@ import {
   takipHam,
   takipServisiAcik,
   takipTanisi,
+  servisAnahtariSorunu,
   guneBol,
   buAyKullanicilari,
   ulkeDagilimi,
@@ -50,7 +51,8 @@ export async function GET() {
         "Henüz kayıt yok. Tablo hazır; yeni bir sekmede siteyi bir kez gezince sayaçlar dolmaya başlar."
       : ""
     : saasConfigured()
-      ? "SUPABASE_SERVICE_ROLE_KEY eksik — kayıtlar sunucunun geçici hafızasına gidiyor; bulut kalıcılığı için Vercel env'ine anahtarı ekle."
+      ? servisAnahtariSorunu() ||
+        "SUPABASE_SERVICE_ROLE_KEY eksik — kayıtlar sunucunun geçici hafızasına gidiyor; bulut kalıcılığı için Vercel env'ine anahtarı ekle."
       : "";
 
   const bugun = bugunku(olaylar);

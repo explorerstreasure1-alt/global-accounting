@@ -104,6 +104,7 @@ export default function AdminPanel() {
   const [hata, setHata] = useState<string | null>(null);
   const [veri, setVeri] = useState<Veri | null>(null);
   const [bekliyor, setBekliyor] = useState(true);
+  const [testMesaj, setTestMesaj] = useState<string | null>(null);
 
   const yukle = useCallback(async () => {
     setBekliyor(true);
@@ -153,6 +154,23 @@ export default function AdminPanel() {
       setHata("Bağlantı sorunu.");
     } finally {
       setGiriliyor(false);
+    }
+  }
+
+  /** Takip kaydı gerçekten yazılabiliyor mu? Hatayı aynen gösterir. */
+  async function testEt() {
+    setTestMesaj("Deneniyor…");
+    try {
+      const r = await fetch("/api/admin/test-takip", { method: "POST" });
+      const j = (await r.json()) as { ok?: boolean; mod?: string; hata?: string };
+      if (j.ok) {
+        setTestMesaj(`Test kaydı yazıldı (${j.mod === "supabase" ? "Supabase" : "dosya"}). Veriler yenilendi.`);
+        await yukle();
+      } else {
+        setTestMesaj(`Test kaydı BAŞARISIZ: ${j.hata || "bilinmeyen hata"}`);
+      }
+    } catch {
+      setTestMesaj("Test kaydı BAŞARISIZ: bağlantı sorunu.");
     }
   }
 
@@ -226,6 +244,12 @@ export default function AdminPanel() {
             Yenile
           </button>
           <button
+            onClick={() => void testEt()}
+            className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-teal-800 ring-1 ring-teal-300 hover:bg-teal-50"
+          >
+            Test kaydı
+          </button>
+          <button
             onClick={() => {
               fetch("/api/admin/giris", { method: "DELETE" }).catch(() => {});
               setOturum(false);
@@ -235,6 +259,10 @@ export default function AdminPanel() {
             Çıkış
           </button>
         </header>
+
+        {testMesaj ? (
+          <p className="rounded-2xl bg-teal-50 px-4 py-2 text-xs text-teal-900 ring-1 ring-teal-200">{testMesaj}</p>
+        ) : null}
 
         {veri?.uyari ? (
           <p className="rounded-2xl bg-amber-50 px-4 py-2 text-xs text-amber-900 ring-1 ring-amber-200">{veri.uyari}</p>
