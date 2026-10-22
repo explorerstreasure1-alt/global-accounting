@@ -72,6 +72,8 @@ export type Ayarlar = {
   googleYorumLink: string;
   /** Meslek / iş kolu (kayıt anketinden). */
   meslek: string;
+  /** Meslek "diger" seçildiyse kullanıcının yazdığı hizmetler (virgülle ayrılmış). */
+  meslekDiger: string;
   /** Hizmet seçimi açık mı? false ise tümü "Hizmet" işaretlenir, kullanıcı kendisi yazar. */
   hizmetSecimiAcik: boolean;
 };

@@ -221,11 +221,17 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
     }
   }
 
-  async function kaydetMeslek(meslek: string, hizmetSecimiAcik: boolean) {
+  async function kaydetMeslek(meslek: string, hizmetSecimiAcik: boolean, digerHizmet?: string) {
     try {
-      await saveAyarlar({ meslek, hizmetSecimiAcik });
+      await saveAyarlar({
+        meslek,
+        hizmetSecimiAcik,
+        // Meslek "Diger" ise kullanıcının yazdığı hizmetler de kayda girer.
+        meslekDiger: meslek === "diger" ? (digerHizmet || "").trim().slice(0, 300) : "",
+      });
     } catch {
-      /* yoksay — anket yine kapanır */
+      // Kayıt düşmedi: anket açık kalsın, hata diliyle (i18n toast) görülür.
+      return;
     }
     setAnketOpen(false);
   }

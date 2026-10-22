@@ -739,6 +739,7 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
             waSablonHazir: String(data.get("waSablonHazir") || "").slice(0, 500),
             googleYorumLink: String(data.get("googleYorumLink") || "").trim().slice(0, 300),
             meslek: String(data.get("meslek") || "").trim().slice(0, 60),
+            meslekDiger: String(data.get("meslekDiger") || "").trim().slice(0, 300),
             hizmetSecimiAcik: data.get("hizmetSecimiAcik") === "on",
           });
           onClose();
@@ -807,6 +808,15 @@ export function SettingsModal({ open, ayarlar, onClose, onSave, onYedekIndir, on
               <option value="freelancer">{t("meslek_freelancer")}</option>
               <option value="diger">{t("meslek_diger")}</option>
             </select>
+          </label>
+          <label className="text-sm">
+            {t("anket_diger_hizmet")}
+            <input
+              name="meslekDiger"
+              defaultValue={ayarlar.meslekDiger || ""}
+              placeholder={t("meslek_diger")}
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+            />
           </label>
           <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
             <span>

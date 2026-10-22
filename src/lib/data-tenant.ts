@@ -49,6 +49,7 @@ function mapAyarlar(row: Row): Ayarlar {
     waSablonHazir: String(row.wa_sablon_hazir ?? ""),
     googleYorumLink: String(row.google_yorum_link ?? ""),
     meslek: String(row.meslek ?? ""),
+    meslekDiger: String(row.meslek_diger ?? ""),
     hizmetSecimiAcik: row.hizmet_secimi_acik === false || row.hizmet_secimi_acik === "false" ? false : true,
   };
 }
@@ -272,6 +273,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
       wa_sablon_hazir: patch.waSablonHazir !== undefined ? patch.waSablonHazir.slice(0, 500) : current.waSablonHazir,
       google_yorum_link: patch.googleYorumLink !== undefined ? patch.googleYorumLink.trim().slice(0, 300) : current.googleYorumLink,
        meslek: patch.meslek !== undefined ? patch.meslek.trim().slice(0, 60) : current.meslek,
+       meslek_diger: patch.meslekDiger !== undefined ? patch.meslekDiger.trim().slice(0, 300) : current.meslekDiger,
        hizmet_secimi_acik: patch.hizmetSecimiAcik !== undefined ? patch.hizmetSecimiAcik : current.hizmetSecimiAcik,
     };
     const { error } = await dayanikliAyarlarUpdate(next);

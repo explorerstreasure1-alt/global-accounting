@@ -257,6 +257,7 @@ function seedAyarlar(today: string): Ayarlar {
     waSablonHazir: "",
     googleYorumLink: "",
     meslek: "",
+    meslekDiger: "",
     hizmetSecimiAcik: true,
   };
 }
@@ -325,6 +326,7 @@ export async function fileGetAll(): Promise<{ kayitlar: Kayit[]; ayarlar: Ayarla
     if (!ayarlar.ollamaModel) ayarlar.ollamaModel = "gemma3:4b";
     if (!ayarlar.whatsappAlici) ayarlar.whatsappAlici = "";
     if (ayarlar.meslek === undefined) ayarlar.meslek = "";
+    if (ayarlar.meslekDiger === undefined) ayarlar.meslekDiger = "";
     if (ayarlar.hizmetSecimiAcik === undefined) ayarlar.hizmetSecimiAcik = true;
     yaz = true;
   }

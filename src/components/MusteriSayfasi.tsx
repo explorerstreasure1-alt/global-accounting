@@ -101,6 +101,7 @@ export function MusteriSayfasi() {
   const [hizmet, setHizmet] = useState("");
   const [tutar, setTutar] = useState("");
   const [meslek, setMeslek] = useState("");
+  const [meslekDiger, setMeslekDiger] = useState("");
   const [hizmetSecimiAcik, setHizmetSecimiAcik] = useState(true);
   const adRef = useRef<HTMLInputElement | null>(null);
   const hizmetRef = useRef<HTMLInputElement | null>(null);
@@ -157,6 +158,7 @@ export function MusteriSayfasi() {
           gonderen: ay.whatsappIsletme ?? "",
         });
         setMeslek(ay.meslek ?? "");
+        setMeslekDiger(ay.meslekDiger ?? "");
         setHizmetSecimiAcik(ay.hizmetSecimiAcik !== false);
       }
     } catch {
@@ -313,6 +315,9 @@ export function MusteriSayfasi() {
     { id: "borclu", ad: t("cm_borclu") },
   ];
 
+  /** Mesleğe göre hazır hizmet düğmeleri; "Diger"se kullanıcının virgüllü listesi kullanılır. */
+  const hazirHizmetler = meslek === "diger" ? meslekDiger.split(",").map((s) => s.trim()).filter(Boolean) : meslekHizmetleri(meslek);
+
   return (
     <div className="desk-app min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4">
@@ -341,9 +346,9 @@ export function MusteriSayfasi() {
                 <input ref={adRef} value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
                 <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
                 <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
-                {hizmetSecimiAcik && meslekHizmetleri(meslek).length > 0 ? (
+                {hizmetSecimiAcik && hazirHizmetler.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {meslekHizmetleri(meslek).map((h) => (
+                    {hazirHizmetler.map((h) => (
                       <button
                         key={h}
                         type="button"

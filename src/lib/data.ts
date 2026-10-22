@@ -54,6 +54,7 @@ function mapAyarlar(row: typeof ayarlar.$inferSelect): Ayarlar {
     waSablonHazir: typeof raw.waSablonHazir === "string" ? raw.waSablonHazir.slice(0, 500) : "",
     googleYorumLink: typeof raw.googleYorumLink === "string" ? raw.googleYorumLink.trim().slice(0, 300) : "",
     meslek: typeof raw.meslek === "string" ? raw.meslek.trim().slice(0, 60) : "",
+    meslekDiger: typeof raw.meslekDiger === "string" ? raw.meslekDiger.trim().slice(0, 300) : "",
     hizmetSecimiAcik: raw.hizmetSecimiAcik === false ? false : true,
   };
 }
@@ -77,6 +78,7 @@ function normalAyarlar(a: Partial<Ayarlar>): Ayarlar {
     waSablonHazir: typeof a.waSablonHazir === "string" ? a.waSablonHazir.slice(0, 500) : "",
     googleYorumLink: a.googleYorumLink?.trim() ? a.googleYorumLink.trim().slice(0, 300) : "",
     meslek: a.meslek?.trim() ? a.meslek.trim().slice(0, 60) : "",
+    meslekDiger: typeof a.meslekDiger === "string" ? a.meslekDiger.trim().slice(0, 300) : "",
     hizmetSecimiAcik: a.hizmetSecimiAcik === false ? false : true,
   };
 }
@@ -403,6 +405,10 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
       patch.meslek !== undefined
         ? patch.meslek.trim().slice(0, 60)
         : (current.meslek || ""),
+    meslekDiger:
+      patch.meslekDiger !== undefined
+        ? patch.meslekDiger.trim().slice(0, 300)
+        : (current.meslekDiger || ""),
     hizmetSecimiAcik:
       patch.hizmetSecimiAcik !== undefined
         ? patch.hizmetSecimiAcik
@@ -426,9 +432,20 @@ export async function updateAyarlar(patch: Partial<Ayarlar>): Promise<Ayarlar> {
         waSablonHazir: nextAyar.waSablonHazir,
         googleYorumLink: nextAyar.googleYorumLink,
         meslek: nextAyar.meslek,
+        meslekDiger: nextAyar.meslekDiger,
         hizmetSecimiAcik: nextAyar.hizmetSecimiAcik,
       };
-      await db!.update(ayarlar).set(next).where(eq(ayarlar.id, 1));
+      // Kolonlar eski tabloda eksik olabilir: önce otomatik tamamla.
+      await ensureAyarlarWa().catch(() => undefined);
+      try {
+        await db!.update(ayarlar).set(next).where(eq(ayarlar.id, 1));
+      } catch (ilk) {
+        console.warn("[hafiza] ayarlar ilk yazım hata verdi, kolon tamiri sonrası tekrar:", (ilk as Error)?.message);
+        await ensureAyarlarWa().catch(() => undefined);
+        ayarTabloHazir = false; // zorla taze dene
+        await ensureAyarlarWa().catch(() => undefined);
+        await db!.update(ayarlar).set(next).where(eq(ayarlar.id, 1));
+      }
       void fileSaveAyarlar(nextAyar).catch(() => undefined);
       return nextAyar;
     },
@@ -719,7 +736,7 @@ function mapMusteri(row: typeof musteriler.$inferSelect, tumZiyaretler: Ziyaret[
 
 let ayarTabloHazir = false;
 
-/** Mevcut yerel ayarlar tablosuna WA alanlarını idempotent ekle. */
+/** Mevcut ayar tablosuna sonradan gelen alanları idempotent ekle (WA + meslek). */
 async function ensureAyarlarWa(): Promise<void> {
   if (ayarTabloHazir || !hasDatabase || !pool) return;
   await pool.query(`
@@ -727,6 +744,9 @@ async function ensureAyarlarWa(): Promise<void> {
     alter table ayarlar add column if not exists wa_sablon_alindi text not null default '';
     alter table ayarlar add column if not exists wa_sablon_hazir text not null default '';
     alter table ayarlar add column if not exists google_yorum_link text not null default '';
+    alter table ayarlar add column if not exists meslek varchar(60) not null default '';
+    alter table ayarlar add column if not exists hizmet_secimi_acik boolean not null default true;
+    alter table ayarlar add column if not exists meslek_diger varchar(300) not null default '';
   `);
   ayarTabloHazir = true;
 }

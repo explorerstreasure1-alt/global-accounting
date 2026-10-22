@@ -85,6 +85,8 @@ alter table ayarlar
   add column if not exists meslek varchar(60) not null default '';
 alter table ayarlar
   add column if not exists hizmet_secimi_acik boolean not null default true;
+alter table ayarlar
+  add column if not exists meslek_diger varchar(300) not null default '';
 
 create index if not exists kayitlar_business_idx on kayitlar(business_id);
 create index if not exists sohbet_business_idx on "sohbetMesajlari"(business_id);
