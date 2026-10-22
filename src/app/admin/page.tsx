@@ -34,6 +34,7 @@ type Veri = {  ok: boolean;
   sonUlke: { ulke: string; zaman: string };
   epostalar: { email: string; sonZaman: string; adet: number }[];
   uyari?: string;
+  projeRef?: string;
 };
 
 const GUNLER_TR = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
@@ -237,6 +238,11 @@ export default function AdminPanel() {
           <div className="mr-auto">
             <h1 className="text-xl font-extrabold text-slate-900">Yönetici Paneli</h1>
             <p className="text-xs text-slate-500">Bu ay: {veri?.buAy} · oturum 8 saat açık kalır</p>
+            {veri?.projeRef ? (
+              <p className="text-[11px] text-slate-400">
+                Supabase projesi: <b className="font-mono text-slate-600">{veri.projeRef}</b>
+              </p>
+            ) : null}
           </div>
           <button onClick={csvIndir} className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50">
             CSV indir

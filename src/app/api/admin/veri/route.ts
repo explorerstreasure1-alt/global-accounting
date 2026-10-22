@@ -75,6 +75,7 @@ export async function GET() {
       sonUlke: sonUlke(olaylar),
       epostalar: distinctEpostalar(olaylar),
       uyari,
+      projeRef: (process.env.NEXT_PUBLIC_SUPABASE_URL || "").match(/https:\/\/([^.]+)\./)?.[1] ?? "",
     },
     { headers: KORUNAN },
   );
