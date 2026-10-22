@@ -259,3 +259,27 @@ grant all on public.ziyaretler to service_role;
 
 -- sequences (id generation)
 grant usage, select on all sequences in schema public to anon, authenticated, service_role;
+
+-- ============================================================
+-- SITE TAKIP: ziyaret + oturum açma olayları (yönetici paneli /admin)
+-- RLS kapalı değil: SINIRLI — sadece INSERT izni var, KİMSE okuyamaz.
+-- Yönetici paneli SUPABASE_SERVICE_ROLE_KEY ile okur (RLS bypass).
+-- ============================================================
+create table if not exists site_takip (
+  id bigint generated always as identity primary key,
+  olusturma timestamptz not null default now(),
+  olay varchar(20) not null default 'ziyaret',
+  kaynak varchar(20) not null default '',
+  email varchar(200),
+  ulke varchar(10) not null default '',
+  yol varchar(200) not null default ''
+);
+create index if not exists site_takip_olusturma_idx on site_takip(olusturma);
+create index if not exists site_takip_email_idx on site_takip(email);
+
+alter table site_takip enable row level security;
+
+-- Yalnızca kayıt ekleme izni: anon + authenticated yazabilir, kimse okuyamaz
+grant insert on public.site_takip to anon, authenticated;
+grant usage, select on sequence site_takip_id_seq to anon, authenticated, service_role;
+grant all on public.site_takip to service_role;

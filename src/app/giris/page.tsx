@@ -79,6 +79,17 @@ export default function GirisPage() {
       } else {
         const { error } = await supa.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
+        // Şifreli giriş kaydı: yönetici paneline e-posta ile akar (hatasızsa)
+        try {
+          void fetch("/api/admin/track", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ olay: "giris", kaynak: "parola", email: email.trim() }),
+            keepalive: true,
+          });
+        } catch {
+          /* takip hatası girişe engel olmasın */
+        }
       }
       router.replace(nextPath());
       router.refresh();
