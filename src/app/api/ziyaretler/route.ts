@@ -1,0 +1,88 @@
+import { NextResponse } from "next/server";
+import type { ZiyaretDurum } from "@/lib/types";
+import { toISODate } from "@/lib/format";
+import { maskAktif } from "@/lib/gizlilik";
+import { resolveDb } from "@/lib/tenant";
+
+export const dynamic = "force-dynamic";
+
+/** Liste vitrini maskelidir, diskte önbelleklenmez. */
+const NO_STORE = { "Cache-Control": "no-store" } as const;
+
+/** Aktif işler: teslim edilmemiş ziyaretler + müşteri kimliği. */
+export async function GET() {
+  const { db, gate } = await resolveDb();
+  if (gate) return gate;
+  const aktif = (await db.listAktifZiyaretler()).map(maskAktif);
+  return NextResponse.json({ aktif }, { headers: NO_STORE });
+}
+
+/** Yeni ziyaret/sipariş satırı. */
+export async function POST(request: Request) {
+  const { db, gate } = await resolveDb();
+  if (gate) return gate;
+  const body = (await request.json()) as Record<string, unknown>;
+  const musteriId = String(body.musteriId || "");
+  if (!musteriId) return NextResponse.json({ error: "musteri-gerekli" }, { status: 400 });
+  const musteri = await db.getMusteri(musteriId);
+  if (!musteri) return NextResponse.json({ error: "not-found" }, { status: 404 });
+  const tarihRaw = String(body.tarih || "");
+  const ziyaret = await db.addZiyaret({
+    musteriId,
+    hizmet: String(body.hizmet || ""),
+    tutar: Number(body.tutar || 0),
+    tarih: /^\d{4}-\d{2}-\d{2}$/.test(tarihRaw) ? tarihRaw : toISODate(),
+    not: String(body.not || ""),
+  });
+  return NextResponse.json({ ziyaret }, { status: 201 });
+}
+
+/** Durum ilerlet: hazirlaniyor → hazir → teslim. tahsilat verilirse borçtan düşer. Hizmet/tutar/tarih/not verilirse içeriği düzenler. */
+export async function PATCH(request: Request) {
+  const { db, gate } = await resolveDb();
+  if (gate) return gate;
+  const body = (await request.json()) as Record<string, unknown>;
+  const id = String(body.id || "");
+  if (!id) return NextResponse.json({ error: "id-gerekli" }, { status: 400 });
+  if (body.tahsilat !== undefined && body.tahsilat !== null) {
+    const tutar = Number(body.tahsilat);
+    if (!Number.isFinite(tutar) || tutar <= 0) return NextResponse.json({ error: "tutar-hatali" }, { status: 400 });
+    const ziyaret = await db.tahsilatEkle(id, tutar);
+    if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
+    return NextResponse.json({ ziyaret });
+  }
+  // İçerik düzenleme: hizmet adı / tutar / tarih / not (yanlış yazım düzeltmesi)
+  if (body.hizmet !== undefined || body.tutar !== undefined || body.tarih !== undefined || body.not !== undefined) {
+    const patch: { hizmet?: string; tutar?: number; tarih?: string; not?: string } = {};
+    if (body.hizmet !== undefined) patch.hizmet = String(body.hizmet || "").trim().slice(0, 80);
+    if (body.tutar !== undefined) {
+      const tutar = Number(body.tutar);
+      if (!Number.isFinite(tutar) || tutar < 0) return NextResponse.json({ error: "tutar-hatali" }, { status: 400 });
+      patch.tutar = tutar;
+    }
+    if (body.tarih !== undefined) {
+      const tarih = String(body.tarih || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(tarih)) return NextResponse.json({ error: "tarih-hatali" }, { status: 400 });
+      patch.tarih = tarih;
+    }
+    if (body.not !== undefined) patch.not = String(body.not || "").trim().slice(0, 500);
+    const ziyaret = await db.updateZiyaret(id, patch);
+    if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
+    return NextResponse.json({ ziyaret });
+  }
+  const durum = String(body.durum || "") as ZiyaretDurum;
+  const ziyaret = await db.updateZiyaretDurum(id, durum);
+  if (!ziyaret) return NextResponse.json({ error: "not-found" }, { status: 404 });
+  return NextResponse.json({ ziyaret });
+}
+
+/** Ziyaret satırını kalıcı sil (?id=). */
+export async function DELETE(request: Request) {
+  const { db, gate } = await resolveDb();
+  if (gate) return gate;
+  const id = new URL(request.url).searchParams.get("id") || "";
+  if (!id) return NextResponse.json({ error: "id-gerekli" }, { status: 400 });
+  const ok = await db.deleteZiyaret(id);
+  if (!ok) return NextResponse.json({ error: "not-found" }, { status: 404 });
+  return NextResponse.json({ ok: true });
+}

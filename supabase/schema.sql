@@ -1,0 +1,287 @@
+-- ============================================================
+-- Tailor Ledger — çok kiracılı SaaS şeması (Supabase SQL editor'e yapıştır)
+-- Project: lwujklmjjoaubjbxaukn
+-- 7 gün free trial + sonra kilit + işletme başına izole veri
+-- ============================================================
+
+-- 1) KULLANICI PROFİLİ (Supabase Auth ile birebir)
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  created_at timestamptz not null default now()
+);
+
+-- 2) İŞLETMELER (her kayıt = bir kiracı = Canva'daki ayrı çalışma alanı gibi)
+create table if not exists businesses (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  name text not null default 'My Tailor Shop',
+  locale text not null default 'en',
+  currency text not null default 'USD',
+  plan text not null default 'free' check (plan in ('free', 'pro')),
+  status text not null default 'active',
+  trial_ends_at timestamptz not null default (now() + interval '7 days'),
+  lemon_customer_id text,
+  lemon_subscription_id text,
+  created_at timestamptz not null default now()
+);
+create index if not exists businesses_owner_idx on businesses(owner_id);
+
+-- 3) DEFTER TABLOLARI (yoksa oluştur) + kiracı kolonu (mevcut tablolar korunur)
+create table if not exists kayitlar (
+  id uuid primary key default gen_random_uuid(),
+  tarih date not null,
+  aciklama text not null,
+  kategori varchar(50) not null,
+  gelir numeric(14,2) not null default 0,
+  gider numeric(14,2) not null default 0,
+  odeme_tipi varchar(20) not null,
+  kasa_etkisi numeric(14,2) not null,
+  olusturma_zamani timestamptz not null default now()
+);
+
+create table if not exists "sohbetMesajlari" (
+  id uuid primary key default gen_random_uuid(),
+  rol varchar(20) not null,
+  icerik text not null,
+  olusturma_zamani timestamptz not null default now()
+);
+
+create table if not exists ayarlar (
+  id integer primary key generated always as identity,
+  isletme_adi varchar(200) not null default 'My Tailor Shop',
+  kira_tutari numeric(14,2) not null default 0,
+  kira_periyodu integer not null default 6,
+  aylik_kira_karsiligi numeric(14,2) not null default 0,
+  para_birimi varchar(10) not null default 'USD',
+  kira_sonraki_tarih date,
+  acilis_bakiyesi numeric(14,2) not null default 0,
+  ai_motor varchar(20) not null default 'otomatik',
+  ollama_model varchar(100) not null default 'gemma3:4b',
+  whatsapp_alici varchar(30) not null default ''
+);
+
+alter table kayitlar
+  add column if not exists business_id uuid references businesses(id) on delete cascade;
+alter table "sohbetMesajlari"
+  add column if not exists business_id uuid references businesses(id) on delete cascade;
+
+-- ayarlar: tek satır (id=1) modelinden işletme başına satıra geçiş
+alter table ayarlar
+  add column if not exists business_id uuid references businesses(id) on delete cascade;
+create unique index if not exists ayarlar_business_uidx on ayarlar(business_id)
+  where business_id is not null;
+
+-- Sonradan eklenen ayar alanları (eski tablolarda eksikse tamamlanır)
+alter table ayarlar
+  add column if not exists whatsapp_isletme varchar(30) not null default '';
+alter table ayarlar
+  add column if not exists wa_sablon_alindi text not null default '';
+alter table ayarlar
+  add column if not exists wa_sablon_hazir text not null default '';
+alter table ayarlar
+  add column if not exists google_yorum_link text not null default '';
+alter table ayarlar
+  add column if not exists meslek varchar(60) not null default '';
+alter table ayarlar
+  add column if not exists hizmet_secimi_acik boolean not null default true;
+alter table ayarlar
+  add column if not exists meslek_diger varchar(300) not null default '';
+
+create index if not exists kayitlar_business_idx on kayitlar(business_id);
+create index if not exists sohbet_business_idx on "sohbetMesajlari"(business_id);
+
+-- 4) ERİŞİM FONKSİYONU: trial sürüyor mu / pro mu?
+create or replace function can_use_app(b uuid)
+returns boolean
+language sql stable security definer
+as $$
+  select exists (
+    select 1 from businesses
+    where id = b
+      and owner_id = auth.uid()
+      and (plan = 'pro' or trial_ends_at > now())
+  );
+$$;
+
+-- 5) RLS: herkes SADECE kendi işletmesinin satırlarını görür
+alter table profiles enable row level security;
+alter table businesses enable row level security;
+alter table kayitlar enable row level security;
+alter table ayarlar enable row level security;
+alter table "sohbetMesajlari" enable row level security;
+
+drop policy if exists "own profile" on profiles;
+create policy "own profile" on profiles
+  for all using (id = auth.uid()) with check (id = auth.uid());
+
+drop policy if exists "own businesses" on businesses;
+create policy "own businesses" on businesses
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+drop policy if exists "own kayitlar" on kayitlar;
+create policy "own kayitlar" on kayitlar
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );
+
+drop policy if exists "own ayarlar" on ayarlar;
+create policy "own ayarlar" on ayarlar
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );
+
+drop policy if exists "own sohbet" on "sohbetMesajlari";
+create policy "own sohbet" on "sohbetMesajlari"
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );
+
+-- 6) YENİ ÜYE: Auth kaydında otomatik profil + işletme + 7 günlük trial
+create or replace function handle_new_user()
+returns trigger
+language plpgsql security definer
+as $$
+declare
+  b_id uuid;
+begin
+  insert into profiles(id, email)
+  values (new.id, new.email)
+  on conflict (id) do update set email = excluded.email;
+
+  insert into businesses(owner_id, name, trial_ends_at)
+  values (new.id, 'My Tailor Shop', now() + interval '7 days')
+  returning id into b_id;
+
+  insert into ayarlar(isletme_adi, kira_tutari, kira_periyodu, aylik_kira_karsiligi, para_birimi, kira_sonraki_tarih, acilis_bakiyesi, ai_motor, ollama_model, whatsapp_alici, whatsapp_isletme, wa_sablon_alindi, wa_sablon_hazir, google_yorum_link, meslek, hizmet_secimi_acik, business_id)
+  values ('My Tailor Shop', 1500, 6, 250, 'USD', null, 125, 'otomatik', 'gemma3:4b', '', '', '', '', '', '', true, b_id);
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+-- ============================================================
+-- 7) MÜŞTERİLER + ZİYARETLER (EGZEL ARYA modülü, işletme başına izole)
+-- Supabase SQL editor'e yukarıdakilerle birlikte yapıştır
+-- ============================================================
+create table if not exists musteriler (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  ad text not null default '',
+  soyad text not null default '',
+  telefon text not null default '',
+  "not" text not null default '',
+  silindi_at timestamptz,
+  olusturma_zamani timestamptz not null default now()
+);
+
+create table if not exists ziyaretler (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid references businesses(id) on delete cascade,
+  musteri_id uuid not null references musteriler(id) on delete cascade,
+  hizmet text not null default '',
+  tutar numeric(14,2) not null default 0,
+  tarih date not null default CURRENT_DATE,
+  "not" text not null default '',
+  durum varchar(20) not null default 'hazirlaniyor',
+  odenen numeric(14,2),
+  olusturma_zamani timestamptz not null default now()
+);
+
+create index if not exists musteriler_business_idx on musteriler(business_id);
+create index if not exists musteriler_telefon_idx on musteriler(telefon);
+create index if not exists ziyaretler_business_idx on ziyaretler(business_id);
+create index if not exists ziyaretler_musteri_idx on ziyaretler(musteri_id);
+create index if not exists ziyaretler_durum_idx on ziyaretler(durum);
+
+alter table musteriler enable row level security;
+alter table ziyaretler enable row level security;
+
+drop policy if exists "own musteriler" on musteriler;
+create policy "own musteriler" on musteriler
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );
+
+drop policy if exists "own ziyaretler" on ziyaretler;
+create policy "own ziyaretler" on ziyaretler
+  for all using (
+    business_id is null or business_id in (select id from businesses where owner_id = auth.uid())
+  ) with check (
+    business_id in (select id from businesses where owner_id = auth.uid())
+  );
+
+-- ============================================================
+-- Supabase Data API grants (30 Ekim 2026 itibariyle yeni tablolar
+-- icin otomatik grant verilmiyor; her tablo icin acikca grant gerekir.
+-- Mevcut tablolar etkilenmez, ama yeni projeler / preview branch /
+-- 'supabase db reset' akislarinda bu grant'ler olmadan "permission
+-- denied" hatasi alinir.
+-- ============================================================
+grant select on public.profiles to anon;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant all on public.profiles to service_role;
+
+grant select on public.businesses to anon;
+grant select, insert, update, delete on public.businesses to authenticated;
+grant all on public.businesses to service_role;
+
+grant select on public.kayitlar to anon;
+grant select, insert, update, delete on public.kayitlar to authenticated;
+grant all on public.kayitlar to service_role;
+
+grant select on public."sohbetMesajlari" to anon;
+grant select, insert, update, delete on public."sohbetMesajlari" to authenticated;
+grant all on public."sohbetMesajlari" to service_role;
+
+grant select on public.ayarlar to anon;
+grant select, insert, update, delete on public.ayarlar to authenticated;
+grant all on public.ayarlar to service_role;
+
+grant select on public.musteriler to anon;
+grant select, insert, update, delete on public.musteriler to authenticated;
+grant all on public.musteriler to service_role;
+
+grant select on public.ziyaretler to anon;
+grant select, insert, update, delete on public.ziyaretler to authenticated;
+grant all on public.ziyaretler to service_role;
+
+-- sequences (id generation)
+grant usage, select on all sequences in schema public to anon, authenticated, service_role;
+
+-- ============================================================
+-- SITE TAKIP: ziyaret + oturum açma olayları (yönetici paneli /admin)
+-- RLS kapalı değil: SINIRLI — sadece INSERT izni var, KİMSE okuyamaz.
+-- Yönetici paneli SUPABASE_SERVICE_ROLE_KEY ile okur (RLS bypass).
+-- ============================================================
+create table if not exists site_takip (
+  id bigint generated always as identity primary key,
+  olusturma timestamptz not null default now(),
+  olay varchar(20) not null default 'ziyaret',
+  kaynak varchar(20) not null default '',
+  email varchar(200),
+  ulke varchar(10) not null default '',
+  yol varchar(200) not null default ''
+);
+create index if not exists site_takip_olusturma_idx on site_takip(olusturma);
+create index if not exists site_takip_email_idx on site_takip(email);
+
+alter table site_takip enable row level security;
+
+-- Yalnızca kayıt ekleme izni: anon + authenticated yazabilir, kimse okuyamaz
+grant insert on public.site_takip to anon, authenticated;
+grant usage, select on sequence site_takip_id_seq to anon, authenticated, service_role;
+grant all on public.site_takip to service_role;

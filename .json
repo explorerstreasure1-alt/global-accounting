@@ -1,0 +1,48 @@
+﻿{
+    "kayitlar":  [
+                     {
+                         "id":  "221dc254-e592-4d37-b54a-5176976f4f45",
+                         "tarih":  "2026-06-26",
+                         "aciklama":  "paÃ§a kÄ±saltma paÃ§a - gelir",
+                         "kategori":  "SatÄ±Å",
+                         "gelir":  1400,
+                         "gider":  0,
+                         "odemeTipi":  "Nakit",
+                         "kasaEtkisi":  1400,
+                         "olusturmaZamani":  "2026-10-05T11:13:33.630Z"
+                     },
+                     {
+                         "id":  "382533c0-5ef6-48d6-a07b-69e46f325c6c",
+                         "tarih":  "2026-06-26",
+                         "aciklama":  "paÃ§a kÄ±saltma paÃ§a -",
+                         "kategori":  "DiÄer",
+                         "gelir":  0,
+                         "gider":  1400,
+                         "odemeTipi":  "Nakit",
+                         "kasaEtkisi":  -1400,
+                         "olusturmaZamani":  "2026-10-05T11:14:29.369Z"
+                     },
+                     {
+                         "id":  "589c20b3-e500-41c2-a9ae-7a93260c671d",
+                         "tarih":  "2026-06-26",
+                         "aciklama":  "paca kisaltma paca",
+                         "kategori":  "DiÄer",
+                         "gelir":  0,
+                         "gider":  1400,
+                         "odemeTipi":  "Nakit",
+                         "kasaEtkisi":  -1400,
+                         "olusturmaZamani":  "2026-10-05T11:32:09.021Z"
+                     },
+                     {
+                         "id":  "cc6cc50f-0061-47fe-800d-525c175ab4c8",
+                         "tarih":  "2026-06-26",
+                         "aciklama":  "paca kisaltma",
+                         "kategori":  "DiÄer",
+                         "gelir":  0,
+                         "gider":  1400,
+                         "odemeTipi":  "Nakit",
+                         "kasaEtkisi":  -1400,
+                         "olusturmaZamani":  "2026-10-05T11:33:54.335Z"
+                     }
+                 ]
+}

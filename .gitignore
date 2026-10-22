@@ -1,0 +1,13 @@
+node_modules/
+.next/
+data/*.json
+data/yedekler/
+.env.local
+.env
+*.log
+
+# Derleme onbellegi
+*.tsbuildinfo
+
+# bozuk adli klasor (sonunda bosluk)
+data\ 

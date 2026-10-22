@@ -1,0 +1,715 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f5f5f4;
+  --paper-dark: #e2e2df;
+  --line: rgba(90, 140, 190, 0.42);
+  --margin: #c43c3c;
+  --ink: #16324f;
+  --ink-soft: #2c4a6e;
+  --ai-bg: #0e1a2b;
+  --ai-card: #15263d;
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(255, 255, 255, 0.5), transparent 50%),
+    #e3e3e0;
+  background-attachment: fixed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-hand {
+  font-family: var(--font-caveat), "Segoe Script", cursive;
+}
+
+.font-book {
+  font-family: var(--font-literata), Georgia, serif;
+}
+
+.font-ui {
+  font-family: var(--font-dm), var(--font-noto), var(--font-arabic), var(--font-hebrew), system-ui, sans-serif;
+}
+
+/* Çok dilli klavye / yazı desteği: Arapça (RTL) ve Kiril metinler düzgün
+   görünür ve giriş alanları yönü miras alır. */
+html[dir="rtl"] body,
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="ltr"] input,
+html[dir="ltr"] textarea,
+html[dir="ltr"] select {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Arapça seçiliyken Arapça glifleri olan yazı tipi öncelikli */
+html[lang="ar"] body,
+html[lang="ar"] input,
+html[lang="ar"] textarea,
+html[lang="ar"] select {
+  font-family: var(--font-arabic), var(--font-dm), system-ui, sans-serif;
+}
+
+/* Kiril seçiliyken Kiril glifli DM Sans öncelikli (zaten subset'te) */
+html[lang="ru"] body,
+html[lang="ru"] input,
+html[lang="ru"] textarea,
+html[lang="ru"] select {
+  font-family: var(--font-dm), var(--font-arabic), system-ui, sans-serif;
+}
+
+/* İbranice seçiliyken İbranice glifli yazı tipi öncelikli */
+html[lang="he"] body,
+html[lang="he"] input,
+html[lang="he"] textarea,
+html[lang="he"] select {
+  font-family: var(--font-hebrew), var(--font-dm), system-ui, sans-serif;
+}
+
+/* Farsça seçiliyken Arapça glifli yazı tipi (Farsça Arap alfabesi kullanır) */
+html[lang="fa"] body,
+html[lang="fa"] input,
+html[lang="fa"] textarea,
+html[lang="fa"] select {
+  font-family: var(--font-arabic), var(--font-dm), system-ui, sans-serif;
+}
+
+/* Mobil klavye ipucu: giriş alanları dil kodunu miras alsın */
+input,
+textarea,
+select {
+  unicode-bidi: plaintext;
+}
+
+.desk-app {
+  min-height: 100vh;
+  color: var(--ink);
+  background-color: #f4f4f2;
+  background-image:
+    radial-gradient(rgba(100, 116, 140, 0.2) 1px, transparent 1.5px),
+    repeating-linear-gradient(to bottom, transparent 0 35px, rgba(100, 116, 140, 0.34) 35px 36px),
+    radial-gradient(ellipse at 50% 0%, #ffffff 0%, #f4f4f2 60%, #e2e2df 100%);
+  background-size:
+    26px 26px,
+    auto,
+    cover;
+  background-attachment: fixed;
+}
+
+.notebook {
+  position: relative;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg, rgba(196, 60, 60, 0.95) 0 3px, transparent 3px),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 35px,
+      var(--line) 35px 36px
+    ),
+    repeating-linear-gradient(3deg, rgba(90, 90, 95, 0.03) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 45% 20%, #ffffff 0%, var(--paper) 72%, #e6e6e3 100%);
+  background-blend-mode: normal, normal, multiply, normal;
+  background-size: auto, auto, auto, cover;
+  box-shadow:
+    0 30px 70px rgba(25, 25, 30, 0.42),
+    inset 0 0 80px rgba(90, 90, 95, 0.1);
+}
+
+.notebook::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 48px;
+  background: linear-gradient(90deg, rgba(90, 90, 95, 0.16), rgba(90, 90, 95, 0) 75%);
+  pointer-events: none;
+}
+
+/* Çerçevesiz doldurma alanlarına defter çerçevesi (kenarlıklı olanlara dokunmaz) */
+.desk-app input:not([class*="border"]):not([type="checkbox"]):not([type="radio"]),
+.desk-app select:not([class*="border"]),
+.desk-app textarea:not([class*="border"]) {
+  border: 1.5px solid rgba(22, 50, 79, 0.28);
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.desk-app input:not([class*="border"]):focus,
+.desk-app select:not([class*="border"]):focus,
+.desk-app textarea:not([class*="border"]):focus {
+  border-color: rgba(22, 50, 79, 0.6);
+  outline: none;
+}
+
+/* Spiral delikleri: küçük nokta */
+.spiral-delik {
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin-inline: auto;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(0, 0, 0, 0) 0 32%,
+    #4a4a4f 33% 52%,
+    #17171a 53% 66%,
+    rgba(23, 23, 26, 0) 67%
+  );
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.4));
+}
+
+.notebook-row {
+  min-height: 36px;
+}
+
+/* Dar ekranda taşma olmasın: ızgara çocukları küçülebilsin */
+.notebook-row > *,
+.notebook .grid > * {
+  min-width: 0;
+}
+
+.notebook input,
+.notebook select,
+.notebook textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ink-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+  width: 100%;
+}
+
+.ink-input:focus {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.chip {
+  border: 1px solid rgba(22, 50, 79, 0.18);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.chip.active-nakit {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.chip.active-kart {
+  background: #e2e8f0;
+  border-color: #64748b;
+  color: #334155;
+}
+
+.chip.active-havale {
+  background: #dcfce7;
+  border-color: #15803d;
+  color: #166534;
+}
+
+.ai-panel {
+  background:
+    radial-gradient(800px 280px at 80% -10%, rgba(45, 212, 191, 0.16), transparent 50%),
+    linear-gradient(180deg, #102033, #0b1624 60%, #09101a);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+}
+
+.msg-user {
+  background: linear-gradient(180deg, #1d4e4a, #155e75);
+}
+
+.msg-ai {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Asistan mesajı zengin metin */
+.msg-html p {
+  margin: 0 0 6px;
+}
+.msg-html p:last-child {
+  margin-bottom: 0;
+}
+.msg-html strong {
+  color: #99f6e4;
+  font-weight: 700;
+}
+.msg-html code {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0 5px;
+  font-size: 12px;
+}
+.msg-html a {
+  display: inline-block;
+  margin-top: 6px;
+  background: #2dd4bf;
+  color: #0b1624 !important;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+.msg-html .msg-baslik {
+  color: #99f6e4;
+  font-weight: 700;
+  font-size: 15px;
+}
+.msg-html .msg-madde {
+  padding-left: 2px;
+}
+.msg-html .msg-bos {
+  height: 6px;
+}
+.msg-tablo {
+  margin: 6px -4px;
+  overflow-x: auto;
+  border-radius: 10px;
+}
+.msg-tablo table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.msg-tablo th,
+.msg-tablo td {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 4px 7px;
+  text-align: left;
+  white-space: nowrap;
+}
+.msg-tablo th {
+  background: rgba(45, 212, 191, 0.14);
+  color: #99f6e4;
+  font-weight: 700;
+}
+.msg-tablo td {
+  font-variant-numeric: tabular-nums;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(80, 60, 30, 0.35);
+  border-radius: 99px;
+}
+
+.ai-panel .scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.stamp {
+  border: 2px solid #9f1239;
+  color: #9f1239;
+  letter-spacing: 0.18em;
+  transform: rotate(-8deg);
+}
+
+/* Rapor grafikleri ekranda da baskıda/PDF'te de renkli çıksın */
+.yazdir-renk {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .desk-app {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-root {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .print-sheet table {
+    border-collapse: collapse !important;
+  }
+
+  .print-sheet th,
+  .print-sheet td {
+    border: 1px solid #999 !important;
+    padding: 4px 6px !important;
+  }
+
+  .print-sheet tr {
+    break-inside: avoid;
+  }
+}
+
+/* === Global Pro Themes: tek kâğıt tema kilitlidir, bu bloklar bilerek boştur === */
+[dir='rtl'] .notebook::before { inset:0 0 0 auto; }
+
+/* === Mobil dokunuş (telefon): iOS odak-zoom engeli + dar ekran sigortası === */
+@media (max-width: 639px) {
+  /* iOS Safari 16px altı inputa odakta sayfayı büyütür; telefonda bunu engelle (masaüstü aynen kalır) */
+  .desk-app input,
+  .desk-app select,
+  .desk-app textarea,
+  .notebook input,
+  .notebook select,
+  .notebook textarea {
+    font-size: 16px;
+  }
+  /* Defter satırları dar ekranda nefes alsın */
+  .notebook-row {
+    row-gap: 6px;
+  }
+}
+
+/* === 60x40 müşteri etiketi (ekranda önizleme + baskıda tam ölçü) === */
+.etiket-sayfa {
+  position: relative;
+  width: 480px;
+  height: 320px;
+  flex: none;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  container-type: size;
+}
+.etiket-sayfa > span {
+  position: absolute;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+}
+.etk-kose { width: 4.2%; height: 6.4%; border: 0 solid rgba(255, 255, 255, 0.7); }
+.etk-kose-tl { top: 3%; left: 2%; border-top-width: 1px; border-left-width: 1px; }
+.etk-kose-tr { top: 3%; right: 2%; border-top-width: 1px; border-right-width: 1px; }
+.etk-kose-bl { bottom: 3%; left: 2%; border-bottom-width: 1px; border-left-width: 1px; }
+.etk-kose-br { bottom: 3%; right: 2%; border-bottom-width: 1px; border-right-width: 1px; }
+.etk-dukkan { left: 5.8%; top: 6%; width: 56%; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 4.2cqw; letter-spacing: 0.2em; opacity: 0.95; }
+.etk-alt { left: 5.8%; top: 15.5%; width: 56%; font-family: system-ui, sans-serif; font-weight: 700; font-size: 2.7cqw; letter-spacing: 0.14em; opacity: 0.7; }
+.etk-qr { position: absolute; left: 3.3%; top: 30%; width: 25%; aspect-ratio: 1; }
+.etk-ad { left: 32.5%; top: 24%; width: 63%; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 6cqw; letter-spacing: 0.15em; }
+.etk-tel { left: 32.5%; top: 42%; width: 63%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 6cqw; }
+.etk-sip { left: 32.5%; top: 58.5%; width: 31%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 4.6cqw; }
+.etk-kod { left: 65%; top: 58.5%; width: 31%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 4.6cqw; }
+.etk-sira { left: 32.5%; top: 71%; width: 63%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 6.2cqw; }
+.etk-tarih { left: 40%; top: 84%; width: 53%; font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: 3.4cqw; text-align: right; }
+.etk-durum { left: 68%; top: 4.5%; width: 28%; font-family: system-ui, sans-serif; font-weight: 700; font-size: 3cqw; letter-spacing: 0.1em; text-align: right; }
+
+@media (max-width: 540px) {
+  .etiket-sayfa {
+    transform: scale(0.72);
+    transform-origin: top center;
+  }
+}
+
+@media print {
+  .etiket-modal {
+    position: static !important;
+    display: block !important;
+    background: #fff !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .etiket-sayfa {
+    transform: none !important;
+    width: 60mm !important;
+    height: 40mm !important;
+  }
+}
+
+/* === Kâğıt cilt: koyu yüzeyleri fildişine çevir (giriş ekranı bu kapsamın dışındadır) === */
+.desk-app [class~="bg-black/25"],
+.desk-app [class~="bg-black/20"],
+.desk-app [class~="bg-white/10"],
+.desk-app [class~="bg-white/5"],
+.desk-app .ai-panel {
+  background-color: rgba(255, 255, 255, 0.92);
+  background-image:
+    radial-gradient(rgba(100, 116, 140, 0.13) 1px, transparent 1.5px);
+  background-size: 26px 26px;
+  color: var(--ink);
+  border: 1px solid rgba(75, 72, 66, 0.2);
+  box-shadow:
+    0 10px 28px rgba(75, 72, 66, 0.1),
+    inset 0 0 40px rgba(90, 90, 95, 0.05);
+  backdrop-filter: none;
+}
+
+.desk-app [class*="hover:bg-white/20"]:hover {
+  background-color: rgba(75, 72, 66, 0.08);
+}
+
+.desk-app [class*="border-white/10"] {
+  border-color: rgba(75, 72, 66, 0.2);
+}
+
+.desk-app [class*="ring-white/10"] {
+  --tw-ring-color: rgba(75, 72, 66, 0.2);
+}
+
+/* Açık zemin yazılarını mürekkebe çevir (renkli düğmelerdeki beyazlar aynen kalır) */
+.desk-app [class*="text-amber-50"] {
+  color: var(--ink);
+}
+
+.desk-app [class*="text-amber-100"] {
+  color: var(--ink-soft);
+}
+
+.desk-app [class*="text-amber-200"] {
+  color: var(--ink-soft);
+}
+
+.desk-app [class*="text-amber-300"] {
+  color: var(--ink-soft);
+}
+
+.desk-app [class*="text-sky-100"] {
+  color: #075985;
+}
+
+.desk-app [class*="text-emerald-100"] {
+  color: #047857;
+}
+
+.desk-app [class*="text-teal-100"],
+.desk-app [class*="text-teal-200"] {
+  color: #0e6b62;
+}
+
+.desk-app [class*="placeholder:text-amber-100"]::placeholder {
+  color: rgba(44, 74, 110, 0.5);
+}
+
+/* Asistan paneli kâğıt uyumu */
+.desk-app .ai-panel .msg-ai {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(75, 72, 66, 0.22);
+  color: var(--ink);
+}
+
+.desk-app .ai-panel .msg-html strong,
+.desk-app .ai-panel .msg-html .msg-baslik {
+  color: #0e6b62;
+}
+
+.desk-app .ai-panel .msg-html code {
+  background: rgba(75, 72, 66, 0.12);
+}
+
+.desk-app .ai-panel .msg-tablo th {
+  background: rgba(14, 107, 98, 0.12);
+  color: #0e6b62;
+}
+
+.desk-app .ai-panel .msg-tablo th,
+.desk-app .ai-panel .msg-tablo td {
+  border-color: rgba(75, 72, 66, 0.3);
+}
+
+.desk-app .ai-panel .scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(90, 90, 95, 0.4);
+}
+
+/* === Kabartma (deftere mühür basılmış hissi) === */
+.desk-app .font-hand {
+  color: var(--ink);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -1px 1px rgba(75, 72, 66, 0.32);
+}
+
+/* Tüm ikonlar: antrasit sade çizgi (renkli dolgulu düğmelerdeki beyazlar korunur) */
+.desk-app svg {
+  color: #34383f;
+  stroke-width: 1.6;
+}
+
+.desk-app [class*="bg-emerald"] svg,
+.desk-app [class*="bg-slate-900"] svg,
+.desk-app [class*="bg-slate-800"] svg,
+.desk-app [class*="bg-sky-"] svg,
+.desk-app [class*="bg-rose"] svg,
+.desk-app [class*="bg-indigo"] svg,
+.desk-app [class*="bg-teal-700"] svg,
+.desk-app [class*="bg-teal-600"] svg,
+.desk-app [class*="bg-[var(--ink)]"] svg,
+.desk-app [class*="bg-black/95"] svg,
+.desk-app [class*="gradient"] svg {
+  color: #fff;
+}
+
+.desk-app button svg,
+.desk-app a svg {
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.65))
+    drop-shadow(0 -1px 1px rgba(75, 72, 66, 0.4));
+}
+
+.kabartma {
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -1px 1px rgba(75, 72, 66, 0.32);
+}
+
+/* ============================================================================
+   MOBİL TEMA KATMANI (telefonda gerçek uygulama hissi)
+   - Alt hızlı eylem çubuğu (başparmak bölgesi) + safe-area (çentik) desteği
+   - Tam ekran modallar (bottom sheet düzeni olmadan tek nefes tabaka)
+   - Uygulama benzeri kaydırma: çubuk gizle, snap, momentum
+   - 300 ms dokunma gecikmesi ve iOS zoom titremeleri kapalı
+   ========================================================================= */
+
+:root {
+  --mobil-bar-h: 0px;
+}
+
+/* İçerik çubuğun altında kaybolmasın diye alt pay (telefonda doldurulur) */
+.mobil-alt-bos {
+  padding-bottom: var(--mobil-bar-h);
+}
+
+/* Alt hızlı eylem çubuğu: yalnızca telefonlarda gösterilir */
+.mobil-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 45;
+  display: none;
+  padding-bottom: max(env(safe-area-inset-bottom), 5px);
+  background: linear-gradient(180deg, rgba(246, 246, 243, 0.96), rgba(238, 238, 234, 0.98));
+  border-top: 1px solid rgba(75, 72, 66, 0.2);
+  box-shadow: 0 -14px 34px rgba(75, 72, 66, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mobil-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mobil-btn:active {
+  background: rgba(75, 72, 66, 0.1);
+}
+
+/* Dokunma cihazlarında iyileştirmeler */
+@media (hover: none) and (pointer: coarse) {
+  .desk-app,
+  .desk-app * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .desk-app button,
+  .desk-app [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --mobil-bar-h: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .mobil-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  /* iOS Safari: sabit zemin kayarken titreme yapmaz (background-attachment: fixed desteklenmez) */
+  body,
+  .desk-app {
+    background-attachment: scroll;
+  }
+
+  .desk-app {
+    min-height: 100dvh; /* Tarayıcı adres çubuğu açılırken taşmayı önler */
+  }
+
+  /* Uygulama hissi: yatay buton şeridinde kaydırma çubuğu görünmez, snap yapılıdır */
+  .scroll-thin {
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    scroll-behavior: smooth;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    display: none;
+  }
+  .scroll-thin > * {
+    scroll-snap-align: start;
+  }
+
+  /* Defter satırı telefonda 1-2 px daha geniş nefes alır */
+  .notebook-row {
+    min-height: 40px;
+  }
+
+  /* Modallar telefondaki tam ekran tabaka (calendar, rapor, ayarlar, anket) */
+  .desk-app [class~="fixed"][class~="inset-0"] {
+    padding: 0;
+  }
+  .desk-app [class~="fixed"][class~="inset-0"] > div {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+
+  /* Bildirim: çubuğun üstünde kalsın */
+  .mobil-toast {
+    bottom: calc(var(--mobil-bar-h) + 10px) !important;
+  }
+}
