@@ -230,7 +230,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         meslekDiger: meslek === "diger" ? (digerHizmet || "").trim().slice(0, 300) : "",
       });
     } catch {
-      // Kayıt düşmedi: anket açık kalsın, hata diliyle (i18n toast) görülür.
+      // saveAyarlar zaten toast ile hata gösterdi; anket açık kalsın, kullanıcı tekrar denesin.
       return;
     }
     setAnketOpen(false);
@@ -484,7 +484,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       <MeslekAnketi
         open={anketOpen}
         ilkMeslek={ayarlar.meslek}
-        onKaydet={(m, acik) => void kaydetMeslek(m, acik)}
+        onKaydet={(m, acik, digerHizmet) => void kaydetMeslek(m, acik, digerHizmet)}
         onAtla={() => setAnketOpen(false)}
       />
       <SettingsModal
