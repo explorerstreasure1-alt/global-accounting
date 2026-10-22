@@ -21,6 +21,9 @@ export default function Landing() {
       <AnimatedLedgerBg />
       <div className="relative mx-auto max-w-5xl px-5 py-8">
         <GlobalBar compact />
+        <div className="flex justify-end mb-2">
+          <a href="/admin" className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-teal-600 underline" title="Yönetici paneli">admin</a>
+        </div>
         <header className="mt-10 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">{t("land_eyebrow")}</p>
           <h1 className="mt-3 text-4xl font-extrabold leading-tight md:text-6xl">
