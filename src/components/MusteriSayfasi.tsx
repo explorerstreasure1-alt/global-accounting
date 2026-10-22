@@ -17,7 +17,7 @@ type WaAyar = { dukkan: string; alindi: string; hazir: string; yorumLink: string
 function gunFarki(tarih: string): number {
   const simdi = new Date();
   const gun = new Date(simdi.getFullYear(), simdi.getMonth(), simdi.getDate()).getTime();
-  const [y, m, d] = tarih.split("-").map(Number);
+  const [y, m, d] = String(tarih ?? "").split("-").map(Number);
   if (!y || !m || !d) return 9999;
   return Math.round((gun - new Date(y, m - 1, d).getTime()) / 86400000);
 }

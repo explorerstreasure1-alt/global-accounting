@@ -453,7 +453,12 @@ async function executeIntent(intent: NlpIntent, kayitlar: Kayit[], ayarlar: Ayar
     if (!intent.confirm) {
       return "Son otomatik yedeği geri yüklersem mevcut defterin, ayarların ve sohbet geçmişin yedekteki hale döner. Devam etmek için şu cümleyi yazın: ‘Son yedeği geri yükle, onaylıyorum.’";
     }
-    const restored = await D.restoreLatestBackup();
+    let restored;
+    try {
+      restored = await D.restoreLatestBackup();
+    } catch {
+      restored = null;
+    }
     return restored
       ? `Son otomatik yedeği geri yükledim. Defterde ${restored.kayitlar.length} kayıt var.`
       : "Geri yükleyebileceğim bir otomatik yedek bulamadım.";

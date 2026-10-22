@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Caveat, DM_Sans, Literata, Noto_Sans, Noto_Sans_Arabic, Noto_Sans_Hebrew } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { LocaleSync } from "@/components/LocaleSync";
 import { GeoLocale } from "@/components/GeoLocale";
@@ -89,7 +90,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable} ${notoSans.variable} ${notoArabic.variable} ${notoHebrew.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
+        <Script id="locale-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: localeInitScript }} />
       </head>
       <body className="font-ui antialiased notranslate">
         <LocaleSync />

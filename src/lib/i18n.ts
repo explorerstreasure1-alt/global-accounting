@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { globalDicts } from "./i18n-dict";
 
 /** Global locale + theme foundation. Additive, breaks nothing. */
@@ -711,30 +711,32 @@ export function t(locale: LocaleCode, key: string): string {
   return MAP[locale]?.[key] ?? en[key] ?? key;
 }
 
+/** React'in hidrasyon-güvenli reaktifTranslate deseni kullanılır.
+ *
+ * Sunucu anlık görüntüsü SABİT "en" döner → SSR HTML'i ilk istemci boyamasıyla
+ * birebir eşleşir ve React "hydration mismatch" hatası fvazla olmaz (Console
+ * hatası yok). Hidrasyon bitince React istemci değerine (kullanıcının dili)
+ * geçer ve tekrar boyar — kullanıcı yine kendi dilini ilk karede görmüş olur.
+ */
+function dilParaAbonelik(fn: () => void): () => void {
+  window.addEventListener("tailor-locale-change", fn);
+  window.addEventListener("tailor-currency-change", fn);
+  window.addEventListener("storage", fn);
+  return () => {
+    window.removeEventListener("tailor-locale-change", fn);
+    window.removeEventListener("tailor-currency-change", fn);
+    window.removeEventListener("storage", fn);
+  };
+}
+
 /** Reactive translator hook. Re-renders on language/currency change. */
 export function useT(): { locale: LocaleCode; t: (key: string) => string; intl: string; currency: string } {
-  const [locale, setLoc] = useState<LocaleCode>(() => getLocale());
-  const [currency, setCur] = useState<string>(() => getCurrency(getLocale()));
-  useEffect(() => {
-    const fn = (e: Event) => {
-      const v = (e as CustomEvent).detail as LocaleCode;
-      setLoc(v);
-      setCur(getCurrency(v));
-    };
-    const cur = (e: Event) => setCur((e as CustomEvent).detail as string);
-    const storage = () => {
-      setLoc(getLocale());
-      setCur(getCurrency());
-    };
-    window.addEventListener("tailor-locale-change", fn as EventListener);
-    window.addEventListener("tailor-currency-change", cur as EventListener);
-    window.addEventListener("storage", storage);
-    return () => {
-      window.removeEventListener("tailor-locale-change", fn as EventListener);
-      window.removeEventListener("tailor-currency-change", cur as EventListener);
-      window.removeEventListener("storage", storage);
-    };
-  }, []);
+  const locale = useSyncExternalStore<LocaleCode>(dilParaAbonelik, () => getLocale(), () => "en");
+  const currency = useSyncExternalStore<string>(
+    dilParaAbonelik,
+    () => getCurrency(getLocale()),
+    () => getCurrency("en"),
+  );
   const meta = LOCALE_META[locale] ?? LOCALE_META.en;
   return { locale, t: (key: string) => t(locale, key), intl: meta.intl, currency };
 }
