@@ -117,7 +117,7 @@ function migrateOnce(): Promise<void> {
             continue; // bu kaynakta veri yok, sonrakine bak
           }
           await fs.mkdir(hedef, { recursive: true });
-          for (const dosya of ["kayitlar.json", "ayarlar.json", "sohbet.json"]) {
+          for (const dosya of DATA_FILES) {
             try {
               await fs.copyFile(path.join(kaynak, dosya), path.join(hedef, dosya));
             } catch {
@@ -156,6 +156,9 @@ async function ensureDirs() {
   await fs.mkdir(dataDir(), { recursive: true });
   await fs.mkdir(backupDir(), { recursive: true });
 }
+
+// Sabit dosya listesi - Next.js statik analizi için
+const DATA_FILES = ["kayitlar.json", "ayarlar.json", "sohbet.json"] as const;
 
 async function readJson<T>(name: string, fallback: T): Promise<T> {
   try {
@@ -396,10 +399,10 @@ export async function mirrorToFile(
       fs.writeFile(path.join(dataDir(), "ayarlar.json"), JSON.stringify(ayarlar, null, 2), "utf-8").catch(() => undefined),
       ...(mesajlar
         ? [
-            fs
-              .writeFile(path.join(dataDir(), "sohbet.json"), JSON.stringify(mesajlar.slice(-500), null, 2), "utf-8")
-              .catch(() => undefined),
-          ]
+          fs
+            .writeFile(path.join(dataDir(), "sohbet.json"), JSON.stringify(mesajlar.slice(-500), null, 2), "utf-8")
+            .catch(() => undefined),
+        ]
         : []),
     ]);
   } catch {
