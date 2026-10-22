@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Ayarlar, AktifZiyaret, InitData, Kayit, KayitGirdi, Kategori, Musteri, MusteriGirdi, SohbetMesaji, Ziyaret, ZiyaretDurum, ZiyaretGirdi } from "./types";
 import { KATEGORILER, KATEGORI_ESKI } from "./types";
 import { addMonths, num, round2, toISODate } from "./format";
+import { pool } from "@/db";
 
 /**
  * Çok kiracılı veri katmanı (Supabase + RLS).
@@ -167,6 +168,20 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
     return m ? m[1] : null;
   }
 
+  /** FIX #1: Ensure meslek columns exist in Supabase before any update. Without this, meslek/meslek_diger/hizmet_secimi_acik are silently dropped. */
+  async function ensureAyarlarColumns(): Promise<void> {
+    if (!pool) return;
+    try {
+      await pool.query(`
+        alter table ayarlar add column if not exists meslek varchar(60) not null default '';
+        alter table ayarlar add column if not exists meslek_diger varchar(300) not null default '';
+        alter table ayarlar add column if not exists hizmet_secimi_acik boolean not null default true;
+      `);
+    } catch {
+      /* column creation is best-effort; dayanikliAyarlarUpdate handles missing columns */
+    }
+  }
+
   async function listKayitlar(): Promise<Kayit[]> {
     const { data, error } = await supa
       .from("kayitlar")
@@ -276,6 +291,7 @@ export function tenantDb(supa: SupabaseClient, businessId: string, businessName:
        meslek_diger: patch.meslekDiger !== undefined ? patch.meslekDiger.trim().slice(0, 300) : current.meslekDiger,
        hizmet_secimi_acik: patch.hizmetSecimiAcik !== undefined ? patch.hizmetSecimiAcik : current.hizmetSecimiAcik,
     };
+    await ensureAyarlarColumns();
     const { error } = await dayanikliAyarlarUpdate(next);
     if (error) throw error;
     return getAyarlar();
