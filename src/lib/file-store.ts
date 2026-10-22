@@ -1,4 +1,6 @@
-﻿import { promises as fs } from "node:fs";
+﻿"use server";
+
+import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Ayarlar, Kayit, SohbetMesaji } from "./types";
 import { addDays, addMonths, round2, toISODate } from "./format";
