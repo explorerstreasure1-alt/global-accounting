@@ -8,6 +8,7 @@
  */
 import { promises as fs } from "fs";
 import path from "path";
+import { pool } from "@/db";
 import { saasConfigured } from "./tenant";
 import { getDataDir } from "./file-store";
 
@@ -29,6 +30,45 @@ export function takipServisiAcik(): boolean {
   );
 }
 
+let takipTablosuDenendi = false;
+
+/**
+ * `site_takip` tablosu yoksa otomatik kur (DATABASE_URL varsa).
+ * Supabase projesinde tablo eksik olduğunda yönetici paneli boş kalıyordu;
+ * bu fonksiyon ilk istekte idempotent olarak tabloyu + indeksleri oluşturur.
+ */
+async function takipTablosunuKur(): Promise<void> {
+  if (takipTablosuDenendi || !pool) return;
+  takipTablosuDenendi = true;
+  try {
+    await pool.query(`
+      create table if not exists site_takip (
+        id bigint generated always as identity primary key,
+        olusturma timestamptz not null default now(),
+        olay varchar(20) not null default 'ziyaret',
+        kaynak varchar(20) not null default '',
+        email varchar(200),
+        ulke varchar(10) not null default '',
+        yol varchar(200) not null default ''
+      );
+      create index if not exists site_takip_olusturma_idx on site_takip(olusturma);
+      create index if not exists site_takip_email_idx on site_takip(email);
+      alter table site_takip enable row level security;
+    `);
+  } catch {
+    // DB yok / yetki yok: panel uyarı gösterir, istekler bozulmaz.
+    return;
+  }
+  // Düz Postgres'te bu roller olmayabilir; tablo yine de kurulmuş olur.
+  await pool
+    .query(`
+      grant insert on public.site_takip to anon, authenticated;
+      grant usage, select on sequence public.site_takip_id_seq to anon, authenticated, service_role;
+      grant all on public.site_takip to service_role;
+    `)
+    .catch(() => undefined);
+}
+
 async function supaVe() {
   const { createServiceClient } = await import("./supabase/server");
   return createServiceClient();
@@ -36,6 +76,7 @@ async function supaVe() {
 
 /** Olay kaydet (sunucu tarafı). Hint verirse hata at, sessiz kalmayı çağıran seçer. */
 export async function takipKaydet(olay: Omit<TakipOlayi, "olusturma">): Promise<void> {
+  await takipTablosunuKur();
   const satir: TakipOlayi = { olusturma: new Date().toISOString(), ...olay };
   if (takipServisiAcik()) {
     const supa = await supaVe();
@@ -56,6 +97,7 @@ export async function takipKaydet(olay: Omit<TakipOlayi, "olusturma">): Promise<
 
 /** Ham olaylar (son N gün). Yerel modda tam dosya okunup süzülür. */
 export async function takipHam(gun: number): Promise<TakipOlayi[]> {
+  await takipTablosunuKur();
   const sinir = new Date(Date.now() - gun * 24 * 60 * 60 * 1000).toISOString();
   if (takipServisiAcik()) {
     const supa = await supaVe();

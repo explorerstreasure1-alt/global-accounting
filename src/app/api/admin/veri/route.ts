@@ -45,7 +45,7 @@ export async function GET() {
 
   const uyari = takipServisiAcik()
     ? olaylar.length === 0
-      ? "Supabase açıldı ama kayıt görünmüyor — `site_takip` tablosunu oluşturmak için schema.sql'deki SQL'i Supabase SQL Editor'de çalıştır."
+      ? "Supabase açık ama henüz kayıt yok. Tablo yoksa otomatik oluşturulur; Vercel'de DATABASE_URL tanımlı değilse schema.sql içindeki site_takip SQL'ini Supabase SQL Editor'de bir kez çalıştır."
       : ""
     : saasConfigured()
       ? "SUPABASE_SERVICE_ROLE_KEY eksik — kayıtlar sunucunun geçici hafızasına gidiyor; bulut kalıcılığı için Vercel env'ine anahtarı ekle."
