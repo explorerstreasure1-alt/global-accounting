@@ -131,12 +131,15 @@ export default function AdminPanel() {
         body: JSON.stringify({ sifre }),
       });
       const j = (await r.json()) as { ok?: boolean; hata?: string };
+      // Şifre bellekte kalmasın: ister doğru ister yanlış, denemeden hemen sil.
+      setSifre("");
       if (!r.ok || !j.ok) {
         setHata(j.hata || "Şifre yanlış.");
         return;
       }
       await yukle();
     } catch {
+      setSifre("");
       setHata("Bağlantı sorunu.");
     } finally {
       setGiriliyor(false);
@@ -168,7 +171,10 @@ export default function AdminPanel() {
           <p className="mt-1 text-center text-xs text-slate-500">Gizli şifreyle girilir.</p>
           <input
             type="password"
+            name="y-gizli"
             required
+            autoComplete="new-password"
+            spellCheck={false}
             value={sifre}
             onChange={(e) => setSifre(e.target.value)}
             placeholder="Şifre"
