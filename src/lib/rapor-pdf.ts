@@ -13,6 +13,9 @@ const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   es: { intl: "es-ES", currency: "EUR" },
   ar: { intl: "ar-SA", currency: "SAR" },
   ru: { intl: "ru-RU", currency: "RUB" },
+  fa: { intl: "fa-IR", currency: "IRR" },
+  he: { intl: "he-IL", currency: "ILS" },
+  ku: { intl: "ku-TR", currency: "TRY" },
 };
 
 /**

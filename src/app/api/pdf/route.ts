@@ -15,6 +15,9 @@ const DAMGA: Record<string, Record<string, string>> = {
   es: { defter: "LIBRO", z: "INFORME Z", gunsonu: "DÍA", aysonu: "MES", karzarar: "P&P", ozet: "RESUMEN" },
   ar: { defter: "الدفتر", z: "تقرير Z", gunsonu: "اليوم", aysonu: "الشهر", karzarar: "ربح", ozet: "ملخص" },
   ru: { defter: "КНИГА", z: "Z-ОТЧЁТ", gunsonu: "ДЕНЬ", aysonu: "МЕСЯЦ", karzarar: "П&У", ozet: "ИТОГ" },
+  fa: { defter: "دفتر", z: "گزارش Z", gunsonu: "روز", aysonu: "ماه", karzarar: "سود", ozet: "خلاصه" },
+  he: { defter: "ספר", z: "דוח Z", gunsonu: "יום", aysonu: "חודש", karzarar: "רווח", ozet: "סיכום" },
+  ku: { defter: "DEFT", z: "RAPORA Z", gunsonu: "ROJ", aysonu: "MEH", karzarar: "QEZENC", ozet: "KURTE" },
 };
 
 export async function GET(request: Request) {

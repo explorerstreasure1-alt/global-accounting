@@ -11,6 +11,9 @@ const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   es: { intl: "es-ES", currency: "EUR" },
   ar: { intl: "ar-SA", currency: "SAR" },
   ru: { intl: "ru-RU", currency: "RUB" },
+  fa: { intl: "fa-IR", currency: "IRR" },
+  he: { intl: "he-IL", currency: "ILS" },
+  ku: { intl: "ku-TR", currency: "TRY" },
 };
 
 const L: Record<string, Record<string, string>> = {
@@ -21,6 +24,9 @@ const L: Record<string, Record<string, string>> = {
   es: { summary: "Resumen", daily: "Desglose diario", receipts: "Lista recibos", date: "Fecha", cash: "Efectivo", card: "Tarjeta", transfer: "Transferencia", income: "Ingresos", expense: "Gastos", net: "Neto", totalIn: "Ingresos totales", totalEx: "Gastos totales", grandNet: "Neto general", opening: "Apertura", closing: "Cierre", count: "Líneas", desc: "Descripción", cat: "Categoría", pay: "Pago", prepared: "preparado" },
   ar: { summary: "ملخص", daily: "تفصيل يومي", receipts: "قائمة الإيصالات", date: "التاريخ", cash: "نقد", card: "بطاقة", transfer: "تحويل", income: "الدخل", expense: "المصروف", net: "الصافي", totalIn: "إجمالي الدخل", totalEx: "إجمالي المصروف", grandNet: "الصافي العام", opening: "افتتاحي", closing: "ختامي", count: "سجلات", desc: "الوصف", cat: "الفئة", pay: "الدفع", prepared: "أُعد" },
   ru: { summary: "Итог", daily: "По дням", receipts: "Чеки", date: "Дата", cash: "Нал", card: "Карта", transfer: "Перевод", income: "Доход", expense: "Расход", net: "Нетто", totalIn: "Всего доход", totalEx: "Всего расход", grandNet: "Итого нетто", opening: "Начало", closing: "Конец", count: "Записи", desc: "Описание", cat: "Категория", pay: "Оплата", prepared: "подготовлен" },
+  fa: { summary: "خلاصه", daily: "تفکیک روزانه", receipts: "فهرست فیش‌ها", date: "تاریخ", cash: "نقد", card: "کارت", transfer: "انتقال", income: "درآمد", expense: "هزینه", net: "خالص", totalIn: "کل درآمد", totalEx: "کل هزینه", grandNet: "خالص کل", opening: "افتتاحیه", closing: "اختتامیه", count: "رکورد", desc: "توضیح", cat: "دسته", pay: "پرداخت", prepared: "آماده‌شده" },
+  he: { summary: "סיכום", daily: "פירוט יומי", receipts: "רשימת קבלות", date: "תאריך", cash: "מזומן", card: "כרטיס", transfer: "העברה", income: "הכנסה", expense: "הוצאה", net: "נטו", totalIn: "סה״כ הכנסה", totalEx: "סה״כ הוצאה", grandNet: "נטו כללי", opening: "פתיחה", closing: "סגירה", count: "רשומות", desc: "תיאור", cat: "קטגוריה", pay: "תשלום", prepared: "הוכן" },
+  ku: { summary: "Kurte", daily: "Dabeşkirina rojane", receipts: "Lîsteya fişan", date: "Dîrok", cash: "Nakit", card: "Kart", transfer: "Veguhestin", income: "Dahat", expense: "Xerc", net: "Net", totalIn: "Giştî dahat", totalEx: "Giştî xerc", grandNet: "Neta giştî", opening: "Destpêk", closing: "Dawî", count: "Tomar", desc: "Danasîn", cat: "Kategorî", pay: "Dravdan", prepared: "hat amadekirin" },
 };
 
 export function wordBasligi(tip: string, locale = "en"): string {
@@ -32,6 +38,9 @@ export function wordBasligi(tip: string, locale = "en"): string {
     es: { defter: "Libro completo", z: "Informe Z", gunsonu: "Cierre día", aysonu: "Cierre mes", karzarar: "Ganancia-Pérdida", ozet: "Resumen" },
     ar: { defter: "الدفتر الكامل", z: "تقرير Z", gunsonu: "إغلاق اليوم", aysonu: "إغلاق الشهر", karzarar: "ربح-خسارة", ozet: "ملخص" },
     ru: { defter: "Полная книга", z: "Z-отчёт", gunsonu: "Закрытие дня", aysonu: "Закрытие месяца", karzarar: "Прибыль-Убыток", ozet: "Итог" },
+    fa: { defter: "دفتر کامل", z: "گزارش Z", gunsonu: "بستن روز", aysonu: "بستن ماه", karzarar: "سود-زیان", ozet: "خلاصه دوره" },
+    he: { defter: "ספר מלא", z: "דוח Z", gunsonu: "סגירת יום", aysonu: "סגירת חודש", karzarar: "רווח-הפסד", ozet: "סיכום תקופה" },
+    ku: { defter: "Deftera tevahî", z: "Rapora Z", gunsonu: "Girtina rojê", aysonu: "Girtina mehê", karzarar: "Qezenc-Ziyan", ozet: "Kurteya demê" },
   };
   const m = T[locale] ?? T.en;
   return m[tip] ?? m.ozet;
