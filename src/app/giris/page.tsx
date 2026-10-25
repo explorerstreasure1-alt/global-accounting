@@ -5,6 +5,19 @@ import { useRouter } from "next/navigation";
 import { createClient, supabaseConfigured } from "@/lib/supabase/client";
 import { useT } from "@/lib/i18n";
 
+function takipBildir(token: string | undefined, kaynak: "parola" | "kayit") {
+  if (!token) return;
+  // E-posta gönderilmez: sunucu jetonu doğrulayıp e-postayı kendisi okur.
+  void fetch("/api/admin/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ olay: "giris", kaynak, token }),
+    keepalive: true,
+  }).catch(() => {
+    /* takip hatası girişe engel olmasın */
+  });
+}
+
 export default function GirisPage() {
   const router = useRouter();
   const { t } = useT();
@@ -76,20 +89,13 @@ export default function GirisPage() {
           setMode("login");
           return;
         }
+        // Yeni kayıt: oturum hemen açıldıysa kaydı bildir (sunucu jetonu doğrular)
+        takipBildir(data.session.access_token, "kayit");
       } else {
-        const { error } = await supa.auth.signInWithPassword({ email: email.trim(), password });
+        const { data, error } = await supa.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
-        // Şifreli giriş kaydı: yönetici paneline e-posta ile akar (hatasızsa)
-        try {
-          void fetch("/api/admin/track", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ olay: "giris", kaynak: "parola", email: email.trim() }),
-            keepalive: true,
-          });
-        } catch {
-          /* takip hatası girişe engel olmasın */
-        }
+        // Şifreli giriş kaydı: e-posta sunucuda jetondan doğrulanır
+        takipBildir(data.session?.access_token, "parola");
       }
       router.replace(nextPath());
       router.refresh();

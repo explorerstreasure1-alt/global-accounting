@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { ulkeTespit } from "@/lib/ulke";
+import { ulkeTespit, ipTespit, cihazTespit } from "@/lib/ulke";
 import { takipKaydet } from "@/lib/site-takip";
 
 // Supabase OAuth dönüşü: code → session (Google ile giriş için şart)
@@ -28,16 +28,31 @@ export async function GET(request: Request) {
         },
       },
     );
-    await supa.auth.exchangeCodeForSession(code);
-    // Google girişi kaydı: e-posta + ülke → yönetici paneline akar
-    try {
-      const { data: { user } } = await supa.auth.getUser();
-      if (user?.email) {
-        const ulke = await ulkeTespit(request);
-        await takipKaydet({ olay: "giris", kaynak: "google", email: user.email.toLowerCase(), ulke, yol: "/app" });
+    const { error } = await supa.auth.exchangeCodeForSession(code);
+    // Giriş kaydı: e-posta + ülke + IP + cihaz → yönetici paneline akar.
+    // Kaynak artık sağlayıcıdan okunur; e-posta onay / sihirli bağlantı
+    // akışları yanlışlıkla "Google" sayılmaz.
+    if (!error) {
+      try {
+        const { data: { user } } = await supa.auth.getUser();
+        if (user?.email) {
+          const saglayici = String(
+            (user.app_metadata as { provider?: string } | undefined)?.provider || "",
+          );
+          const ulke = await ulkeTespit(request);
+          await takipKaydet({
+            olay: "giris",
+            kaynak: saglayici === "google" ? "google" : "parola",
+            email: user.email.toLowerCase(),
+            ulke,
+            ip: ipTespit(request),
+            cihaz: cihazTespit(request),
+            yol: "/app",
+          });
+        }
+      } catch {
+        /* takip hatası girişe engel olmasın */
       }
-    } catch {
-      /* takip hatası girişe engel olmasın */
     }
   }
   return NextResponse.redirect(new URL(next, url.origin));

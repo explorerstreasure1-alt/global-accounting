@@ -11,7 +11,6 @@ import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
 import { useT } from "@/lib/i18n";
 import { ReportModal, SettingsModal, TelefonModal } from "./ReportModals";
-import { MeslekAnketi } from "./MeslekAnketi";
 import { TakvimPanel } from "./TakvimPanel";
 import { KlavuzPaneli } from "./KlavuzPaneli";
 import { ProBanner } from "./ProBanner";
@@ -27,14 +26,6 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [anketOpen, setAnketOpen] = useState<boolean>(() => {
-    try {
-      const a = yerelAyarDoldur(initial.ayarlar);
-      return !a.meslek;
-    } catch {
-      return false;
-    }
-  });
   const [telefonOpen, setTelefonOpen] = useState(false);
   const router = useRouter();
   const [zOpen, setZOpen] = useState(false);
@@ -219,22 +210,6 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
     } else {
       setToast(t("toast_settingsSaved"));
     }
-  }
-
-  async function kaydetMeslek(meslek: string, hizmetSecimiAcik: boolean, digerHizmet?: string) {
-    try {
-      await saveAyarlar({
-        meslek,
-        hizmetSecimiAcik,
-        // Meslek "Diger" ise kullanıcının yazdığı hizmetler de kayda girer.
-        meslekDiger: meslek === "diger" ? (digerHizmet || "").trim().slice(0, 300) : "",
-      });
-    } catch {
-      // FIX #2: Don't swallow errors — show toast and keep modal open so user can retry.
-      setToast(t("toast_saveFailed"));
-      return;
-    }
-    setAnketOpen(false);
   }
 
   /** Kirayı aylara böl (AI'sız): son kira giderini N taksite ayırır */
@@ -481,12 +456,6 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         </div>
       </div>
 
-      <MeslekAnketi
-        open={anketOpen}
-        ilkMeslek={ayarlar.meslek}
-        onKaydet={(m, acik, digerHizmet) => void kaydetMeslek(m, acik, digerHizmet)}
-        onAtla={() => setAnketOpen(false)}
-      />
       <SettingsModal
         open={settingsOpen}
         ayarlar={ayarlar}

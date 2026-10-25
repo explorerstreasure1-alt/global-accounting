@@ -1,4 +1,5 @@
 ﻿import { promises as fs } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Ayarlar, Kayit, SohbetMesaji } from "./types";
 import { addDays, addMonths, round2, toISODate } from "./format";
@@ -37,10 +38,21 @@ function legacyDir(): string {
   return path.join(process.cwd(), "data");
 }
 
+/**
+ * Vercel/AWS Lambda gibi sunucusuz ortamlarda proje klasörü salt-okunurdur.
+ * Bu yüzden dosya hafızası (DB yoksa devreye giren yedek katman) /tmp altına yazılır.
+ */
+function sunucusuzDir(): string | null {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join(tmpdir(), APP_ADI, "data");
+  }
+  return null;
+}
+
 /** Birincil veri klasörü (dışarıda). */
 export function getDataDir(): string {
   if (process.env.VERILER_DIZIN) return process.env.VERILER_DIZIN;
-  return appDataDir() ?? legacyDir();
+  return sunucusuzDir() ?? appDataDir() ?? legacyDir();
 }
 
 export function getBackupDir(): string {
@@ -119,7 +131,7 @@ function migrateOnce(): Promise<void> {
           await fs.mkdir(hedef, { recursive: true });
           for (const dosya of DATA_FILES) {
             try {
-              await fs.copyFile(path.join(kaynak, dosya), path.join(hedef, dosya));
+              await fs.copyFile(path.join(/*turbopackIgnore: true*/ kaynak, dosya), path.join(/*turbopackIgnore: true*/ hedef, dosya));
             } catch {
               /* tekil dosya hatası taşımayı durdurmasın */
             }
@@ -162,7 +174,7 @@ const DATA_FILES = ["kayitlar.json", "ayarlar.json", "sohbet.json"] as const;
 
 async function readJson<T>(name: string, fallback: T): Promise<T> {
   try {
-    const raw = await fs.readFile(path.join(dataDir(), name), "utf-8");
+    const raw = await fs.readFile(path.join(/*turbopackIgnore: true*/ dataDir(), name), "utf-8");
     return JSON.parse(raw) as T;
   } catch {
     return fallback;
@@ -171,7 +183,7 @@ async function readJson<T>(name: string, fallback: T): Promise<T> {
 
 async function writeJsonAtomic(name: string, value: unknown): Promise<void> {
   await ensureDirs();
-  const full = path.join(dataDir(), name);
+  const full = path.join(/*turbopackIgnore: true*/ dataDir(), name);
   // Eşzamanlı yazımlar çakışmasın diye benzersiz tmp adı (aynı pid'den çift istek gelebilir)
   const tmp = `${full}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(value, null, 2), "utf-8");

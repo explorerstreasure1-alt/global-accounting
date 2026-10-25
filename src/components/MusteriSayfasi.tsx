@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import type { AktifZiyaret, Musteri, Ziyaret } from "@/lib/types";
 import { formatDate, formatMoneyLocale, toISODate } from "@/lib/format";
 import { useT } from "@/lib/i18n";
-import { meslekHizmetleri } from "./MeslekAnketi";
 import { waGonderenOnay, waLink, waMesajKur, waUlkeISO, yerelAyarDoldur, ziyaretKodu } from "@/lib/wa-mesaj";
 import { maskAd, maskSoyad, maskTelefon } from "@/lib/gizlilik";
 import { GlobalBar } from "./GlobalBar";
@@ -100,9 +99,6 @@ export function MusteriSayfasi() {
   const [telefon, setTelefon] = useState("");
   const [hizmet, setHizmet] = useState("");
   const [tutar, setTutar] = useState("");
-  const [meslek, setMeslek] = useState("");
-  const [meslekDiger, setMeslekDiger] = useState("");
-  const [hizmetSecimiAcik, setHizmetSecimiAcik] = useState(true);
   const adRef = useRef<HTMLInputElement | null>(null);
   const hizmetRef = useRef<HTMLInputElement | null>(null);
 
@@ -157,9 +153,6 @@ export function MusteriSayfasi() {
           yorumLink: ay.googleYorumLink ?? "",
           gonderen: ay.whatsappIsletme ?? "",
         });
-        setMeslek(ay.meslek ?? "");
-        setMeslekDiger(ay.meslekDiger ?? "");
-        setHizmetSecimiAcik(ay.hizmetSecimiAcik !== false);
       }
     } catch {
       /* yoksay */
@@ -315,9 +308,6 @@ export function MusteriSayfasi() {
     { id: "borclu", ad: t("cm_borclu") },
   ];
 
-  /** Mesleğe göre hazır hizmet düğmeleri; "Diger"se kullanıcının virgüllü listesi kullanılır. */
-  const hazirHizmetler = meslek === "diger" ? meslekDiger.split(",").map((s) => s.trim()).filter(Boolean) : meslekHizmetleri(meslek);
-
   return (
     <div className="desk-app min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4">
@@ -346,21 +336,8 @@ export function MusteriSayfasi() {
                 <input ref={adRef} value={ad} onChange={(e) => setAd(e.target.value)} placeholder={t("mus_name")} className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
                 <input value={soyad} onChange={(e) => setSoyad(e.target.value)} placeholder={t("mus_surname")} className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
                 <input value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder={t("mus_phone")} inputMode="tel" className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
-                {hizmetSecimiAcik && hazirHizmetler.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {hazirHizmetler.map((h) => (
-                      <button
-                        key={h}
-                        type="button"
-                        onClick={() => setHizmet(h)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${hizmet === h ? "bg-teal-600 text-white" : "bg-white/80 text-slate-700 hover:bg-white"}`}
-                      >
-                        {h}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-                <input value={hizmet} ref={hizmetRef} onChange={(e) => setHizmet(e.target.value)} placeholder={hizmetSecimiAcik ? t("mus_service") : (t("mus_service") + " (manuel)")} className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />              </div>
+                <input value={hizmet} ref={hizmetRef} onChange={(e) => setHizmet(e.target.value)} placeholder={t("mus_service")} className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
+              </div>
               <div className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-[minmax(0,1fr)_auto]">
                 <input value={tutar} onChange={(e) => setTutar(e.target.value)} placeholder={t("mus_price")} inputMode="decimal" className="min-h-[44px] min-w-0 rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 outline-none min-[480px]:min-h-0" />
                 <button type="button" disabled={mesgul} onClick={() => void hizliEkle()} className="min-h-[44px] rounded-xl bg-emerald-600 px-8 py-2 text-sm font-bold text-white disabled:opacity-50 min-[480px]:min-h-0">

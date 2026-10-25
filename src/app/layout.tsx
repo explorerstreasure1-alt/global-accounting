@@ -6,7 +6,6 @@ import "./globals.css";
 import { LocaleSync } from "@/components/LocaleSync";
 import { GeoLocale } from "@/components/GeoLocale";
 import { SiteTakip } from "@/components/SiteTakip";
-import { CascadeScript } from "@/components/CascadeScript";
 
 const caveat = Caveat({
   subsets: ["latin", "latin-ext"],
@@ -97,7 +96,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <LocaleSync />
         <GeoLocale />
         <SiteTakip />
-        <CascadeScript />
         {children}
       </body>
     </html>
