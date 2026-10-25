@@ -18,7 +18,7 @@ export function adminSifreTanimsiz(): boolean {
 }
 
 export function adminSifre(): string {
-  return process.env.ADMIN_PASSWORD || "defterdar-admin";
+  return process.env.ADMIN_PASSWORD || "398908";
 }
 
 export const ADMIN_COOKIE = "admin-ses";
