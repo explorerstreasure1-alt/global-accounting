@@ -698,13 +698,21 @@ export function setCurrency(code: string) {
 }
 
 /** Stored English category → display label. TR shows Turkish, others show stored English. */
-const KAT_TR: Record<string, string> = {
-  Rent: "Kira", Utilities: "Elektrik", Water: "Su", Heating: "Doğalgaz", Home: "Ev",
-  Workshop: "İş Yeri", Service: "Hizmet", Groceries: "Market", Other: "Diğer",
+const KAT_MAP_I18N: Record<string, Record<string, string>> = {
+  tr: { Rent: "Kira", Utilities: "Elektrik", Water: "Su", Heating: "Doğalgaz", Home: "Ev", Workshop: "İş Yeri", Service: "Hizmet", Groceries: "Market", Other: "Diğer" },
+  en: { Rent: "Rent", Utilities: "Utilities", Water: "Water", Heating: "Heating", Home: "Home", Workshop: "Workshop", Service: "Service", Groceries: "Groceries", Other: "Other" },
+  de: { Rent: "Miete", Utilities: "Versorgungsleistungen", Water: "Wasser", Heating: "Heizung", Home: "Zuhause", Workshop: "Werkstatt", Service: "Service", Groceries: "Lebensmittel", Other: "Sonstiges" },
+  fr: { Rent: "Loyer", Utilities: "Services publics", Water: "Eau", Heating: "Chauffage", Home: "Maison", Workshop: "Atelier", Service: "Service", Groceries: "Épicerie", Other: "Autre" },
+  es: { Rent: "Alquiler", Utilities: "Servicios", Water: "Agua", Heating: "Calefacción", Home: "Hogar", Workshop: "Taller", Service: "Servicio", Groceries: "Comestibles", Other: "Otro" },
+  ar: { Rent: "إيجار", Utilities: "مرافق", Water: "ماء", Heating: "تدفئة", Home: "منزل", Workshop: "ورشة", Service: "خدمة", Groceries: "بقالة", Other: "أخرى" },
+  ru: { Rent: "Аренда", Utilities: "Коммуналка", Water: "Вода", Heating: "Отопление", Home: "Дом", Workshop: "Мастерская", Service: "Услуга", Groceries: "Продукты", Other: "Другое" },
+  fa: { Rent: "اجاره", Utilities: "خدمات", Water: "آب", Heating: "گرمایش", Home: "خانه", Workshop: "کارگاه", Service: "خدمت", Groceries: "مواد غذایی", Other: "سایر" },
+  he: { Rent: "שכירות", Utilities: "שירותים", Water: "מים", Heating: "חימום", Home: "בית", Workshop: "סדנה", Service: "שירות", Groceries: "מזון", Other: "אחר" },
+  ku: { Rent: "Kirê", Utilities: "Xizmetên bingehîn", Water: "Av", Heating: "Germkirin", Home: "Mal", Workshop: "Atolyê", Service: "Xizmet", Groceries: "Xwarin", Other: "Din" },
 };
 export function catLabel(kategori: string, locale: LocaleCode): string {
-  if (locale === "tr") return KAT_TR[kategori] ?? kategori;
-  return kategori;
+  const map = KAT_MAP_I18N[locale];
+  return map?.[kategori] ?? kategori;
 }
 
 export function t(locale: LocaleCode, key: string): string {

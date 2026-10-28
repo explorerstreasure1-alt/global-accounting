@@ -281,9 +281,24 @@ const KAT_TR: Record<string, string> = {
   Workshop: "İş Yeri", Service: "Hizmet", Groceries: "Market", Other: "Diğer",
 };
 
-/** Saklanan kategori → seçili dilde etiket (TR hariç saklanan İngilizce aynen). */
+const KAT_MAP: Record<string, Record<string, string>> = {
+  tr: KAT_TR,
+  en: { Rent: "Rent", Utilities: "Utilities", Water: "Water", Heating: "Heating", Home: "Home", Workshop: "Workshop", Service: "Service", Groceries: "Groceries", Other: "Other" },
+  de: { Rent: "Miete", Utilities: "Versorgungsleistungen", Water: "Wasser", Heating: "Heizung", Home: "Zuhause", Workshop: "Werkstatt", Service: "Service", Groceries: "Lebensmittel", Other: "Sonstiges" },
+  fr: { Rent: "Loyer", Utilities: "Services publics", Water: "Eau", Heating: "Chauffage", Home: "Maison", Workshop: "Atelier", Service: "Service", Groceries: "Épicerie", Other: "Autre" },
+  es: { Rent: "Alquiler", Utilities: "Servicios", Water: "Agua", Heating: "Calefacción", Home: "Hogar", Workshop: "Taller", Service: "Servicio", Groceries: "Comestibles", Other: "Otro" },
+  ar: { Rent: "إيجار", Utilities: "مرافق", Water: "ماء", Heating: "تدفئة", Home: "منزل", Workshop: "ورشة", Service: "خدمة", Groceries: "بقالة", Other: "أخرى" },
+  ru: { Rent: "Аренда", Utilities: "Коммуналка", Water: "Вода", Heating: "Отопление", Home: "Дом", Workshop: "Мастерская", Service: "Услуга", Groceries: "Продукты", Other: "Другое" },
+  fa: { Rent: "اجاره", Utilities: "خدمات", Water: "آب", Heating: "گرمایش", Home: "خانه", Workshop: "کارگاه", Service: "خدمت", Groceries: "مواد غذایی", Other: "سایر" },
+  he: { Rent: "שכירות", Utilities: "שירותים", Water: "מים", Heating: "חימום", Home: "בית", Workshop: "סדנה", Service: "שירות", Groceries: "מזון", Other: "אחר" },
+  ku: { Rent: "Kirê", Utilities: "Xizmetên bingehîn", Water: "Av", Heating: "Germkirin", Home: "Mal", Workshop: "Atolyê", Service: "Xizmet", Groceries: "Xwarin", Other: "Din" },
+};
+
+/** Saklanan kategori → seçili dilde etiket. */
 export function kategoriEtiketi(kategori: string, locale?: string): string {
-  if ((locale ?? "en") === "tr") return KAT_TR[kategori] ?? kategori;
+  const loc = (locale ?? "en").toLowerCase();
+  const map = KAT_MAP[loc];
+  if (map) return map[kategori] ?? kategori;
   return kategori;
 }
 

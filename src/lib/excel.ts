@@ -11,6 +11,9 @@ const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   es: { intl: "es-ES", currency: "EUR" },
   ar: { intl: "ar-SA", currency: "SAR" },
   ru: { intl: "ru-RU", currency: "RUB" },
+  fa: { intl: "fa-IR", currency: "IRR" },
+  he: { intl: "he-IL", currency: "ILS" },
+  ku: { intl: "ku-TR", currency: "TRY" },
 };
 
 /**
@@ -39,6 +42,9 @@ export function raporBasligi(tip: string, locale = "en"): string {
     es: { defter: "Libro completo", z: "Informe Z", gunsonu: "Cierre día", aysonu: "Cierre mes", karzarar: "Ganancia-Pérdida", ozet: "Resumen" },
     ar: { defter: "الدفتر الكامل", z: "تقرير Z", gunsonu: "إغلاق اليوم", aysonu: "إغلاق الشهر", karzarar: "ربح-خسارة", ozet: "ملخص" },
     ru: { defter: "Полная книга", z: "Z-отчёт", gunsonu: "Закрытие дня", aysonu: "Закрытие месяца", karzarar: "Прибыль-Убыток", ozet: "Итог" },
+    fa: { defter: "دفتر کامل", z: "گزارش Z", gunsonu: "بستن روز", aysonu: "بستن ماه", karzarar: "سود-زیان", ozet: "خلاصه دوره" },
+    he: { defter: "ספר מלא", z: "דוח Z", gunsonu: "סגירת יום", aysonu: "סגירת חודש", karzarar: "רווח-הפסד", ozet: "סיכום תקופה" },
+    ku: { defter: "Deftera tevahî", z: "Rapora Z", gunsonu: "Girtina rojê", aysonu: "Girtina mehê", karzarar: "Qezenc-Ziyan", ozet: "Kurteya demê" },
   };
   const m = T[locale] ?? T.en;
   if (tip === "defter") return m.defter;
@@ -379,6 +385,9 @@ export function buildMusteriExcel(
     es: { baslik: "Clientes", kolonlar: ["Nombre", "Apellido", "Teléfono", "Visitas", "Total", "Deuda", "Última visita", "Último servicio", "Nota"] },
     ar: { baslik: "العملاء", kolonlar: ["الاسم", "اللقب", "الهاتف", "الزيارات", "الإجمالي", "الدين", "آخر زيارة", "آخر خدمة", "ملاحظة"] },
     ru: { baslik: "Клиенты", kolonlar: ["Имя", "Фамилия", "Телефон", "Визиты", "Итого", "Долг", "Посл. визит", "Посл. услуга", "Заметка"] },
+    fa: { baslik: "مشتریان", kolonlar: ["نام", "نام خانوادگی", "تلفن", "بازدید", "جمع", "بدهی", "آخرین بازدید", "آخرین خدمت", "یادداشت"] },
+    he: { baslik: "לקוחות", kolonlar: ["שם פרטי", "שם משפחה", "טלפון", "ביקורים", "סה״כ", "חוב", "ביקור אחרון", "שירות אחרון", "הערה"] },
+    ku: { baslik: "Xerîdar", kolonlar: ["Nav", "Pêşnav", "Telefon", "Serdan", "Giştî", "Deyn", "Serdana dawî", "Xizmeta dawî", "Têbînî"] },
   };
   const m = T[locale] ?? T.en;
   fmtAktif = '#,##0.00 "' + paraSembol(opts?.currency) + '"';
