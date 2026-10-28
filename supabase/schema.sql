@@ -275,10 +275,12 @@ create table if not exists site_takip (
   email varchar(200),
   ulke varchar(10) not null default '',
   yol varchar(200) not null default '',
+  referer varchar(500) not null default '',
   ip varchar(64) not null default '',
   cihaz varchar(300) not null default ''
 );
 -- Eski tabloya sonradan eklenen alanlar (idempotent)
+alter table site_takip add column if not exists referer varchar(500) not null default '';
 alter table site_takip add column if not exists ip varchar(64) not null default '';
 alter table site_takip add column if not exists cihaz varchar(300) not null default '';
 create index if not exists site_takip_olusturma_idx on site_takip(olusturma);
