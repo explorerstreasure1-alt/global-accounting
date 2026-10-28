@@ -1,7 +1,27 @@
 import { NextResponse } from "next/server";
 import { ulkeTespit, ipTespit, cihazTespit } from "@/lib/ulke";
 import { takipKaydet } from "@/lib/site-takip";
-import { tokenSahibi } from "@/lib/kimlik";
+import { tokenSahibi, type Kimlik } from "@/lib/kimlik";
+import { createClient as sunucuIstemci } from "@/lib/supabase/server";
+
+/**
+ * Sunucudaki Supabase oturum çerezinden kimlik çöz.
+ * Tarayıcı `getSession()` ile token gönderemese bile (çerez bölünmesi,
+ * yenileme yarışı, eski istemci sürümü) e-posta buradan güvenle okunur:
+ * çerez httpOnly değil ama yine de sunucu tarafında doğrulanır.
+ */
+async function cerezKimligi(): Promise<Kimlik | null> {
+  try {
+    const supa = await sunucuIstemci();
+    const { data } = await supa.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return null;
+    // Doğrulama + 2 dk önbellek tokenSahibi içinde.
+    return await tokenSahibi(token);
+  } catch {
+    return null;
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +70,10 @@ export async function POST(request: Request) {
   }
   const olay = body.olay === "giris" ? "giris" : "ziyaret";
 
-  // Kimlik: imzalı jeton → e-posta + sağlayıcı. Yoksa anonim kalır.
-  const kimlik = await tokenSahibi(typeof body.token === "string" ? body.token : null);
+  // Kimlik: önce gövdedeki imzalı jeton, olmazsa sunucudaki oturum çerezi.
+  const kimlik =
+    (await tokenSahibi(typeof body.token === "string" ? body.token : null)) ??
+    (await cerezKimligi());
   const email = kimlik?.email ?? null;
 
   // Doğrulanmamış giriş bildirimi kaydedilmez: sayaçlar yalnızca gerçek
