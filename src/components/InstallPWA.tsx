@@ -13,7 +13,7 @@ export function InstallPWA() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      e.preventDefault();
+      e.preventDefault(); // Tarayıcının banner'ını engelle, custom buton kullan
       setDeferredPrompt(e);
       setShowInstall(true);
       setShowMenu(true); // Otomatik menüyü aç
