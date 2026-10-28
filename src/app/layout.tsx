@@ -6,6 +6,8 @@ import "./globals.css";
 import { LocaleSync } from "@/components/LocaleSync";
 import { GeoLocale } from "@/components/GeoLocale";
 import { SiteTakip } from "@/components/SiteTakip";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { InstallPWA } from "@/components/InstallPWA";
 
 const caveat = Caveat({
   subsets: ["latin", "latin-ext"],
@@ -96,6 +98,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <LocaleSync />
         <GeoLocale />
         <SiteTakip />
+        <ServiceWorkerRegistration />
+        <InstallPWA />
         {children}
       </body>
     </html>
