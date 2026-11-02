@@ -10,6 +10,7 @@ export function InstallPWA() {
   const [showInstall, setShowInstall] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -25,6 +26,8 @@ export function InstallPWA() {
     if (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone) {
       setIsInstalled(true);
     }
+
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
@@ -45,8 +48,6 @@ export function InstallPWA() {
   function toggleMenu() {
     setShowMenu(!showMenu);
   }
-
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
     <div className="fixed bottom-6 right-6 z-50">

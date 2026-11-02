@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { Ayarlar, RaporOzet } from "@/lib/types";
 import { formatMoneyLocale, formatDate, formatDateLong } from "@/lib/format";
 import { gonderRapor, raporCanvas, raporJpgIndir, type GonderFormati } from "@/lib/rapor-gorsel";
@@ -93,10 +93,13 @@ export function ReportModal({
   const [hazirlaniyor, setHazirlaniyor] = useState(false);
   const [gonderSec, setGonderSec] = useState(false);
   const [gonderDurum, setGonderDurum] = useState<string | null>(null);
+  const [showExpensesSection, setShowExpensesSection] = useState(false);
+  const [extractOpen, setExtractOpen] = useState(false);
+  const [extractYearMonth, setExtractYearMonth] = useState("");
+  const [extracting, setExtracting] = useState(false);
   const { t, intl, currency, locale } = useT();
   const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
   const fd = (iso: string) => formatDate(iso, intl);
-  if (!open) return null;
 
   const damgaMetni = damga ?? (singleDate ? t("stamp_gun") : t("stamp_z"));
 
@@ -108,6 +111,55 @@ export function ReportModal({
       return null;
     }
   }
+
+  async function handleExtract() {
+    if (!extractYearMonth || !rapor) return;
+    setExtracting(true);
+    try {
+      const baslangic = `${extractYearMonth}-01`;
+      const d = new Date(Number(extractYearMonth.slice(0, 4)), Number(extractYearMonth.slice(5, 7)), 0);
+      const bitis = `${extractYearMonth}-${String(d.getDate()).padStart(2, "0")}`;
+
+      const giderKayitlar = rapor.kayitlar.filter(
+        (k) => k.tarih >= baslangic && k.tarih <= bitis && k.gider > 0,
+      );
+
+      for (const k of giderKayitlar) {
+        await fetch(`/api/kayitlar/${k.id}`, { method: "DELETE" });
+      }
+
+      setExtractOpen(false);
+      setExtractYearMonth("");
+      onRefresh();
+    } catch {
+      /* ignore */
+    } finally {
+      setExtracting(false);
+    }
+  }
+
+  // Extract expenses from the report
+  const expensesData = useMemo(() => {
+    if (!rapor) return null;
+    const totalGider = rapor.gider;
+    const kategorilerGider = rapor.kategoriler
+      .filter((k) => k.gider > 0)
+      .map((k) => ({ kategori: k.kategori, gider: k.gider, adet: k.adet }));
+    const gunlukGider = rapor.gunler
+      .filter((g) => g.gider > 0)
+      .map((g) => ({ tarih: g.tarih, gider: g.gider, nakitGider: g.nakitGider, kartGider: g.kartGider, havaleGider: g.havaleGider }));
+    const kayitlarGider = rapor.kayitlar
+      .filter((k) => k.gider > 0)
+      .map((k) => ({ tarih: k.tarih, aciklama: k.aciklama, kategori: k.kategori, gider: k.gider, odemeTipi: k.odemeTipi }));
+    return {
+      totalGider,
+      kategorilerGider,
+      gunlukGider,
+      kayitlarGider,
+    };
+  }, [rapor]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/55 p-3 print:static print:bg-white print:p-0">
@@ -150,6 +202,16 @@ export function ReportModal({
           <button onClick={onExcel} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm text-white">
             {t("rep_excel")}
           </button>
+          {!singleDate && rapor && (
+            <>
+              <button
+                onClick={() => setExtractOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-white bg-amber-600 shadow-sm hover:bg-amber-700 transition"
+              >
+                <I name="search" size={14} /> {t("rep_extractExpenses")}
+              </button>
+            </>
+          )}
           <button
             disabled={hazirlaniyor || !rapor}
             onClick={() => {
@@ -339,6 +401,107 @@ export function ReportModal({
                 ))}
               </div>
 
+              {showExpensesSection && expensesData && (
+                <div className="mt-8 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-hand text-2xl text-amber-800">{t("rep_expensesSection")}</h3>
+                    <span className="text-sm text-amber-700 font-semibold">{t("rep_expensesExtracted")}</span>
+                  </div>
+                  <div className="mb-6">
+                    <p className="font-semibold text-amber-900 mb-2">{t("rep_totalExpense")}: {fm(expensesData.totalGider)}</p>
+                    <div className="grid gap-2 md:grid-cols-3">
+                      <div className="rounded-lg bg-white p-3 border border-amber-100">
+                        <p className="text-xs uppercase tracking-wider text-amber-600">{t("pay_cash")}</p>
+                        <p className="text-2xl font-bold text-rose-700 tabular-nums">{fm(expensesData.gunlukGider.reduce((s, g) => s + g.nakitGider, 0))}</p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3 border border-amber-100">
+                        <p className="text-xs uppercase tracking-wider text-amber-600">{t("pay_card")}</p>
+                        <p className="text-2xl font-bold text-rose-700 tabular-nums">{fm(expensesData.gunlukGider.reduce((s, g) => s + g.kartGider, 0))}</p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3 border border-amber-100">
+                        <p className="text-xs uppercase tracking-wider text-amber-600">{t("pay_transfer")}</p>
+                        <p className="text-2xl font-bold text-rose-700 tabular-nums">{fm(expensesData.gunlukGider.reduce((s, g) => s + g.havaleGider, 0))}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4 className="font-hand text-xl text-amber-800 mb-3">{t("rep_categories")}</h4>
+                  <div className="mb-6 grid gap-2 md:grid-cols-2">
+                    {expensesData.kategorilerGider.map((k) => (
+                      <div key={k.kategori} className="flex items-center justify-between rounded-lg bg-white/90 px-3 py-2 text-sm border border-amber-100">
+                        <span>{catLabel(k.kategori, locale)} · {k.adet} {t("nb_ofRows")}</span>
+                        <span className="tabular-nums text-rose-700 font-semibold">{fm(k.gider)}</span>
+                      </div>
+                    ))}
+                    {expensesData.kategorilerGider.length === 0 && (
+                      <p className="text-amber-600 col-span-2 text-center py-4">{t("rep_noRange")}</p>
+                    )}
+                  </div>
+
+                  <h4 className="font-hand text-xl text-amber-800 mb-3">{t("rep_dailyBreak")}</h4>
+                  <div className="mb-6 scroll-thin -mx-1 overflow-x-auto px-1">
+                    <table className="w-full min-w-[560px] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-amber-200 text-left text-xs uppercase tracking-wider text-amber-600">
+                          <th className="py-2">{t("nb_thDate")}</th>
+                          <th>{t("pay_cash")}</th>
+                          <th>{t("pay_card")}</th>
+                          <th>{t("pay_transfer")}</th>
+                          <th>{t("nb_thExpense")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {expensesData.gunlukGider.map((g) => (
+                          <tr key={g.tarih} className="border-b border-amber-100">
+                            <td className="py-1.5">{fd(g.tarih)}</td>
+                            <td>{fm(g.nakitGider)}</td>
+                            <td>{fm(g.kartGider)}</td>
+                            <td>{fm(g.havaleGider)}</td>
+                            <td className="font-semibold text-rose-700">{fm(g.gider)}</td>
+                          </tr>
+                        ))}
+                        {expensesData.gunlukGider.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-4 text-center text-amber-500">{t("rep_noRange")}</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <h4 className="font-hand text-xl text-amber-800 mb-3">{t("rep_receipts")}</h4>
+                  <div className="scroll-thin -mx-1 overflow-x-auto px-1">
+                    <table className="w-full min-w-[560px] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-amber-200 text-left text-xs uppercase tracking-wider text-amber-600">
+                          <th className="py-2">{t("nb_thDate")}</th>
+                          <th>{t("nb_thDesc")}</th>
+                          <th>{t("nb_thCat")}</th>
+                          <th>{t("nb_thPay")}</th>
+                          <th>{t("nb_thExpense")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {expensesData.kayitlarGider.map((k) => (
+                          <tr key={`${k.tarih}-${k.aciklama}`} className="border-b border-amber-100">
+                            <td className="py-1.5">{fd(k.tarih)}</td>
+                            <td>{k.aciklama}</td>
+                            <td>{catLabel(k.kategori, locale)}</td>
+                            <td>{k.odemeTipi === "Nakit" ? t("pay_cash") : k.odemeTipi === "Havale" ? t("pay_transfer") : t("pay_card")}</td>
+                            <td className="text-rose-700 font-semibold">{fm(k.gider)}</td>
+                          </tr>
+                        ))}
+                        {expensesData.kayitlarGider.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-4 text-center text-amber-500">{t("rep_noRange")}</td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               <h3 className="mt-8 font-hand text-2xl">{t("rep_receipts")}</h3>
               <div className="scroll-thin -mx-1 overflow-x-auto px-1">
               <table className="mt-2 w-full min-w-[560px] border-collapse text-sm">
@@ -376,6 +539,38 @@ export function ReportModal({
           )}
         </div>
       </div>
+
+      {extractOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full">
+            <p className="font-hand text-2xl mb-4">{t("rep_cikarAy")}</p>
+            <input
+              type="month"
+              value={extractYearMonth}
+              onChange={(e) => setExtractYearMonth(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm mb-4"
+            />
+            <p className="text-xs text-slate-500 mb-4">
+              {extractYearMonth ? `Seçili: ${extractYearMonth}` : ""}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setExtractOpen(false)}
+                className="rounded-lg px-3 py-1.5 text-sm text-slate-600"
+              >
+                {t("rep_giveUp")}
+              </button>
+              <button
+                onClick={handleExtract}
+                disabled={extracting || !extractYearMonth}
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+              >
+                {extracting ? "…" : t("rep_cikarildi")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

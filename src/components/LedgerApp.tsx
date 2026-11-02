@@ -15,6 +15,7 @@ import { TakvimPanel } from "./TakvimPanel";
 import { KlavuzPaneli } from "./KlavuzPaneli";
 import { ProBanner } from "./ProBanner";
 import { PwaInstallBtn, KurulumModal } from "./PwaInstallBtn";
+import { GiderlerBolumu } from "./GiderlerBolumu";
 
 export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: { gun: number; email: string }; sub?: { plan: string; gun: number; email: string } }) {
   const { t, intl, currency, locale } = useT();
@@ -30,6 +31,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const router = useRouter();
   const [zOpen, setZOpen] = useState(false);
   const [gunOpen, setGunOpen] = useState(false);
+  const [giderBolumuOpen, setGiderBolumuOpen] = useState(false);
   const [zBas, setZBas] = useState(monthRange(now.getFullYear(), now.getMonth() + 1).baslangic);
   const [zBit, setZBit] = useState(monthRange(now.getFullYear(), now.getMonth() + 1).bitis);
   const [gunTarih, setGunTarih] = useState(toISODate());
@@ -363,6 +365,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
             <ToolBtn onClick={() => router.push("/app/musteriler")}><I name="scissors" /> {t("mus_addCustomer")}</ToolBtn>
             <ToolBtn onClick={() => setTakvimOpen(true)}><I name="calendar" /> {t("calendar")}</ToolBtn>
             <ToolBtn onClick={() => setGunOpen(true)}><I name="day" /> {t("day_end")}</ToolBtn>
+            <ToolBtn onClick={() => setGiderBolumuOpen(true)}><I name="list" /> {t("gider_bolumu")}</ToolBtn>
             <ToolBtn onClick={() => setAyOpen(true)}><I name="month" /> {t("month_end")}</ToolBtn>
             <ToolBtn onClick={() => setZOpen(true)}><I name="report" /> {t("z_report")}</ToolBtn>
             <ToolBtn onClick={() => downloadExcel("defter", monthRange(year, month).baslangic, monthRange(year, month).bitis)}>
@@ -490,7 +493,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         onBaslangic={setZBas}
         onBitis={setZBit}
         onClose={() => setZOpen(false)}
-        onRefresh={() => setToast(t("toast_reportReady"))}
+        onRefresh={async () => { await tazeleKayitlar(); setToast(t("toast_reportReady")); }}
         onExcel={() => downloadExcel("z", zBas, zBit)}
         pdfTip="z"
       />
@@ -505,7 +508,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         onBaslangic={setGunTarih}
         onBitis={setGunTarih}
         onClose={() => setGunOpen(false)}
-        onRefresh={() => setToast(t("toast_dayReady"))}
+        onRefresh={async () => { await tazeleKayitlar(); setToast(t("toast_dayReady")); }}
         onExcel={() => downloadExcel("gunsonu", gunTarih, gunTarih)}
         pdfTip="gunsonu"
         singleDate
@@ -521,10 +524,18 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         onBaslangic={setAyBas}
         onBitis={setAyBit}
         onClose={() => setAyOpen(false)}
-        onRefresh={() => setToast(t("toast_monthReady"))}
+        onRefresh={async () => { await tazeleKayitlar(); setToast(t("toast_monthReady")); }}
         onExcel={() => downloadExcel("aysonu", ayBas, ayBit)}
         pdfTip="aysonu"
         damga={t("stamp_ay")}
+      />
+      <GiderlerBolumu
+        open={giderBolumuOpen}
+        onClose={() => setGiderBolumuOpen(false)}
+        kayitlar={kayitlar}
+        onAdd={addKayit}
+        onDelete={deleteKayit}
+        ayarlar={ayarlar}
       />
 
       {toast ? (

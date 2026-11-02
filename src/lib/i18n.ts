@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { globalDicts } from "./i18n-dict";
 
 /** Global locale + theme foundation. Additive, breaks nothing. */
@@ -739,12 +739,28 @@ function dilParaAbonelik(fn: () => void): () => void {
 
 /** Reactive translator hook. Re-renders on language/currency change. */
 export function useT(): { locale: LocaleCode; t: (key: string) => string; intl: string; currency: string } {
-  const locale = useSyncExternalStore<LocaleCode>(dilParaAbonelik, () => getLocale(), () => "en");
+  const [hydrated, setHydrated] = useState(false);
+
+  const locale = useSyncExternalStore<LocaleCode>(
+    dilParaAbonelik,
+    () => {
+      if (!hydrated) return "en";
+      return getLocale();
+    },
+    () => "en",
+  );
+
   const currency = useSyncExternalStore<string>(
     dilParaAbonelik,
-    () => getCurrency(getLocale()),
-    () => getCurrency("en"),
+    () => {
+      if (!hydrated) return "USD";
+      return getCurrency(getLocale());
+    },
+    () => "USD",
   );
+
+  useEffect(() => { setHydrated(true); }, []);
+
   const meta = LOCALE_META[locale] ?? LOCALE_META.en;
   return { locale, t: (key: string) => t(locale, key), intl: meta.intl, currency };
 }

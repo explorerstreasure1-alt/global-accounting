@@ -45,6 +45,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [tariheGit, setTariheGit] = useState("");
   const [arama, setArama] = useState("");
+  const [addingDate, setAddingDate] = useState<string | null>(null);
 
   // Ay değişince yeni satır tarihini o aya çek (geçmişe yazım)
   // React'in önerdiği "render fazında durumu düzelt" deseni: efekt yerine
@@ -67,10 +68,11 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
   // Defter içi arama (açıklama / kategori / ödeme tipi)
   const süzülmüş = useMemo(() => {
     const q = arama.trim().toLocaleLowerCase(intl);
-    if (!q) return rows;
-    return rows.filter((k) =>
-      `${k.aciklama} ${k.kategori} ${k.odemeTipi} ${fd(k.tarih)}`.toLocaleLowerCase(intl).includes(q),
-    );
+    return rows.filter((k) => {
+      const metin =
+        `${k.aciklama} ${k.kategori} ${k.odemeTipi} ${fd(k.tarih)}`.toLocaleLowerCase(intl);
+      return !q || metin.includes(q);
+    });
   }, [rows, arama, intl, fd]);
 
   const gunluk = useMemo(() => {
@@ -253,6 +255,37 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                     </article>
                   ),
                 )}
+                {/* Gün için + butonu — sadece geçmiş günlerde (bugün hariç) */}
+                {tarih < today && (
+                  <>
+                    {addingDate === tarih ? (
+                      <div className="mt-2 rounded-2xl bg-white/35 p-2 ring-1 ring-slate-900/10">
+                        <RowEditor
+                          value={draft}
+                          onChange={setDraft}
+                          onSave={async () => {
+                            await onAdd(draft);
+                            setDraft({ tarih: today.startsWith(prefix) ? today : `${prefix}-01`, aciklama: "", kategori: "Service", gelir: 0, gider: 0, odemeTipi: "Nakit" });
+                            setAddingDate(null);
+                          }}
+                          saving={pending}
+                          saveLabel={pending ? "…" : t("add")}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setDraft({ ...draft, tarih });
+                          setAddingDate(tarih);
+                        }}
+                        className="w-6 h-6 rounded-full border border-black/40 flex items-center justify-center text-black text-[10px] mx-auto mt-2 hover:bg-black/5 transition"
+                        title={t("nb_add")}
+                      >
+                        <I name="add" size={10} />
+                      </button>
+                    )}
+                  </>
+                )}
               </section>
             );
           })}
@@ -266,6 +299,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
           ) : null}
         </div>
 
+        {/* En altta her zaman sabit açık ekleme formu */}
         <div className="mt-3 rounded-2xl bg-white/35 p-2 ring-1 ring-slate-900/10">
           <p className="px-1 pb-1 text-[10px] uppercase tracking-wider text-slate-500">
             {t("nb_newRow")} ({fd(today)})
