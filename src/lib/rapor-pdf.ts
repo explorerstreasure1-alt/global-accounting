@@ -1,9 +1,16 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { jsPDF } from "jspdf";
 import type { Ayarlar, RaporOzet } from "./types";
 import { formatMoneyLocale, formatDate } from "./format";
 import { dilAl, kategoriEtiketi, odemeEtiketi } from "./rapor-dil";
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
 
 const LOCALE_INTL: Record<string, { intl: string; currency: string }> = {
   tr: { intl: "tr-TR", currency: "TRY" },
@@ -35,51 +42,40 @@ let fontCache: { normal: string; bold: string } | null = null;
 let fontSozu: Promise<{ normal: string; bold: string }> | null = null;
 
 /**
- * Font adayları. İlk sırada depoya gömülü DejaVu Sans var: Vercel gibi
- * sunucusuz ortamlarda sistem fontu bulunmadığı için PDF'in her yerde
- * üretilebilmesi gerekir. Sistem fontları yalnızca yedektir.
+ * Fontları HTTP üzerinden yükler (public/fonts/ klasöründen).
+ * Sunucusuz (Vercel) ortamlarda dosya sistemi erişimi sınırlı olduğu için
+ * fetch ile aynı kaynaktan indirilir; bu sayfa her ortamda çalışır.
  */
-function fontAdaylari(): Array<{ normal: string; bold: string }> {
-  const adaylar: Array<{ normal: string; bold: string }> = [
-    {
-      normal: path.join(process.cwd(), "public", "fonts", "DejaVuSans.ttf"),
-      bold: path.join(process.cwd(), "public", "fonts", "DejaVuSans-Bold.ttf"),
-    },
-  ];
-  if (process.platform === "win32") {
-    const kok = process.env.SystemRoot || process.env.WINDIR || "C:\\Windows";
-    adaylar.push({
-      normal: path.join(kok, "Fonts", "arial.ttf"),
-      bold: path.join(kok, "Fonts", "arialbd.ttf"),
-    });
-  }
-  adaylar.push(
-    { normal: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", bold: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" },
-    { normal: "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf", bold: "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf" },
-    { normal: "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", bold: "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" },
-    { normal: "/System/Library/Fonts/Supplemental/Arial.ttf", bold: "/System/Library/Fonts/Supplemental/Arial Bold.ttf" },
-  );
-  return adaylar;
-}
+const FONT_URLS: Array<{ normal: string; bold: string }> = [
+  {
+    normal: "/fonts/DejaVuSans.ttf",
+    bold: "/fonts/DejaVuSans-Bold.ttf",
+  },
+];
 
 async function fontlariYukle(): Promise<{ normal: string; bold: string }> {
   if (fontCache) return fontCache;
-  // Aynı anda gelen PDF istekleri fontu bir kez okusun.
   if (fontSozu) return fontSozu;
   fontSozu = (async () => {
-    for (const aday of fontAdaylari()) {
+    for (const aday of FONT_URLS) {
       try {
-        const normal = await fs.readFile(aday.normal);
-        let bold = normal;
-        try {
-          bold = await fs.readFile(aday.bold);
-        } catch {
-          /* kalın dosya yoksa normal fontu kalın yerine kullan */
+        const [normalRes, boldRes] = await Promise.all([
+          fetch(aday.normal),
+          fetch(aday.bold),
+        ]);
+        if (!normalRes.ok || !boldRes.ok) throw new Error("font fetch failed");
+        const normalBuf = await normalRes.arrayBuffer();
+        let boldBuf = normalBuf;
+        if (aday.bold !== aday.normal) {
+          boldBuf = await boldRes.arrayBuffer();
         }
-        fontCache = { normal: normal.toString("base64"), bold: bold.toString("base64") };
+        fontCache = {
+          normal: arrayBufferToBase64(normalBuf),
+          bold: arrayBufferToBase64(boldBuf),
+        };
         return fontCache;
       } catch {
-        /* sıradaki adaya geç */
+        /* sıradaki kaynağa geç */
       }
     }
     throw new Error(
