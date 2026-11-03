@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient, supabaseConfigured } from "@/lib/supabase/client";
 import { useT } from "@/lib/i18n";
@@ -27,11 +27,32 @@ export default function GirisPage() {
   const [busy, setBusy] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [bilgi, setBilgi] = useState<string | null>(null);
+  // FIX #A/C: OAuth dönüşü başarısız olduğunda /giris?oauth=hata ile gelinir.
+  // Bayrak tutulur (metin değil) ki dil değişince mesaj da doğru dilde görünsün.
+  const [oauthHata, setOauthHata] = useState(false);
+
+  useEffect(() => {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("oauth") !== "hata") return;
+      setOauthHata(true);
+      // Adresten parametreyi temizle: sayfa yenilenince mesaj tekrar çıkmasın.
+      p.delete("oauth");
+      const q = p.toString();
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${q ? `?${q}` : ""}`,
+      );
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   function nextPath(): string {
     try {
       const v = new URLSearchParams(window.location.search).get("next");
-      return v && v.startsWith("/") ? v : "/app";
+      return v && v.startsWith("/") && !v.startsWith("//") ? v : "/app";
     } catch {
       return "/app";
     }
@@ -51,11 +72,16 @@ export default function GirisPage() {
     setBusy(true);
     setHata(null);
     setBilgi(null);
+    setOauthHata(false);
     try {
       const supa = createClient();
+      // FIX #B: kullanıcının gelmek istediği sayfayı koru (proxy ?next=... yazar).
+      const hedef = nextPath();
       const { error } = await supa.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=/app` },
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(hedef)}`,
+        },
       });
       if (error) throw error;
     } catch (err) {
@@ -150,7 +176,9 @@ export default function GirisPage() {
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
           />
           ) : null}
-          {hata ? <p className="text-xs text-rose-700">{hata}</p> : null}
+          {hata || oauthHata ? (
+            <p className="text-xs text-rose-700">{hata ?? t("giris_google_fail")}</p>
+          ) : null}
           {bilgi ? <p className="rounded-xl bg-teal-50 px-3 py-2 text-xs text-teal-900 ring-1 ring-teal-200">{bilgi}</p> : null}
           <button
             type="submit"
