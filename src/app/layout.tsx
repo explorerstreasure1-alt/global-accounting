@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Caveat, DM_Sans, Literata, Noto_Sans, Noto_Sans_Arabic, Noto_Sans_Hebrew } from "next/font/google";
+import { Caveat, DM_Sans, Literata, Noto_Sans, Noto_Sans_Arabic } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { LocaleSync } from "@/components/LocaleSync";
@@ -36,13 +36,6 @@ const notoSans = Noto_Sans({
 const notoArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
   variable: "--font-arabic",
-  weight: ["400", "500", "600", "700"],
-});
-
-// İbranice alfabe için ayrı yazı tipi.
-const notoHebrew = Noto_Sans_Hebrew({
-  subsets: ["hebrew"],
-  variable: "--font-hebrew",
   weight: ["400", "500", "600", "700"],
 });
 
@@ -90,7 +83,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable} ${notoSans.variable} ${notoArabic.variable} ${notoHebrew.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="notebook" translate="no" className={`${caveat.variable} ${literata.variable} ${dmSans.variable} ${notoSans.variable} ${notoArabic.variable}`} suppressHydrationWarning>
       <head suppressHydrationWarning>
         <Script id="locale-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: localeInitScript }} />
       </head>
