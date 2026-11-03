@@ -343,16 +343,28 @@ select {
 @media print {
   @page {
     size: A4;
-    margin: 12mm 10mm 12mm 10mm;
+    margin: 10mm 8mm 12mm 8mm;
   }
 
   body {
     background: white !important;
     color: black !important;
+    overflow: visible !important;
   }
 
   .desk-app {
     background: white !important;
+  }
+
+  /* Tüm ölçüm/debug overlay'leri gizle */
+  [style*="mm"],
+  [class*="measure"],
+  [class*="debug"],
+  [class*="ruler"],
+  .measure-overlay,
+  .print-measure,
+  [data-measure] {
+    display: none !important;
   }
 
   .no-print,
@@ -387,31 +399,45 @@ select {
     overflow: visible !important;
     width: 100% !important;
     max-width: none !important;
+    page-break-inside: avoid;
   }
 
+  /* Tablolar A4'e sığdır, kesilmesin */
   .print-sheet table {
     border-collapse: collapse !important;
+    table-layout: fixed !important;
     width: 100% !important;
-    font-size: 9pt !important;
+    font-size: 8.5pt !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
+  }
+
+  .print-sheet thead {
+    display: table-header-group !important;
   }
 
   .print-sheet th,
   .print-sheet td {
     border: 0.5pt solid #999 !important;
-    padding: 3px 5px !important;
+    padding: 2px 4px !important;
     background: white !important;
     color: black !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
   }
 
   .print-sheet tr {
-    break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  .print-sheet thead {
-    display: table-header-group;
+  .print-sheet tbody tr:last-child td {
+    border-bottom: 0.5pt solid #999 !important;
   }
 
-  /* Stat kartları sayfa içinde bölünmesin */
+  /* Stat kartları bölünmesin */
   .Stat,
   [class*="Stat"] {
     break-inside: avoid !important;
@@ -419,15 +445,17 @@ select {
     border-radius: 0 !important;
     border: 0.5pt solid #cbd5e1 !important;
     background: #f8fafc !important;
+    page-break-after: avoid !important;
   }
 
-  /* Ana bölümler yeni sayfaya başlasın */
+  /* Ana bölümler yeni sayfada başlasın ama bölünebilir */
   h3.font-hand {
     break-before: page;
     break-after: avoid;
     page-break-before: always;
     page-break-after: avoid;
     margin-top: 0 !important;
+    margin-bottom: 4mm !important;
   }
 
   h3.font-hand:first-of-type {
@@ -442,6 +470,7 @@ select {
   [class*="grafik"] {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    page-break-after: avoid !important;
   }
 
   /* Amber gider düşümü kutusu bölünmesin */
@@ -454,7 +483,7 @@ select {
     background: #fffbeb !important;
   }
 
-  /* Tüm rounded corner'ları kaldır (kâğıtta güzel görünsün) */
+  /* Tüm rounded corner'ları kaldır */
   * {
     border-radius: 0 !important;
   }
@@ -511,10 +540,10 @@ select {
     border-width: 0.5pt !important;
   }
 
-  /* Grid'leri tek sütunla yazdır (dar kağıt için) */
+  /* Grid'leri tek sütunla yazdır */
   .print-sheet .grid {
     grid-template-columns: 1fr !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
 
   .print-sheet .md\:grid-cols-4,
@@ -523,23 +552,63 @@ select {
     grid-template-columns: 1fr !important;
   }
 
-  /* Büyük fontları küçült */
+  /* Font boyutlarını kâğıt için ayarla */
   .text-4xl,
   .text-3xl,
   .text-2xl {
-    font-size: 1.5rem !important;
+    font-size: 1.4rem !important;
   }
 
   .text-xl {
-    font-size: 1.125rem !important;
+    font-size: 1.1rem !important;
   }
 
-  /* Sayfa numarası */
+  .text-lg {
+    font-size: 1rem !important;
+  }
+
+  .text-base,
+  .text-sm {
+    font-size: 0.9rem !important;
+  }
+
+  .text-xs {
+    font-size: 0.8rem !important;
+  }
+
+  /* Sayfa numarası altta ortada */
   @bottom-center {
     content: "Sayfa " counter(page) " / " counter(pages);
     font-family: system-ui, sans-serif;
     font-size: 8pt;
     color: #666;
+  }
+
+  /* Fazla boşlukları azalt */
+  .mt-8,
+  .mt-6,
+  .mt-4 {
+    margin-top: 3mm !important;
+  }
+
+  .mb-8,
+  .mb-6,
+  .mb-4 {
+    margin-bottom: 3mm !important;
+  }
+
+  .p-6 {
+    padding: 4mm !important;
+  }
+
+  .px-6 {
+    padding-left: 4mm !important;
+    padding-right: 4mm !important;
+  }
+
+  .py-5 {
+    padding-top: 3mm !important;
+    padding-bottom: 3mm !important;
   }
 }
 
