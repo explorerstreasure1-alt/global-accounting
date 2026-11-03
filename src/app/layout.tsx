@@ -92,7 +92,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <GeoLocale />
         <SiteTakip />
         <ServiceWorkerRegistration />
-        <InstallPWA />
         {children}
       </body>
     </html>
