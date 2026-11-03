@@ -537,7 +537,10 @@ select {
     background: white !important;
   }
 
-  .bg-[#fafafa] {
+  /* FIX: sinif adindaki # karakteri CSS'te kacisli yazilmali (\#),
+     aksi halde lightningcss bunu gecersiz ozellik secici sayip uyari verir
+     ve kural hicbir zaman uygulanmaz. */
+  .bg-\[\#fafafa\] {
     background: white !important;
   }
 
