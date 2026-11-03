@@ -343,7 +343,7 @@ select {
 @media print {
   @page {
     size: A4;
-    margin: 10mm 8mm 12mm 8mm;
+    margin: 8mm 6mm 10mm 6mm;
   }
 
   body {
@@ -356,15 +356,24 @@ select {
     background: white !important;
   }
 
-  /* Tüm ölçüm/debug overlay'leri gizle */
+  /* Tüm ölçüm/debug overlay'leri ve kıvılcım kutuları gizle */
   [style*="mm"],
   [class*="measure"],
   [class*="debug"],
   [class*="ruler"],
   .measure-overlay,
   .print-measure,
-  [data-measure] {
+  [data-measure],
+  [class*="measure-box"],
+  [class*="mm-box"],
+  div[style*="position: absolute"][class*="bg-blue"],
+  div[style*="position: absolute"][class*="bg-cyan"],
+  div[style*="position: absolute"][class*="bg-blue-600"],
+  div[style*="position: absolute"][class*="bg-cyan-600"],
+  .absolute > div[class*="bg-blue"],
+  .absolute > div[class*="bg-cyan"] {
     display: none !important;
+    visibility: hidden !important;
   }
 
   .no-print,
@@ -399,17 +408,19 @@ select {
     overflow: visible !important;
     width: 100% !important;
     max-width: none !important;
-    page-break-inside: avoid;
+    page-break-inside: avoid !important;
   }
 
-  /* Tablolar A4'e sığdır, kesilmesin */
+  /* Tablolar A4'e sığdır, ASLA bölünmesin */
   .print-sheet table {
     border-collapse: collapse !important;
     table-layout: fixed !important;
     width: 100% !important;
-    font-size: 8.5pt !important;
+    font-size: 8pt !important;
+    break-inside: avoid !important;
     page-break-inside: avoid !important;
     overflow: hidden !important;
+    margin-bottom: 4mm !important;
   }
 
   .print-sheet thead {
@@ -419,13 +430,14 @@ select {
   .print-sheet th,
   .print-sheet td {
     border: 0.5pt solid #999 !important;
-    padding: 2px 4px !important;
+    padding: 1.5px 3px !important;
     background: white !important;
     color: black !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
     vertical-align: middle !important;
+    font-size: 8pt !important;
   }
 
   .print-sheet tr {
@@ -433,8 +445,9 @@ select {
     page-break-inside: avoid !important;
   }
 
-  .print-sheet tbody tr:last-child td {
-    border-bottom: 0.5pt solid #999 !important;
+  .print-sheet tbody {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   /* Stat kartları bölünmesin */
@@ -556,24 +569,24 @@ select {
   .text-4xl,
   .text-3xl,
   .text-2xl {
-    font-size: 1.4rem !important;
+    font-size: 1.3rem !important;
   }
 
   .text-xl {
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
   }
 
   .text-lg {
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
   }
 
   .text-base,
   .text-sm {
-    font-size: 0.9rem !important;
+    font-size: 0.85rem !important;
   }
 
   .text-xs {
-    font-size: 0.8rem !important;
+    font-size: 0.75rem !important;
   }
 
   /* Sayfa numarası altta ortada */
@@ -588,27 +601,32 @@ select {
   .mt-8,
   .mt-6,
   .mt-4 {
-    margin-top: 3mm !important;
+    margin-top: 2.5mm !important;
   }
 
   .mb-8,
   .mb-6,
   .mb-4 {
-    margin-bottom: 3mm !important;
+    margin-bottom: 2.5mm !important;
   }
 
   .p-6 {
-    padding: 4mm !important;
+    padding: 3mm !important;
   }
 
   .px-6 {
-    padding-left: 4mm !important;
-    padding-right: 4mm !important;
+    padding-left: 3mm !important;
+    padding-right: 3mm !important;
   }
 
   .py-5 {
-    padding-top: 3mm !important;
-    padding-bottom: 3mm !important;
+    padding-top: 2.5mm !important;
+    padding-bottom: 2.5mm !important;
+  }
+
+  /* Bölümler arası boşluk */
+  .mt-8 {
+    margin-top: 3mm !important;
   }
 }
 
