@@ -94,12 +94,8 @@ export function ReportModal({
   const [gonderSec, setGonderSec] = useState(false);
   const [gonderDurum, setGonderDurum] = useState<string | null>(null);
   const [showExpensesSection, setShowExpensesSection] = useState(false);
-  const [extractOpen, setExtractOpen] = useState(false);
-  const [extractYearMonth, setExtractYearMonth] = useState("");
-  const [extracting, setExtracting] = useState(false);
-  const [giderCikartOpen, setGiderCikartOpen] = useState(false);
-  const [giderCikartLoading, setGiderCikartLoading] = useState(false);
-  const [giderCikartTarih, setGiderCikartTarih] = useState("");
+  const [giderDusumOpen, setGiderDusumOpen] = useState(false);
+  const [giderDusum, setGiderDusum] = useState(false);
   const { t, intl, currency, locale } = useT();
   const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
   const fd = (iso: string) => formatDate(iso, intl);
@@ -115,62 +111,11 @@ export function ReportModal({
     }
   }
 
-  async function handleExtract() {
-    if (!extractYearMonth || !rapor) return;
-    setExtracting(true);
-    try {
-      const baslangic = `${extractYearMonth}-01`;
-      const d = new Date(Number(extractYearMonth.slice(0, 4)), Number(extractYearMonth.slice(5, 7)), 0);
-      const bitis = `${extractYearMonth}-${String(d.getDate()).padStart(2, "0")}`;
-
-      const giderKayitlar = rapor.kayitlar.filter(
-        (k) => k.tarih >= baslangic && k.tarih <= bitis && k.gider > 0,
-      );
-
-      for (const k of giderKayitlar) {
-        await fetch(`/api/kayitlar/${k.id}`, { method: "DELETE" });
-      }
-
-      setExtractOpen(false);
-      setExtractYearMonth("");
-      onRefresh();
-    } catch {
-      /* ignore */
-    } finally {
-      setExtracting(false);
-    }
-  }
-
-  // Deduct total expenses from closing balance via an adjustment record
-  async function handleGiderCikart() {
-    if (!rapor || !giderCikartTarih) return;
-    setGiderCikartLoading(true);
-    try {
-      const totalGider = rapor.gider;
-      if (totalGider <= 0) {
-        setGiderCikartLoading(false);
-        return;
-      }
-      const res = await fetch("/api/kayitlar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tarih: giderCikartTarih,
-          aciklama: `Gider Düşümü — ${fd(rapor.baslangic)} / ${fd(rapor.bitis)}`,
-          kategori: "Other",
-          gelir: totalGider,
-          gider: 0,
-          odemeTipi: "Nakit",
-        }),
-      });
-      if (!res.ok) throw new Error("gider-dusum-hata");
-      setGiderCikartOpen(false);
-      setGiderCikartTarih("");
-      setGiderCikartLoading(false);
-      onRefresh();
-    } catch {
-      setGiderCikartLoading(false);
-    }
+  /** Giderleri ciro ve kapanış bakiyesinden düş (rapor görünümü, veri değiştirmez). */
+  function giderDusumunuUygula() {
+    setGiderDusum(true);
+    setShowExpensesSection(true);
+    setGiderDusumOpen(false);
   }
 
   // Extract expenses from the report
@@ -237,23 +182,10 @@ export function ReportModal({
           <button onClick={onExcel} className="rounded-lg bg-emerald-700 px-3 py-1.5 text-sm text-white">
             {t("rep_excel")}
           </button>
-          {!singleDate && rapor && (
-            <>
-              <button
-                onClick={() => setExtractOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-white bg-amber-600 shadow-sm hover:bg-amber-700 transition"
-              >
-                <I name="search" size={14} /> {t("rep_extractExpenses")}
-              </button>
-            </>
-          )}
           {rapor && (
             <button
-              onClick={() => {
-                setGiderCikartTarih(bitis);
-                setGiderCikartOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-white bg-rose-700 shadow-sm hover:bg-rose-800 transition"
+              onClick={() => setGiderDusumOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-sm text-white shadow-sm transition hover:bg-amber-700"
               title={t("rep_giderCikartTip")}
             >
               <I name="chevD" size={14} /> {t("rep_giderCikart")}
@@ -334,6 +266,7 @@ export function ReportModal({
                         // Alıcı alanı kalktı: rapor işletmenin kendi numarasına gider.
                         alici: ayarlar.whatsappIsletme || ayarlar.whatsappAlici,
                         locale,
+                        currency,
                       });
                       setGonderDurum(
                         sonuc === "whatsapp-acildi"
@@ -396,8 +329,42 @@ export function ReportModal({
               <div className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-3">
                 <Stat label={t("rep_grandNet")} value={fm(rapor.net)} big />
                 <Stat label={t("rep_opening")} value={fm(rapor.acilisBakiyesi)} />
-                <Stat label={t("rep_closing")} value={fm(rapor.kapanisBakiyesi)} big />
+                <Stat
+                  label={t("rep_closing")}
+                  value={fm(rapor.kapanisBakiyesi)}
+                  big
+                  hint={giderDusum ? t("rep_giderDusumBasarili") : undefined}
+                />
               </div>
+
+              {giderDusum && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 p-4 print:break-inside-avoid">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="font-hand text-xl text-amber-900">{t("rep_giderDusum")}</p>
+                    <span className="text-[10px] uppercase tracking-wider text-amber-700">
+                      {t("rep_giderDusumUygulandi")}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-amber-700">{t("rep_giderCiro")}</p>
+                      <p className="tabular-nums text-sm font-semibold text-slate-900">{fm(rapor.gelir)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-amber-700">{t("rep_totalExpense")}</p>
+                      <p className="tabular-nums text-sm font-semibold text-rose-700">−{fm(rapor.gider)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-amber-700">{t("rep_giderSonrasiNet")}</p>
+                      <p className="tabular-nums text-sm font-bold text-emerald-700">{fm(rapor.net)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-amber-700">{t("rep_giderSonrasiKapanis")}</p>
+                      <p className="tabular-nums text-sm font-bold text-slate-900">{fm(rapor.kapanisBakiyesi)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <GrafikCubuklari rapor={rapor} />
 
@@ -587,75 +554,55 @@ export function ReportModal({
         </div>
       </div>
 
-      {extractOpen && (
+      {giderDusumOpen && rapor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full">
-            <p className="font-hand text-2xl mb-4">{t("rep_cikarAy")}</p>
-            <input
-              type="month"
-              value={extractYearMonth}
-              onChange={(e) => setExtractYearMonth(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm mb-4"
-            />
-            <p className="text-xs text-slate-500 mb-4">
-              {extractYearMonth ? `Seçili: ${extractYearMonth}` : ""}
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <p className="font-hand mb-1 text-2xl">{t("rep_giderCikart")}</p>
+            <p className="mb-4 text-xs text-slate-500">
+              {fd(rapor.baslangic)} — {fd(rapor.bitis)}
             </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setExtractOpen(false)}
-                className="rounded-lg px-3 py-1.5 text-sm text-slate-600"
-              >
-                {t("rep_giveUp")}
-              </button>
-              <button
-                onClick={handleExtract}
-                disabled={extracting || !extractYearMonth}
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-              >
-                {extracting ? "…" : t("rep_cikarildi")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Giderleri Çıkart onay dialog'u */}
-      {giderCikartOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full">
-            <p className="font-hand text-2xl mb-4">{t("rep_giderCikart")}</p>
-            <p className="text-sm text-slate-600 mb-4">
+            <div className="mb-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-600">{t("rep_giderCiro")}</span>
+                <span className="tabular-nums font-semibold text-slate-900">{fm(rapor.gelir)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-600">{t("rep_totalExpense")}</span>
+                <span className="tabular-nums font-semibold text-rose-700">−{fm(rapor.gider)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+                <span className="font-semibold text-slate-800">{t("rep_giderSonrasiNet")}</span>
+                <span className="tabular-nums font-bold text-emerald-700">{fm(rapor.net)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+                <span>{t("rep_giderSonrasiKapanis")}</span>
+                <span className="tabular-nums">{fm(rapor.kapanisBakiyesi)}</span>
+              </div>
+            </div>
+
+            <p className="mb-4 text-xs leading-relaxed text-slate-500">
               {t("rep_giderDusumAciklama")}
             </p>
-            <div className="mb-4">
-              <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">
-                Tarih
-              </label>
-              <input
-                type="date"
-                value={giderCikartTarih}
-                onChange={(e) => setGiderCikartTarih(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              />
-            </div>
-            <p className="text-xs text-slate-500 mb-4">
-              {rapor ? `Dönem toplam gideri: ${fm(rapor.gider)}` : ""}
-            </p>
+
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setGiderCikartOpen(false)}
+                onClick={() => setGiderDusumOpen(false)}
                 className="rounded-lg px-3 py-1.5 text-sm text-slate-600"
               >
                 {t("rep_giveUp")}
               </button>
               <button
-                onClick={handleGiderCikart}
-                disabled={giderCikartLoading || !giderCikartTarih}
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
+                onClick={giderDusumunuUygula}
+                disabled={rapor.gider <= 0}
+                className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-bold text-white transition hover:bg-amber-700 disabled:opacity-50"
               >
-                {giderCikartLoading ? "…" : t("rep_giderDusum")}
+                {t("rep_giderUygula")}
               </button>
             </div>
+            {rapor.gider <= 0 && (
+              <p className="mt-3 text-center text-xs text-rose-600">{t("rep_giderYok")}</p>
+            )}
           </div>
         </div>
       )}
@@ -723,11 +670,13 @@ function Stat({
   value,
   accent,
   big,
+  hint,
 }: {
   label: string;
   value: string;
   accent?: boolean;
   big?: boolean;
+  hint?: string;
 }) {
   return (
     <div className={`rounded-xl border border-slate-200 bg-white/80 px-3 py-3 ${big ? "col-span-1" : ""}`}>
@@ -735,6 +684,11 @@ function Stat({
       <p className={`mt-1 font-semibold tabular-nums ${accent ? "text-teal-800" : "text-slate-900"} ${big ? "text-xl" : "text-base"}`}>
         {value}
       </p>
+      {hint ? (
+        <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+          {hint}
+        </span>
+      ) : null}
     </div>
   );
 }

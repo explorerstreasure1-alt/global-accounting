@@ -3,6 +3,7 @@ import { buildRapor, monthRange } from "@/lib/reports";
 import { toISODate } from "@/lib/format";
 import { buildWord, wordBasligi } from "@/lib/word";
 import { resolveDb } from "@/lib/tenant";
+import { icerikYerlesimi } from "@/lib/dosya-adi";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": icerikYerlesimi(filename),
       },
     });
   } catch (err: unknown) {

@@ -58,10 +58,17 @@ export function GiderlerBolumu({ open, onClose, kayitlar, onAdd, onDelete, ayarl
     setPending(true);
     try {
       await onAdd(draft);
-      setDraft({ tarih: today, aciklama: "", kategori: "Service", gelir: 0, gider: 0, odemeTipi: "Nakit" });
+      // Tarih ve ödeme tipi korunur: aynı güne arka arkaya gider eklemek kolaylaşır.
+      setDraft((d) => ({ ...d, aciklama: "", gelir: 0, gider: 0 }));
     } finally {
       setPending(false);
     }
+  }
+
+  function tarihSec(deger: string) {
+    const secili = deger || null;
+    setFiltreTarih(secili);
+    if (secili) setDraft((d) => ({ ...d, tarih: secili }));
   }
 
   async function deleteKayit(id: string) {
@@ -93,31 +100,47 @@ export function GiderlerBolumu({ open, onClose, kayitlar, onAdd, onDelete, ayarl
         </div>
 
         <div className="overflow-y-auto px-6 py-4 flex-1">
-          {/* Tarih odaklı filtre */}
-          <div className="flex items-center gap-2 mb-4">
-            <label className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
-              {t("rep_giderFiltre")}
-            </label>
-            <select
-              value={filtreTarih ?? ""}
-              onChange={(e) => setFiltreTarih(e.target.value || null)}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+          {/* Tarih odaklı filtre + aynı tarihe hızlı kayıt */}
+          <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white/50 p-3">
+            <div className="min-w-[150px] flex-1">
+              <label
+                htmlFor="gider-filtre-tarih"
+                className="mb-1 block text-[10px] uppercase tracking-wider text-slate-500"
+              >
+                {t("rep_giderFiltre")}
+              </label>
+              <input
+                id="gider-filtre-tarih"
+                type="date"
+                value={filtreTarih ?? ""}
+                onChange={(e) => tarihSec(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => tarihSec("")}
+              className={`rounded-lg px-2 py-1.5 text-[11px] transition ${
+                filtreTarih
+                  ? "text-slate-600 hover:bg-slate-100 hover:text-rose-600"
+                  : "bg-[var(--ink)] text-white"
+              }`}
             >
-              <option value="">{t("rep_giderTumTarihler")}</option>
-              {[...new Set(kayitlar.filter((k) => k.gider > 0).map((k) => k.tarih))].sort().reverse().map((tarih) => (
-                <option key={tarih} value={tarih}>
-                  {fd(tarih)}
-                </option>
-              ))}
-            </select>
+              {t("rep_giderTumTarihler")}
+            </button>
             {filtreTarih && (
               <button
-                onClick={() => setFiltreTarih(null)}
-                className="rounded-lg px-2 py-1.5 text-[10px] text-slate-500 hover:text-rose-600"
+                type="button"
+                onClick={() => tarihSec("")}
+                aria-label={t("rep_giderTumTarihler")}
+                className="rounded-lg px-2 py-1.5 text-sm text-slate-400 transition hover:text-rose-600"
               >
                 ✕
               </button>
             )}
+            <span className="ml-auto self-center text-[11px] text-slate-500">
+              {giderKayitlar.length} {t("nb_ofRows")} · {fm(toplamGider)}
+            </span>
           </div>
           <div className="mt-4 rounded-xl bg-white/40 p-3 border border-slate-200 mb-6">
             <p className="px-1 pb-1 text-[10px] uppercase tracking-wider text-slate-500">
@@ -130,11 +153,13 @@ export function GiderlerBolumu({ open, onClose, kayitlar, onAdd, onDelete, ayarl
                 onChange={(e) => setDraft({ ...draft, tarih: e.target.value })}
                 className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
                 title={t("date")}
+                aria-label={t("date")}
               />
               <input
                 value={draft.aciklama}
                 onChange={(e) => setDraft({ ...draft, aciklama: e.target.value })}
                 placeholder={t("nb_descPh")}
+                aria-label={t("description")}
                 className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm"
               />
               <select

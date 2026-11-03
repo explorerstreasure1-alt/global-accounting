@@ -3,6 +3,7 @@ import { buildRapor, monthRange } from "@/lib/reports";
 import { toISODate } from "@/lib/format";
 import { buildExcel, raporBasligi } from "@/lib/excel";
 import { resolveDb } from "@/lib/tenant";
+import { icerikYerlesimi } from "@/lib/dosya-adi";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,10 @@ export async function GET(request: Request) {
     const wb = buildExcel(tip, ayarlar, rapor, { locale, currency });
     const buf = await wb.xlsx.writeBuffer();
     const filename = `${raporBasligi(tip, locale).replace(/ /g, "-")}-${baslangic}-${bitis}.xlsx`;
-    return new NextResponse(Buffer.from(buf), {
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": icerikYerlesimi(filename),
       },
     });
   } catch (err: unknown) {

@@ -32,28 +32,66 @@ const KIRMIZI: [number, number, number] = [185, 28, 28];
 const BANT: [number, number, number] = [247, 243, 232];
 
 let fontCache: { normal: string; bold: string } | null = null;
+let fontSozu: Promise<{ normal: string; bold: string }> | null = null;
 
-const FONT_KANDIDATLARI: Array<{ normal: string; bold: string }> = [
-  { normal: "C:\\Windows\\Fonts\\arial.ttf", bold: "C:\\Windows\\Fonts\\arialbd.ttf" },
-  { normal: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", bold: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" },
-  { normal: "/System/Library/Fonts/Supplemental/Arial.ttf", bold: "/System/Library/Fonts/Supplemental/Arial Bold.ttf" },
-  { normal: "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", bold: "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" },
-];
+/**
+ * Font adayları. İlk sırada depoya gömülü DejaVu Sans var: Vercel gibi
+ * sunucusuz ortamlarda sistem fontu bulunmadığı için PDF'in her yerde
+ * üretilebilmesi gerekir. Sistem fontları yalnızca yedektir.
+ */
+function fontAdaylari(): Array<{ normal: string; bold: string }> {
+  const adaylar: Array<{ normal: string; bold: string }> = [
+    {
+      normal: path.join(process.cwd(), "public", "fonts", "DejaVuSans.ttf"),
+      bold: path.join(process.cwd(), "public", "fonts", "DejaVuSans-Bold.ttf"),
+    },
+  ];
+  if (process.platform === "win32") {
+    const kok = process.env.SystemRoot || process.env.WINDIR || "C:\\Windows";
+    adaylar.push({
+      normal: path.join(kok, "Fonts", "arial.ttf"),
+      bold: path.join(kok, "Fonts", "arialbd.ttf"),
+    });
+  }
+  adaylar.push(
+    { normal: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", bold: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" },
+    { normal: "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf", bold: "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf" },
+    { normal: "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", bold: "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" },
+    { normal: "/System/Library/Fonts/Supplemental/Arial.ttf", bold: "/System/Library/Fonts/Supplemental/Arial Bold.ttf" },
+  );
+  return adaylar;
+}
 
 async function fontlariYukle(): Promise<{ normal: string; bold: string }> {
   if (fontCache) return fontCache;
-  let sonHata: unknown = null;
-  for (const { normal, bold } of FONT_KANDIDATLARI) {
-    try {
-      const nBuf = await fs.readFile(normal);
-      const bBuf = await fs.readFile(bold);
-      fontCache = { normal: nBuf.toString("base64"), bold: bBuf.toString("base64") };
-      return fontCache;
-    } catch (e) {
-      sonHata = e;
+  // Aynı anda gelen PDF istekleri fontu bir kez okusun.
+  if (fontSozu) return fontSozu;
+  fontSozu = (async () => {
+    for (const aday of fontAdaylari()) {
+      try {
+        const normal = await fs.readFile(aday.normal);
+        let bold = normal;
+        try {
+          bold = await fs.readFile(aday.bold);
+        } catch {
+          /* kalın dosya yoksa normal fontu kalın yerine kullan */
+        }
+        fontCache = { normal: normal.toString("base64"), bold: bold.toString("base64") };
+        return fontCache;
+      } catch {
+        /* sıradaki adaya geç */
+      }
     }
+    throw new Error(
+      "PDF fontu bulunamadı. public/fonts/DejaVuSans.ttf dosyasının depoda olduğundan emin olun.",
+    );
+  })();
+  try {
+    return await fontSozu;
+  } catch (e) {
+    fontSozu = null;
+    throw e;
   }
-  throw sonHata ?? new Error("Arial font bulunamadı");
 }
 
 function yeniSayfaGerekirse(doc: jsPDF, y: number, gereken: number): number {

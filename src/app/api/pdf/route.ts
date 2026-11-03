@@ -4,6 +4,7 @@ import { toISODate } from "@/lib/format";
 import { raporBasligi } from "@/lib/excel";
 import { raporPdfUret } from "@/lib/rapor-pdf";
 import { resolveDb } from "@/lib/tenant";
+import { icerikYerlesimi } from "@/lib/dosya-adi";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": icerikYerlesimi(filename),
       },
     });
   } catch (err: unknown) {

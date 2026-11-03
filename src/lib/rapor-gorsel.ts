@@ -366,9 +366,11 @@ export async function gonderRapor(opts: {
   bitis: string;
   alici: string;
   locale?: string;
+  currency?: string;
 }): Promise<"whatsapp-acildi" | "indirildi" | "hata"> {
   const { format, canvas, rapor, isletmeAdi, baslik, tip, baslangic, bitis, alici } = opts;
   const d = dilAl(opts.locale);
+  const dilParam = `&locale=${encodeURIComponent(opts.locale ?? "en")}&currency=${encodeURIComponent(opts.currency ?? "USD")}`;
   try {
     let blob: Blob | null = null;
     let ad = "";
@@ -377,12 +379,12 @@ export async function gonderRapor(opts: {
       blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.92));
       ad = dosyaAdi(baslik, rapor, "jpg");
     } else if (format === "pdf") {
-      const res = await fetch(`/api/pdf?tip=${encodeURIComponent(tip)}&baslangic=${baslangic}&bitis=${bitis}`);
+      const res = await fetch(`/api/pdf?tip=${encodeURIComponent(tip)}&baslangic=${baslangic}&bitis=${bitis}${dilParam}`);
       if (!res.ok) return "hata";
       blob = await res.blob();
       ad = dosyaAdi(baslik, rapor, "pdf");
     } else {
-      const res = await fetch(`/api/export?tip=${encodeURIComponent(tip)}&baslangic=${baslangic}&bitis=${bitis}`);
+      const res = await fetch(`/api/export?tip=${encodeURIComponent(tip)}&baslangic=${baslangic}&bitis=${bitis}${dilParam}`);
       if (!res.ok) return "hata";
       blob = await res.blob();
       ad = dosyaAdi(baslik, rapor, "xlsx");
