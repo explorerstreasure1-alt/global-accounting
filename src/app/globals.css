@@ -341,15 +341,22 @@ select {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 12mm 10mm 12mm 10mm;
+  }
+
   body {
     background: white !important;
+    color: black !important;
   }
 
   .desk-app {
     background: white !important;
   }
 
-  .no-print {
+  .no-print,
+  .no-print * {
     display: none !important;
   }
 
@@ -360,28 +367,179 @@ select {
     background: white !important;
     color: black !important;
     box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
     max-width: none !important;
     width: 100% !important;
+    min-width: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
   }
 
   .print-sheet {
     box-shadow: none !important;
     border: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
   }
 
   .print-sheet table {
     border-collapse: collapse !important;
+    width: 100% !important;
+    font-size: 9pt !important;
   }
 
   .print-sheet th,
   .print-sheet td {
-    border: 1px solid #999 !important;
-    padding: 4px 6px !important;
+    border: 0.5pt solid #999 !important;
+    padding: 3px 5px !important;
+    background: white !important;
+    color: black !important;
   }
 
   .print-sheet tr {
     break-inside: avoid;
+  }
+
+  .print-sheet thead {
+    display: table-header-group;
+  }
+
+  /* Stat kartları sayfa içinde bölünmesin */
+  .Stat,
+  [class*="Stat"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border-radius: 0 !important;
+    border: 0.5pt solid #cbd5e1 !important;
+    background: #f8fafc !important;
+  }
+
+  /* Ana bölümler yeni sayfaya başlasın */
+  h3.font-hand {
+    break-before: page;
+    break-after: avoid;
+    page-break-before: always;
+    page-break-after: avoid;
+    margin-top: 0 !important;
+  }
+
+  h3.font-hand:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  /* Özet kutuları ve grafikler bölünmesin */
+  [class*="grid-cols-2"],
+  [class*="grid-cols-4"],
+  .grafik,
+  [class*="grafik"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Amber gider düşümü kutusu bölünmesin */
+  [class*="border-amber-200"],
+  [class*="bg-amber-50"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border-radius: 0 !important;
+    border: 0.5pt solid #d97706 !important;
+    background: #fffbeb !important;
+  }
+
+  /* Tüm rounded corner'ları kaldır (kâğıtta güzel görünsün) */
+  * {
+    border-radius: 0 !important;
+  }
+
+  /* Gölgeleri kaldır */
+  .shadow,
+  .shadow-md,
+  .shadow-xl,
+  .shadow-2xl,
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+
+  /* Yazı rengini siyahla zorla */
+  .text-slate-900,
+  .text-slate-800,
+  .text-slate-700,
+  .text-slate-600,
+  .text-slate-500,
+  .text-blue-900,
+  .text-amber-900,
+  .text-amber-700,
+  .text-emerald-700,
+  .text-rose-700,
+  .text-teal-800 {
+    color: black !important;
+  }
+
+  .bg-white,
+  .bg-white\/50,
+  .bg-white\/40,
+  .bg-white\/80,
+  .bg-slate-50,
+  .bg-slate-100,
+  .bg-amber-50,
+  .bg-amber-50\/80,
+  .bg-blue-50 {
+    background: white !important;
+  }
+
+  .bg-[#fafafa] {
+    background: white !important;
+  }
+
+  /* Border renklerini gri yap */
+  .border,
+  .border-b,
+  .border-t,
+  .border-slate-200,
+  .border-slate-300,
+  .border-amber-200,
+  .border-amber-100 {
+    border-color: #999 !important;
+    border-width: 0.5pt !important;
+  }
+
+  /* Grid'leri tek sütunla yazdır (dar kağıt için) */
+  .print-sheet .grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .print-sheet .md\:grid-cols-4,
+  .print-sheet .md\:grid-cols-3,
+  .print-sheet .md\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Büyük fontları küçült */
+  .text-4xl,
+  .text-3xl,
+  .text-2xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.125rem !important;
+  }
+
+  /* Sayfa numarası */
+  @bottom-center {
+    content: "Sayfa " counter(page) " / " counter(pages);
+    font-family: system-ui, sans-serif;
+    font-size: 8pt;
+    color: #666;
   }
 }
 
