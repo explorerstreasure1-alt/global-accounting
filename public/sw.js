@@ -6,6 +6,3 @@ self.addEventListener("install", () => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
-self.addEventListener("fetch", () => {
-  // Bilerek boş: istekler olduğu gibi ağa gider.
-});
