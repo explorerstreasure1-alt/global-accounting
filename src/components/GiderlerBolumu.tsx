@@ -31,12 +31,15 @@ export function GiderlerBolumu({ open, onClose, kayitlar, onAdd, onDelete, ayarl
   });
   const [pending, setPending] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [filtreTarih, setFiltreTarih] = useState<string | null>(null);
 
   const giderKayitlar = useMemo(() => {
-    return kayitlar
-      .filter((k) => k.gider > 0)
-      .sort((a, b) => b.tarih.localeCompare(a.tarih));
-  }, [kayitlar]);
+    let result = kayitlar.filter((k) => k.gider > 0);
+    if (filtreTarih) {
+      result = result.filter((k) => k.tarih === filtreTarih);
+    }
+    return result.sort((a, b) => b.tarih.localeCompare(a.tarih));
+  }, [kayitlar, filtreTarih]);
 
   const gunluk = useMemo(() => {
     const map = new Map<string, Kayit[]>();
@@ -90,6 +93,32 @@ export function GiderlerBolumu({ open, onClose, kayitlar, onAdd, onDelete, ayarl
         </div>
 
         <div className="overflow-y-auto px-6 py-4 flex-1">
+          {/* Tarih odaklı filtre */}
+          <div className="flex items-center gap-2 mb-4">
+            <label className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+              {t("rep_giderFiltre")}
+            </label>
+            <select
+              value={filtreTarih ?? ""}
+              onChange={(e) => setFiltreTarih(e.target.value || null)}
+              className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+            >
+              <option value="">{t("rep_giderTumTarihler")}</option>
+              {[...new Set(kayitlar.filter((k) => k.gider > 0).map((k) => k.tarih))].sort().reverse().map((tarih) => (
+                <option key={tarih} value={tarih}>
+                  {fd(tarih)}
+                </option>
+              ))}
+            </select>
+            {filtreTarih && (
+              <button
+                onClick={() => setFiltreTarih(null)}
+                className="rounded-lg px-2 py-1.5 text-[10px] text-slate-500 hover:text-rose-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <div className="mt-4 rounded-xl bg-white/40 p-3 border border-slate-200 mb-6">
             <p className="px-1 pb-1 text-[10px] uppercase tracking-wider text-slate-500">
               {t("nb_giderEkle")}

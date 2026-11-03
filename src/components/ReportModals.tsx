@@ -97,6 +97,9 @@ export function ReportModal({
   const [extractOpen, setExtractOpen] = useState(false);
   const [extractYearMonth, setExtractYearMonth] = useState("");
   const [extracting, setExtracting] = useState(false);
+  const [giderCikartOpen, setGiderCikartOpen] = useState(false);
+  const [giderCikartLoading, setGiderCikartLoading] = useState(false);
+  const [giderCikartTarih, setGiderCikartTarih] = useState("");
   const { t, intl, currency, locale } = useT();
   const fm = (v: number, sym = true) => formatMoneyLocale(v, intl, currency, sym);
   const fd = (iso: string) => formatDate(iso, intl);
@@ -135,6 +138,38 @@ export function ReportModal({
       /* ignore */
     } finally {
       setExtracting(false);
+    }
+  }
+
+  // Deduct total expenses from closing balance via an adjustment record
+  async function handleGiderCikart() {
+    if (!rapor || !giderCikartTarih) return;
+    setGiderCikartLoading(true);
+    try {
+      const totalGider = rapor.gider;
+      if (totalGider <= 0) {
+        setGiderCikartLoading(false);
+        return;
+      }
+      const res = await fetch("/api/kayitlar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tarih: giderCikartTarih,
+          aciklama: `Gider Düşümü — ${fd(rapor.baslangic)} / ${fd(rapor.bitis)}`,
+          kategori: "Other",
+          gelir: totalGider,
+          gider: 0,
+          odemeTipi: "Nakit",
+        }),
+      });
+      if (!res.ok) throw new Error("gider-dusum-hata");
+      setGiderCikartOpen(false);
+      setGiderCikartTarih("");
+      setGiderCikartLoading(false);
+      onRefresh();
+    } catch {
+      setGiderCikartLoading(false);
     }
   }
 
@@ -211,6 +246,18 @@ export function ReportModal({
                 <I name="search" size={14} /> {t("rep_extractExpenses")}
               </button>
             </>
+          )}
+          {rapor && (
+            <button
+              onClick={() => {
+                setGiderCikartTarih(bitis);
+                setGiderCikartOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-white bg-rose-700 shadow-sm hover:bg-rose-800 transition"
+              title={t("rep_giderCikartTip")}
+            >
+              <I name="chevD" size={14} /> {t("rep_giderCikart")}
+            </button>
           )}
           <button
             disabled={hazirlaniyor || !rapor}
@@ -566,6 +613,47 @@ export function ReportModal({
                 className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm text-white disabled:opacity-50"
               >
                 {extracting ? "…" : t("rep_cikarildi")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Giderleri Çıkart onay dialog'u */}
+      {giderCikartOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md w-full">
+            <p className="font-hand text-2xl mb-4">{t("rep_giderCikart")}</p>
+            <p className="text-sm text-slate-600 mb-4">
+              {t("rep_giderDusumAciklama")}
+            </p>
+            <div className="mb-4">
+              <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+                Tarih
+              </label>
+              <input
+                type="date"
+                value={giderCikartTarih}
+                onChange={(e) => setGiderCikartTarih(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              {rapor ? `Dönem toplam gideri: ${fm(rapor.gider)}` : ""}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setGiderCikartOpen(false)}
+                className="rounded-lg px-3 py-1.5 text-sm text-slate-600"
+              >
+                {t("rep_giveUp")}
+              </button>
+              <button
+                onClick={handleGiderCikart}
+                disabled={giderCikartLoading || !giderCikartTarih}
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {giderCikartLoading ? "…" : t("rep_giderDusum")}
               </button>
             </div>
           </div>

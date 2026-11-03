@@ -21,27 +21,32 @@ const DAMGA: Record<string, Record<string, string>> = {
 };
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const tip = url.searchParams.get("tip") || "z";
-  const today = toISODate();
-  const now = new Date();
-  const month = monthRange(now.getFullYear(), now.getMonth() + 1);
-  const baslangic = url.searchParams.get("baslangic") || (tip === "gunsonu" ? today : month.baslangic);
-  const bitis = url.searchParams.get("bitis") || (tip === "gunsonu" ? today : month.bitis);
-  const locale = url.searchParams.get("locale") || "en";
-  const currency = url.searchParams.get("currency") || "USD";
+  try {
+    const url = new URL(request.url);
+    const tip = url.searchParams.get("tip") || "z";
+    const today = toISODate();
+    const now = new Date();
+    const month = monthRange(now.getFullYear(), now.getMonth() + 1);
+    const baslangic = url.searchParams.get("baslangic") || (tip === "gunsonu" ? today : month.baslangic);
+    const bitis = url.searchParams.get("bitis") || (tip === "gunsonu" ? today : month.bitis);
+    const locale = url.searchParams.get("locale") || "en";
+    const currency = url.searchParams.get("currency") || "USD";
 
-  const { db, gate } = await resolveDb();
-  if (gate) return gate;
-  const [kayitlar, ayarlar] = await Promise.all([db.listKayitlar(), db.getAyarlar()]);
-  const rapor = buildRapor(kayitlar, ayarlar, baslangic, bitis);
-  const damgaMap = DAMGA[locale] ?? DAMGA.en;
-  const pdf = await raporPdfUret(rapor, ayarlar, raporBasligi(tip, locale), damgaMap[tip] ?? "REPORT", { locale, currency });
-  const filename = `${raporBasligi(tip, locale).replace(/ /g, "-")}-${baslangic}-${bitis}.pdf`;
-  return new NextResponse(new Uint8Array(pdf), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  });
+    const { db, gate } = await resolveDb();
+    if (gate) return gate;
+    const [kayitlar, ayarlar] = await Promise.all([db.listKayitlar(), db.getAyarlar()]);
+    const rapor = buildRapor(kayitlar, ayarlar, baslangic, bitis);
+    const damgaMap = DAMGA[locale] ?? DAMGA.en;
+    const pdf = await raporPdfUret(rapor, ayarlar, raporBasligi(tip, locale), damgaMap[tip] ?? "REPORT", { locale, currency });
+    const filename = `${raporBasligi(tip, locale).replace(/ /g, "-")}-${baslangic}-${bitis}.pdf`;
+    return new NextResponse(new Uint8Array(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "PDF oluşturulamadı";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

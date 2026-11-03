@@ -255,11 +255,11 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                     </article>
                   ),
                 )}
-                {/* Gün için + butonu — sadece geçmiş günlerde (bugün hariç) */}
+                {/* Gün için zarif, şeffaf + butonu — sadece geçmiş günlerde (bugün hariç) */}
                 {tarih < today && (
                   <>
                     {addingDate === tarih ? (
-                      <div className="mt-2 rounded-2xl bg-white/35 p-2 ring-1 ring-slate-900/10">
+                      <div className="mt-3 rounded-2xl bg-white/25 p-2 ring-1 ring-slate-900/10 backdrop-blur-sm">
                         <RowEditor
                           value={draft}
                           onChange={setDraft}
@@ -278,10 +278,11 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
                           setDraft({ ...draft, tarih });
                           setAddingDate(tarih);
                         }}
-                        className="w-6 h-6 rounded-full border border-black/40 flex items-center justify-center text-black text-[10px] mx-auto mt-2 hover:bg-black/5 transition"
+                        className="w-7 h-7 rounded-full border border-slate-300/50 bg-white/60 backdrop-blur-md flex items-center justify-center text-slate-600 text-[10px] mx-auto mt-3 hover:bg-white/80 hover:border-slate-400 hover:text-[var(--ink)] transition-all active:scale-95"
                         title={t("nb_add")}
+                        aria-label={t("nb_add")}
                       >
-                        <I name="add" size={10} />
+                        <I name="add" size={11} className="text-[var(--ink-soft)]" />
                       </button>
                     )}
                   </>

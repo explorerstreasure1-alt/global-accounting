@@ -33,13 +33,27 @@ const BANT: [number, number, number] = [247, 243, 232];
 
 let fontCache: { normal: string; bold: string } | null = null;
 
+const FONT_KANDIDATLARI: Array<{ normal: string; bold: string }> = [
+  { normal: "C:\\Windows\\Fonts\\arial.ttf", bold: "C:\\Windows\\Fonts\\arialbd.ttf" },
+  { normal: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", bold: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" },
+  { normal: "/System/Library/Fonts/Supplemental/Arial.ttf", bold: "/System/Library/Fonts/Supplemental/Arial Bold.ttf" },
+  { normal: "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", bold: "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" },
+];
+
 async function fontlariYukle(): Promise<{ normal: string; bold: string }> {
   if (fontCache) return fontCache;
-  const kok = process.env.SystemRoot || "C:\\Windows";
-  const normal = await fs.readFile(path.join(kok, "Fonts", "arial.ttf"));
-  const bold = await fs.readFile(path.join(kok, "Fonts", "arialbd.ttf"));
-  fontCache = { normal: normal.toString("base64"), bold: bold.toString("base64") };
-  return fontCache;
+  let sonHata: unknown = null;
+  for (const { normal, bold } of FONT_KANDIDATLARI) {
+    try {
+      const nBuf = await fs.readFile(normal);
+      const bBuf = await fs.readFile(bold);
+      fontCache = { normal: nBuf.toString("base64"), bold: bBuf.toString("base64") };
+      return fontCache;
+    } catch (e) {
+      sonHata = e;
+    }
+  }
+  throw sonHata ?? new Error("Arial font bulunamadı");
 }
 
 function yeniSayfaGerekirse(doc: jsPDF, y: number, gereken: number): number {
