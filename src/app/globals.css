@@ -589,14 +589,6 @@ select {
     font-size: 0.75rem !important;
   }
 
-  /* Sayfa numarası altta ortada */
-  @bottom-center {
-    content: "Sayfa " counter(page) " / " counter(pages);
-    font-family: system-ui, sans-serif;
-    font-size: 8pt;
-    color: #666;
-  }
-
   /* Fazla boşlukları azalt */
   .mt-8,
   .mt-6,
