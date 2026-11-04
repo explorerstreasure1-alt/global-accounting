@@ -2,7 +2,10 @@
 
 import { getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 
-const VARSAYILAN_ULKE: CountryCode = "TR";
+/** Varsayılan ülke sabitlenmedi: her ülkenin kendi cep numarasıyle çalışır.
+   Numara "+90..." veya "+1..." ile başlıyorsa uluslararası kabul edilir,
+   ülke ipucu gereksizdir. */
+export const VARSAYILAN_ULKE: CountryCode | undefined = undefined;
 
 export type WaKind = "alindi" | "azkaldi" | "hazir" | "teslim" | "yorum" | "bilgi";
 
@@ -126,40 +129,60 @@ export function waMesajKur(kind: WaKind, v: Partial<WaVars>, locale: string, oze
 
 /**
  * Yerel numarayı wa.me'nin istediği uluslararası biçime çevirir (E.164, artısız).
- * Önce libphonenumber ile doğrular (0552.../TR → 90552...); tanınmayan yazımlarda
- * eski sezgisel yedeğe düşer (00 öneki atılır, baştaki 0 ülke koduyla değişir).
+ * Önce libphonenumber ile doğrular; numara "+" veya "00" ile başlıyorsa ülke
+ * ipuçuna gerek kalmadan uluslararası olarak çözülür (her ülke için geçerlidir).
+ * Yerel yazıyla (ör. 0552...) gelenlerde verilen `ulke` ipucu kullanılır;
+ * varsayılan olarak Türkiye zorunlu tutulmaz.
  * Geçerli hiçbir şey yoksa "" döner.
  */
-export function waNormalize(telefon: string, ulke: CountryCode = VARSAYILAN_ULKE): string {
+export function waNormalize(telefon: string, ulke?: CountryCode): string {
   const ham = String(telefon ?? "").trim();
   if (!ham) return "";
-  const dogrulanan = parsePhoneNumberFromString(ham, ulke);
-  if (dogrulanan && dogrulanan.isValid()) return dogrulanan.number.replace(/\D/g, "");
+
+  // Zaten uluslararası biçimde (+ veya 00): ülke ipucuna ihtiyaç yok.
+  if (ham.startsWith("+") || ham.startsWith("00")) {
+    const dogrulanan = parsePhoneNumberFromString(ham);
+    if (dogrulanan && dogrulanan.isValid()) return dogrulanan.number.replace(/\D/g, "");
+    let d = ham.replace(/\D/g, "");
+    if (d.startsWith("00")) d = d.slice(2);
+    return d || "";
+  }
+
+  // Yerel yazım: önce verilen ülke ipucuyla dene.
+  if (ulke) {
+    const dogrulanan = parsePhoneNumberFromString(ham, ulke);
+    if (dogrulanan && dogrulanan.isValid()) return dogrulanan.number.replace(/\D/g, "");
+  }
+
+  // İpucun yoksa / çalışmassa: uluslararası yazım şeklinde dene (+" + rakamlar).
+  const dogrulanan2 = parsePhoneNumberFromString(ham);
+  if (dogrulanan2 && dogrulanan2.isValid()) return dogrulanan2.number.replace(/\D/g, "");
+
+  // Son sezgisel yedek: baştaki 0 atılıp ülke kodu eklenemezse olduğu gibi dön.
   let d = ham.replace(/\D/g, "");
   if (!d) return "";
   if (d.startsWith("00")) {
     d = d.slice(2);
-  } else if (d.startsWith("0")) {
-    let kod = "90";
+  } else if (d.startsWith("0") && ulke) {
     try {
-      kod = getCountryCallingCode(ulke);
+      d = getCountryCallingCode(ulke) + d.replace(/^0+/, "");
     } catch {
       /* yoksay */
     }
-    d = kod + d.replace(/^0+/, "");
   }
   return d;
 }
 
-/** Gönderen numarasından ISO ülke kodu (+90552... → "TR"). Bilinmezse "TR". */
-export function waUlkeISO(gonderenNo: string, varsayilan: CountryCode = VARSAYILAN_ULKE): CountryCode {
+/** Gönderen numarasından ISO ülke kodu (+90552... → "TR"). Uluslararası formatta
+   olmayan veya tanınmayan numarada undefined döner (çağıran yer karar verir). */
+export function waUlkeISO(gonderenNo: string): CountryCode | undefined {
   const p = parsePhoneNumberFromString(String(gonderenNo ?? "").trim());
   if (p && p.country) return p.country;
-  return varsayilan;
+  return undefined;
 }
 
 /** Müşteri telefonundan wa.me sohbet linki (bulunamaz numaralara null). */
-export function waLink(telefon: string, metin: string, ulke: CountryCode = VARSAYILAN_ULKE): string | null {
+export function waLink(telefon: string, metin: string, ulke?: CountryCode): string | null {
   const rakam = waNormalize(telefon, ulke);
   if (rakam.length < 10) return null;
   return `https://wa.me/${rakam}?text=${encodeURIComponent(metin.trim())}`;
