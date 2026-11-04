@@ -37,6 +37,43 @@ textarea {
   font: inherit;
 }
 
+/* --- Tarih girdileri (input[type="date"]) ------------------------------
+   Yerel tarih alanı dar kalınca "gg.aa.yyyy" metni takvim ikonunun altında
+   kesiliyordu. Alanı yeterli genişliğe sabitleyip ikonla metin arasına
+   boşluk veriyoruz (Chrome / Edge / Safari). */
+input[type="date"] {
+  /* !important: Tailwind'in min-w-0 / w-* yardımcı sınıfları bunu ezmesin.
+     Tarih alanı daralınca "gg.aa.yyyy" takvim ikonunun altında kesiliyordu. */
+  min-width: 9.5rem !important; /* gg.aa.yyyy + takvim ikonu için yeterli */
+  width: 9.5rem !important;
+  padding-right: 2.1rem !important; /* sağdaki yeşil takvim ikonu için boşluk */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+  overflow: visible;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin: 0 0 0 0.35rem;
+  padding: 0;
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+/* Arapça / Farsça / İbranice: metin sağdan başlar, ikon sola geçer. */
+html[dir="rtl"] input[type="date"] {
+  padding-left: 2.1rem !important;
+  padding-right: 0.2rem !important;
+}
+
 .font-hand {
   font-family: var(--font-caveat), "Segoe Script", cursive;
 }

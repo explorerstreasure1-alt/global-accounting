@@ -117,7 +117,7 @@ export function NotebookPanel({ kayitlar, year, month, focusDate, onJumpDate, on
               min="2015-01-01"
               max="2035-12-31"
               onChange={(e) => setTariheGit(e.target.value)}
-              className="w-28 min-w-0 rounded-lg border border-slate-900/20 bg-white/60 px-2 py-1 text-xs"
+              className="w-40 min-w-0 rounded-lg border border-slate-900/20 bg-white/60 px-2 py-1 text-xs"
               title={t("calendar")}
             />
             <button
