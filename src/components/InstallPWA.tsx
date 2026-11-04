@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, Monitor, Smartphone } from "lucide-react";
+import { Download, Monitor, Smartphone, X } from "lucide-react";
 import { useT } from "@/lib/i18n";
 
 export function InstallPWA() {
@@ -55,15 +55,18 @@ export function InstallPWA() {
         <button
           onClick={toggleMenu}
           className="flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl hover:bg-slate-800 transition-all"
+          aria-label={t("install_app") || "Install App"}
         >
           {isMobile ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
-          {t("install_app") || "Install App"}
+          <span className="hidden sm:inline">{t("install_app") || "Install App"}</span>
         </button>
       ) : (
-        <div className="rounded-2xl bg-white shadow-2xl p-4 w-72">
+        <div className="rounded-2xl bg-white shadow-2xl p-4 w-72 max-w-[90vw]">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-slate-900">{t("pwa_baslik") || "Install the app"}</h3>
-            <button onClick={toggleMenu} className="text-slate-400 hover:text-slate-600">✕</button>
+            <button onClick={toggleMenu} className="text-slate-400 hover:text-slate-600" aria-label={t("common_close") || "Close"}>
+              <X size={18} />
+            </button>
           </div>
           <p className="text-xs text-slate-600 mb-3">{t("pwa_tek") || "Installs to your phone or computer with one tap, opens from an icon."}</p>
 
@@ -72,6 +75,7 @@ export function InstallPWA() {
               onClick={() => { install(); toggleMenu(); }}
               className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
             >
+              <Download size={16} className="mr-2" />
               {t("install_app") || "Install App"}
             </button>
           ) : isInstalled ? (
@@ -87,7 +91,7 @@ export function InstallPWA() {
               )}
               {isMobile && (
                 <div className="p-2 bg-slate-50 rounded-lg">
-                  <p className="font-medium text-slate-900 mb-1">📱 {t("pwa_ios") || "iPhone"}</p>
+                  <p className="font-medium text-slate-900 mb-1">📱 {t("pwa_ios") || "iPhone / Android"}</p>
                   <p>Safari: Share → Add to Home Screen</p>
                   <p>Chrome: Menu → Install app</p>
                 </div>

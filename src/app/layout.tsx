@@ -93,6 +93,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <SiteTakip />
         <ServiceWorkerRegistration />
         {children}
+        <InstallPWA />
       </body>
     </html>
   );

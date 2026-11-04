@@ -1,16 +1,64 @@
 {
+  "id": "/",
   "name": "Shop Ledger — Small Business Ledger",
   "short_name": "Shop Ledger",
-  "description": "Daily income-expense ledger for small businesses",
+  "description": "Daily income-expense ledger for small businesses. Z-report, day/month close, Excel export, backup.",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0b1c30",
+  "display_override": ["window-controls-overlay"],
+  "orientation": "any",
+  "background_color": "#f4f4f2",
   "theme_color": "#16324f",
   "lang": "en",
+  "dir": "ltr",
+  "categories": ["finance", "business", "productivity"],
   "icons": [
-    { "src": "/images/logo-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/images/logo-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/images/logo-48.png", "sizes": "48x48", "type": "image/png", "purpose": "any" },
+    { "src": "/images/logo-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
+    { "src": "/images/logo-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
+    { "src": "/images/logo-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "/images/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/images/logo-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Shop Ledger on mobile"
+    },
+    {
+      "src": "/images/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Shop Ledger on desktop"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Yeni Gider Ekle",
+      "short_name": "Yeni Gider",
+      "description": "Hızlı bir gider kaydı açın",
+      "url": "/app?yeni=gider",
+      "icons": [{ "src": "/images/logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Gün Sonu",
+      "short_name": "Gün Sonu",
+      "description": "Günlük kazanç-zarar raporu",
+      "url": "/app?rapor=gunsonu",
+      "icons": [{ "src": "/images/logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ay Sonu",
+      "short_name": "Ay Sonu",
+      "description": "Aylık özet rapor",
+      "url": "/app?rapor=aysonu",
+      "icons": [{ "src": "/images/logo-192.png", "sizes": "192x192" }]
+    }
   ]
 }

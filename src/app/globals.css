@@ -680,6 +680,218 @@ select {
   .notebook-row {
     row-gap: 6px;
   }
+
+  /* =========================================================================
+     MOBİL HEADER: buton şarşını yatay kaydırmalı yap, az önemli butonları gizle
+     ========================================================================= */
+  .desk-app header .scroll-thin {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .desk-app header .scroll-thin::-webkit-scrollbar {
+    display: none;
+  }
+  .desk-app header .scroll-thin > * {
+    scroll-snap-align: start;
+  }
+  .desk-app header .scroll-thin .ToolBtn {
+    flex-shrink: 0;
+    min-width: 56px;
+    min-height: 56px;
+    padding: 10px 8px;
+    font-size: 11px;
+    border-radius: 12px;
+  }
+  .desk-app header .scroll-thin .ToolBtn > * {
+    font-size: 16px; /* takip etmesi için ikonları biraz büyüt */
+  }
+
+  /* Masaüstünde görünen ama telefonda gereksiz butonları gizle */
+  .mobil-hide {
+    display: none !important;
+  }
+
+  /* =========================================================================
+     MOBİL ALT TAB BAR: etkin durum vurgusu, parmak dostu boyutlar
+     ========================================================================= */
+  .mobil-bar {
+    grid-template-columns: repeat(5, 1fr);
+    padding-top: 6px;
+    padding-bottom: max(env(safe-area-inset-bottom), 10px);
+    gap: 2px;
+  }
+  .mobil-btn {
+    min-height: auto;
+    height: 56px;
+    padding-top: 6px;
+    padding-bottom: max(env(safe-area-inset-bottom), 4px);
+    border-radius: 14px;
+    color: var(--ink-soft);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(75, 72, 66, 0.1);
+  }
+  .mobil-btn:active {
+    background: rgba(75, 72, 66, 0.12);
+    transform: scale(0.96);
+    transition: transform 0.05s;
+  }
+  .mobil-btn.aktif,
+  .mobil-btn[aria-pressed="true"] {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+    box-shadow: 0 2px 8px rgba(22, 50, 79, 0.25);
+  }
+  .mobil-btn svg,
+  .mobil-btn [class*="lucide"] {
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* =========================================================================
+     MOBİL FASSA (Floating Action Button): hızlı ekleme, başparmak bölgesinde
+     ========================================================================= */
+  .mobil-fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom) + var(--mobil-bar-h));
+    z-index: 60;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(22, 50, 79, 0.35);
+    display: grid;
+    place-items: center;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobil-fab:active {
+    transform: scale(0.92);
+    transition: transform 0.05s;
+  }
+
+  /* =========================================================================
+     MOBİL MODAL: tam ekran tabaka, aşağıdan yukarıya akış hissı
+     ========================================================================= */
+  .desk-app [class~="fixed"][class~="inset-0"] > div {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .desk-app [class~="fixed"][class~="inset-0"] > div > div {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* =========================================================================
+     MOBİL FORM: giriş alanları tam genişlikte, butonlar parmak dostu
+     ========================================================================= */
+  .mobil-form-input {
+    min-height: 52px;
+    padding: 12px 14px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+  .mobil-form-btn {
+    min-height: 52px;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    touch-action: manipulation;
+  }
+
+  /* Defter satırları: sil/düzenle butonları daha büyük */
+  .notebook-row button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  /* Satır içi düzenleyici (RowEditor): tek sütun, geniş alanlar */
+  .notebook .grid > input,
+  .notebook .grid > select {
+    min-height: 48px;
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  /* Toplam kartları: 2 sütun, metin kırılmasın */
+  .totals-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+  }
+  .totals-grid .TotalCard,
+  .totals-grid > div {
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Başlık statleri gizle (darbe) */
+  .desk-app header .ml-auto {
+    display: none !important;
+  }
+
+  /* Logoyu biraz küçült */
+  .desk-app header img {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+
+/* =========================================================================
+   EKSTRA DAR EKRAN (≤540px): logo ve başlık küçültülür
+   ========================================================================= */
+@media (max-width: 540px) {
+  .desk-app header p.font-hand {
+    font-size: 1.5rem !important;
+  }
+  .desk-app header .scroll-thin .ToolBtn {
+    min-width: 52px;
+    min-height: 52px;
+    padding: 8px 6px;
+  }
+}
+
+/* =========================================================================
+   YATAY MOD (landscape): telefon yataya dönünce içerik kaybolmasın
+   ========================================================================= */
+@media (max-width: 639px) and (orientation: landscape) {
+  .desk-app [class~="fixed"][class~="inset-0"] > div {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+  .mobil-bar {
+    bottom: max(env(safe-area-inset-bottom), 6px);
+    padding-bottom: max(env(safe-area-inset-bottom), 6px);
+  }
+  .mobil-fab {
+    bottom: calc(10px + env(safe-area-inset-bottom) + var(--mobil-bar-h));
+    right: 10px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
 }
 
 /* === 60x40 müşteri etiketi (ekranda önizleme + baskıda tam ölçü) === */

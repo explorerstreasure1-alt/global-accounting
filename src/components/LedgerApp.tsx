@@ -42,6 +42,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [takvimOpen, setTakvimOpen] = useState(false);
   const [kilavuzOpen, setKilavuzOpen] = useState(true);
   // Telefonda kılavuz paneli defterin altında kalmasın diye kapalı gelsin (hydration sonrası kapatılır, kayma olmaz)
+  const [mobilAktifTab, setMobilAktifTab] = useState<"takvim" | "gun" | "ay" | "z" | "ayarlar" | null>(null);
   useEffect(() => {
     const h = setTimeout(() => {
       if (window.innerWidth < 1280) setKilavuzOpen(false);
@@ -353,7 +354,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
             </span>
           </div>
 
-          <div className="ml-auto hidden items-center gap-2 lg:flex">
+          <div className="ml-auto hidden items-center gap-2 lg:flex mobil-hide">
             <HeaderStat label={t("income")} value={fm(donem.gelir)} />
             <HeaderStat label={t("expense")} value={fm(donem.gider)} />
             <HeaderStat label={t("net")} value={fm(donem.gelir - donem.gider)} />
@@ -544,12 +545,29 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
         </div>
       ) : null}
       <MobilEylemBar
-        onTakvim={() => setTakvimOpen(true)}
-        onGun={() => setGunOpen(true)}
-        onAy={() => setAyOpen(true)}
-        onZ={() => setZOpen(true)}
-        onAyarlar={() => setSettingsOpen(true)}
+        aktifTab={mobilAktifTab}
+        onTakvim={() => { setMobilAktifTab("takvim"); setTakvimOpen(true); }}
+        onGun={() => { setMobilAktifTab("gun"); setGunOpen(true); }}
+        onAy={() => { setMobilAktifTab("ay"); setAyOpen(true); }}
+        onZ={() => { setMobilAktifTab("z"); setZOpen(true); }}
+        onAyarlar={() => { setMobilAktifTab("ayarlar"); setSettingsOpen(true); }}
       />
+
+      {/* Mobil hızlı ekleme butonu (FAB): defterin alt sabit formuna odaklanır */}
+      <button
+        type="button"
+        className="mobil-fab no-print"
+        onClick={() => {
+          // NotebookPanel'in altındaki sabit formu görünür yap / odakla
+          setKilavuzOpen(false);
+          const el = document.querySelector(".notebook");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "end" });
+        }}
+        aria-label={t("nb_add")}
+        title={t("nb_add")}
+      >
+        <I name="add" size={22} className="text-white" />
+      </button>
     </div>
   );
 }
@@ -581,35 +599,37 @@ function MobilEylemBar({
   onAy,
   onZ,
   onAyarlar,
+  aktifTab,
 }: {
   onTakvim: () => void;
   onGun: () => void;
   onAy: () => void;
   onZ: () => void;
   onAyarlar: () => void;
+  aktifTab: string | null;
 }) {
   const { t } = useT();
   return (
     <nav className="mobil-bar no-print">
-      <button type="button" className="mobil-btn" onClick={onTakvim}>
-        <I name="calendar" size={19} />
-        {t("calendar")}
+      <button type="button" className={`mobil-btn ${aktifTab === "takvim" ? "aktif" : ""}`} onClick={onTakvim} aria-pressed={aktifTab === "takvim"}>
+        <I name="calendar" size={20} />
+        <span>{t("calendar")}</span>
       </button>
-      <button type="button" className="mobil-btn" onClick={onGun}>
-        <I name="day" size={19} />
-        {t("day_end")}
+      <button type="button" className={`mobil-btn ${aktifTab === "gun" ? "aktif" : ""}`} onClick={onGun} aria-pressed={aktifTab === "gun"}>
+        <I name="day" size={20} />
+        <span>{t("day_end")}</span>
       </button>
-      <button type="button" className="mobil-btn" onClick={onAy}>
-        <I name="month" size={19} />
-        {t("month_end")}
+      <button type="button" className={`mobil-btn ${aktifTab === "ay" ? "aktif" : ""}`} onClick={onAy} aria-pressed={aktifTab === "ay"}>
+        <I name="month" size={20} />
+        <span>{t("month_end")}</span>
       </button>
-      <button type="button" className="mobil-btn" onClick={onZ}>
-        <I name="report" size={19} />
-        {t("z_report")}
+      <button type="button" className={`mobil-btn ${aktifTab === "z" ? "aktif" : ""}`} onClick={onZ} aria-pressed={aktifTab === "z"}>
+        <I name="report" size={20} />
+        <span>{t("z_report")}</span>
       </button>
-      <button type="button" className="mobil-btn" onClick={onAyarlar}>
-        <I name="settings" size={19} />
-        {t("set_title")}
+      <button type="button" className={`mobil-btn ${aktifTab === "ayarlar" ? "aktif" : ""}`} onClick={onAyarlar} aria-pressed={aktifTab === "ayarlar"}>
+        <I name="settings" size={20} />
+        <span>{t("set_title")}</span>
       </button>
     </nav>
   );
