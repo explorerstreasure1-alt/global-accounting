@@ -40,6 +40,20 @@ export async function getAuthContext(): Promise<AuthContext> {
     await new Promise((r) => setTimeout(r, 800));
     const retry = await supa.from("businesses").select("*").eq("owner_id", user.id).limit(1).single();
     if (!retry.data) {
+      // FIX (döngü): handle_new_user trigger'ı kurulmamış/gecikmişse işletme satırı
+      // hiç oluşmuyordu → /app "işletme yok" deyip /giris'e, proxy de geri /app'e
+      // atıyordu (sonsuz yönlendirme). İşletmeyi burada kendimiz oluşturuyoruz
+      // (RLS: owner_id = auth.uid() ile insert izinli).
+      const { data: yeni } = await supa
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: "My Tailor Shop",
+          trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select("*")
+        .single();
+      if (yeni) return ctxFor(user.id, user.email ?? "", yeni as Business);
       return { mode: "saas", user: { id: user.id, email: user.email ?? "" }, business: null, canUse: false, trialLeft: 0 };
     }
     return ctxFor(user.id, user.email ?? "", retry.data as Business);

@@ -18,7 +18,9 @@ export default async function AppPage() {
     return <LedgerApp initial={initial} />;
   }
 
-  if (!ctx.user || !ctx.business) redirect("/giris");
+  // FIX (döngü): loop=1 → proxy bu isteği tekrar /app'e göndermez; giriş sayfası
+  // açılır ve kullanıcı yeniden deneyebilir (sonsuz yönlendirme kırılır).
+  if (!ctx.user || !ctx.business) redirect("/giris?loop=1&next=/app");
 
   // Trial bitti + free plan → full kilit
   if (!ctx.canUse) {

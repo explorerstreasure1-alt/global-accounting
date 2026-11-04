@@ -137,7 +137,10 @@ async function takipTablosunuKur(): Promise<void> {
   if (takipTablosuDenendi || !pool) return;
   takipTablosuDenendi = true;
   try {
-    await pool.query(`
+    // FIX: tablo kurulumu asılı kalırsa (DB erişilemez / uyku modunda) giriş
+    // akışı sonsuza kadar beklemesin; 3 sn sonra vazgeç, Supabase yoluna geç.
+    await Promise.race([
+      pool.query(`
       create table if not exists site_takip (
         id bigint generated always as identity primary key,
         olusturma timestamptz not null default now(),
@@ -159,9 +162,13 @@ async function takipTablosunuKur(): Promise<void> {
       create index if not exists site_takip_olay_olusturma_idx on site_takip(olay, olusturma desc);
       create index if not exists site_takip_email_olusturma_idx on site_takip(email, olusturma desc);
       alter table site_takip enable row level security;
-    `);
+    `),
+      new Promise((_, reddet) =>
+        setTimeout(() => reddet(new Error("site_takip kurulum zaman aşımı")), 3000),
+      ),
+    ]);
   } catch {
-    // DB yok / yetki yok: panel uyarı gösterir, istekler bozulmaz.
+    // DB yok / yetki yok / zaman aşımı: panel uyarı gösterir, istekler bozulmaz.
     return;
   }
   // Düz Postgres'te bu roller olmayabilir; tablo yine de kurulmuş olur.

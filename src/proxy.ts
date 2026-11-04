@@ -36,6 +36,10 @@ export async function proxy(req: NextRequest) {
 
   if (!saasOn()) return NextResponse.next();
 
+  // FIX (döngü): Yanıt en başta oluşturulur ve tazelenen oturum çerezleri
+  // DOĞRUDAN bu yanıta yazılır. Önceden yönlendirmelerde yeni yanıt
+  // oluşturulduğu için tazelenen çerezler kayboluyor, oturum "yok" sayılıp
+  // /giris ↔ /app arasında sonsuz yönlendirme oluşabiliyordu.
   const res = NextResponse.next();
   const supa = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,17 +57,29 @@ export async function proxy(req: NextRequest) {
 
   const isApp = urlPath === "/app" || urlPath.startsWith("/app/");
   const isAuth = urlPath === "/giris" || urlPath.startsWith("/giris");
+  // loop=1: /app oturumu göremediği için kullanıcıyı girişe attıysa, proxy onu
+  // tekrar /app'e göndermez. Böylece döngü kırılır ve giriş sayfası açılır.
+  const donguKoru = req.nextUrl.searchParams.get("loop") === "1";
+
+  /** Yönlendirme: tazelenen çerezler yeni yanıta taşınır. */
+  const yonlendir = (hedef: string) => {
+    const r = NextResponse.redirect(hedef);
+    res.cookies.getAll().forEach((c) => r.cookies.set(c.name, c.value, c));
+    return r;
+  };
 
   if (isApp && !user) {
     const url = req.nextUrl.clone();
     url.pathname = "/giris";
     url.searchParams.set("next", urlPath);
-    return NextResponse.redirect(url);
+    url.searchParams.set("loop", "1");
+    return yonlendir(url.toString());
   }
-  if (isAuth && user) {
+  if (isAuth && user && !donguKoru) {
     const url = req.nextUrl.clone();
     url.pathname = "/app";
-    return NextResponse.redirect(url);
+    url.search = "";
+    return yonlendir(url.toString());
   }
   return res;
 }
