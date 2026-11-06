@@ -534,7 +534,7 @@ export function EtiketStudyosu() {
                               onBlur={() => setDuzenId(null)}
                               onKeyDown={(e) => { if (e.key === "Escape") (e.target as HTMLTextAreaElement).blur(); }}
                               rows={3}
-                              placeholder="QR — boş = otomatik"
+                              placeholder={t("et_qrPh")}
                               aria-label={z.baslik}
                               className="w-full resize-none rounded bg-slate-900 px-1 py-1 font-mono text-[11px] text-white outline-none"
                             />
@@ -562,7 +562,7 @@ export function EtiketStudyosu() {
                       <button
                         key={z.id}
                         type="button"
-                        title={`${z.baslik} — düzenlemek için tıkla`}
+                        title={t("et_duzenleTip").replace("{alan}", z.baslik)}
                         aria-label={z.baslik}
                         onClick={() => odakla(z.id)}
                         className="absolute rounded border border-transparent hover:border-white/60 hover:bg-white/10 focus-visible:border-slate-300"
@@ -644,13 +644,12 @@ export function EtiketStudyosu() {
             </div>
             <div className="mt-3 rounded-xl bg-sky-500/10 p-3 ring-1 ring-sky-400/40">
               <button type="button" onClick={() => setAcikUyum((v) => !v)} className="mb-1 flex w-full items-center gap-1 text-xs font-bold text-sky-800">
-                <span>🖨️ Yazıcı uyumu</span>
+                <span>🖨️ {t("et_yaziciUyum")}</span>
                 <I name="chevD" size={13} className={`ml-auto transition-transform ${acikUyum ? "rotate-180" : ""}`} />
               </button>
               {acikUyum ? (
                 <p className="text-[11px] leading-snug text-amber-100/80">
-                  Bu etiket baskısı <span className="font-bold text-slate-900">Phomemo D520-BT Bluetooth+USB Termal Yazıcı</span> (Barkod/Adres/Posta
-                  Etiketi, pazaryerleri ile uyumlu) ile uyumludur — bu yazıcıyı alın ve <span className="font-bold text-slate-900">40×60 etiket kağıdı</span> alın.
+                  {t("et_yaziciUyumMetin").replace("{model}", "Phomemo D520-BT Bluetooth+USB").replace("{size}", "40×60")}
                 </p>
               ) : null}
             </div>

@@ -351,3 +351,81 @@ const ku: Record<string, string> = {
 };
 
 export const globalDicts: Record<LocaleCode, Record<string, string>> = { tr, en, de, fr, es, ar, ru, fa, he, ku };
+
+/** Ek çeviriler (etiket stüdyosu + yönetici bağlantısı). Eksik dil en'e düşer. */
+const EKSTRA: Record<string, Record<string, string>> = {
+  tr: {
+    et_qrPh: "QR — boş = otomatik",
+    et_duzenleTip: "{alan} — düzenlemek için tıkla",
+    et_yaziciUyum: "Yazıcı uyumu",
+    et_yaziciUyumMetin: "Bu etiket baskısı {model} termal yazıcı ile uyumludur — bu yazıcıyı alın ve {size} etiket kağıdı alın.",
+    admin_panel: "Yönetici paneli",
+  },
+  en: {
+    et_qrPh: "QR — empty = auto",
+    et_duzenleTip: "{alan} — click to edit",
+    et_yaziciUyum: "Printer compatibility",
+    et_yaziciUyumMetin: "This label printing is compatible with the {model} thermal printer — buy this printer and {size} label paper.",
+    admin_panel: "Admin panel",
+  },
+  de: {
+    et_qrPh: "QR — leer = automatisch",
+    et_duzenleTip: "{alan} — zum Bearbeiten klicken",
+    et_yaziciUyum: "Druckerkompatibilität",
+    et_yaziciUyumMetin: "Dieser Etikettendruck ist mit dem Thermodrucker {model} kompatibel — kaufen Sie diesen Drucker und {size} Etikettenpapier.",
+    admin_panel: "Admin-Panel",
+  },
+  fr: {
+    et_qrPh: "QR — vide = auto",
+    et_duzenleTip: "{alan} — cliquez pour modifier",
+    et_yaziciUyum: "Compatibilité imprimante",
+    et_yaziciUyumMetin: "Cette impression d'étiquette est compatible avec l'imprimante thermique {model} — achetez cette imprimante et du papier {size}.",
+    admin_panel: "Panneau d'administration",
+  },
+  es: {
+    et_qrPh: "QR — vacío = auto",
+    et_duzenleTip: "{alan} — clic para editar",
+    et_yaziciUyum: "Compatibilidad de impresora",
+    et_yaziciUyumMetin: "Esta impresión de etiquetas es compatible con la impresora térmica {model} — compre esta impresora y papel de {size}.",
+    admin_panel: "Panel de administración",
+  },
+  ar: {
+    et_qrPh: "QR — فارغ = تلقائي",
+    et_duzenleTip: "{alan} — انقر للتحرير",
+    et_yaziciUyum: "توافق الطابعة",
+    et_yaziciUyumMetin: "طباعة الملصقات هذه متوافقة مع طابعة حرارية {model} — اشترِ هذه الطابعة وورق ملصقات {size}.",
+    admin_panel: "لوحة الإدارة",
+  },
+  ru: {
+    et_qrPh: "QR — пусто = авто",
+    et_duzenleTip: "{alan} — нажмите для редактирования",
+    et_yaziciUyum: "Совместимость принтера",
+    et_yaziciUyumMetin: "Эта печать этикеток совместима с термопринтером {model} — купите этот принтер и этикеточную бумагу {size}.",
+    admin_panel: "Панель администратора",
+  },
+  fa: {
+    et_qrPh: "QR — خالی = خودکار",
+    et_duzenleTip: "{alan} — برای ویرایش کلیک کنید",
+    et_yaziciUyum: "سازگاری چاپگر",
+    et_yaziciUyumMetin: "این چاپ برچسب با چاپگر حرارتی {model} سازگار است — این چاپگر و کاغذ برچسب {size} را بخرید.",
+    admin_panel: "پنل مدیریت",
+  },
+  he: {
+    et_qrPh: "QR — ריק = אוטומטי",
+    et_duzenleTip: "{alan} — לחץ לעריכה",
+    et_yaziciUyum: "תאימות מדפסת",
+    et_yaziciUyumMetin: "הדפסת תווית זו תואמת למדפסת תרמית {model} — קנה מדפסת זו ונייר תוויות {size}.",
+    admin_panel: "פאנל ניהול",
+  },
+  ku: {
+    et_qrPh: "QR — vala = otomatîk",
+    et_duzenleTip: "{alan} — ji bo sererastkirinê bitikîne",
+    et_yaziciUyum: "Lihevhatina çapkerê",
+    et_yaziciUyumMetin: "Ev çapa etîketê bi çapkera germî {model} re lihevhatî ye — vê çapkerê û kaxeza etîketê {size} bikire.",
+    admin_panel: "Panela rêveberiyê",
+  },
+};
+
+(Object.keys(EKSTRA) as LocaleCode[]).forEach((kod) => {
+  Object.assign(globalDicts[kod], EKSTRA[kod]);
+});

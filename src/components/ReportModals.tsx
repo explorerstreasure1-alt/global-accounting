@@ -307,7 +307,7 @@ export function ReportModal({
                 </p>
               </div>
             </div>
-            <div className="stamp px-3 py-1 text-xs font-bold">{damga ?? (singleDate ? "GÜN SONU" : "Z RAPORU")}</div>
+            <div className="stamp px-3 py-1 text-xs font-bold">{damgaMetni}</div>
           </div>
 
           {rapor ? (

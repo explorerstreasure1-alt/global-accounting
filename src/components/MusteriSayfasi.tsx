@@ -239,6 +239,10 @@ export function MusteriSayfasi() {
   }
 
   async function hazirYap(a: AktifZiyaret) {
+    // Onay ve yeni sekme, tıklama anında (ilk await'ten ÖNCE) açılmalı; aksi halde
+    // tarayıcı popup engelleyicisi WhatsApp penceresini bloklar ve mesaj gitmez.
+    const onay = gonderOnay();
+    const pencere = onay ? window.open("", "_blank") : null;
     setMesgul(true);
     try {
       await fetch("/api/ziyaretler", {
@@ -267,7 +271,12 @@ export function MusteriSayfasi() {
           )
         : null;
       await yukle();
-      if (link && gonderOnay()) window.open(link, "_blank", "noopener");
+      if (onay && link) {
+        if (pencere) pencere.location.href = link;
+        else window.location.href = link;
+      } else if (pencere) {
+        pencere.close();
+      }
     } finally {
       setMesgul(false);
     }
@@ -757,7 +766,12 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
     }
   }
 
-  async function durumDegis(zid: string, durum: import("@/lib/types").ZiyaretDurum) {    setMesgul(true);
+  async function durumDegis(zid: string, durum: import("@/lib/types").ZiyaretDurum) {
+    // Onay ve yeni sekme tıklama anında açılır; await sonrası window.open popup
+    // engeline takıldığı için "hazır" WhatsApp mesajı gitmiyordu.
+    const onay = durum === "hazir" && musteri ? gonderOnayDetay() : false;
+    const pencere = onay ? window.open("", "_blank") : null;
+    setMesgul(true);
     try {
       await fetch("/api/ziyaretler", {
         method: "PATCH",
@@ -778,7 +792,12 @@ function MusteriDetay({ id, wa, locale, onKapat, duzenleAc }: {
           waUlkeISO(wa.gonderen),
         );
         await yukle();
-        if (href && gonderOnayDetay()) window.open(href, "_blank", "noopener");
+        if (onay && href) {
+          if (pencere) pencere.location.href = href;
+          else window.location.href = href;
+        } else if (pencere) {
+          pencere.close();
+        }
         return;
       }
       await yukle();
