@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { GlobalBar } from "@/components/GlobalBar";
 import { Pricing } from "@/components/Pricing";
 import { AnimatedLedgerBg } from "@/components/AnimatedLedgerBg";
@@ -9,8 +11,21 @@ import { useT } from "@/lib/i18n";
 const IKONLAR = ["report", "excel", "globe"] as const;
 const MESLEKLER = ["land_p1", "land_p2", "land_p3", "land_p4", "land_p5", "land_p6", "land_p7", "land_p8"] as const;
 
-export default function Landing() {
+export default function HomePage() {
   const { t } = useT();
+
+  useEffect(() => {
+    async function logVisit() {
+      await supabase.from('visitor_logs').insert([
+        {
+          page_path: window.location.pathname,
+          user_agent: navigator.userAgent,
+        },
+      ]);
+    }
+
+    logVisit();
+  }, []);
   const ozellikler = [
     { icon: IKONLAR[0], baslik: t("land_f1t"), aciklama: t("land_f1d") },
     { icon: IKONLAR[1], baslik: t("land_f2t"), aciklama: t("land_f2d") },
