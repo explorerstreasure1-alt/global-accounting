@@ -16,16 +16,14 @@ export function Pricing() {
   const [msg, setMsg] = useState<string | null>(null);
 
   const isTr = locale === "tr";
-  // Türkiye özel fiyatı: 3 USD / 150 TL
-  const trPriceRaw = "3";
-  const trPriceSymbol = "USD";
-  const trPriceLocal = "₺150";
+  // Türkiye özel fiyatı: 3 USD / 150 TL — TR’de ana fiyat TL olarak görünür
+  const trPriceUsd = "3 USD";
+  const trPriceTl = "₺150";
 
   async function goPro() {
     setBusy(true);
     setMsg(null);
     try {
-      // Önce API checkout (user_id işlenir → webhook Pro'yu doğru hesaba açar)
       let email: string | undefined;
       let userId: string | undefined;
       if (supabaseConfigured()) {
@@ -46,7 +44,6 @@ export function Pricing() {
         window.location.href = json.url;
         return;
       }
-      // API yoksa ülkeye göre direkt linke düş
       window.location.href = isTr ? LEMON_CHECKOUT_URL_TR : LEMON_CHECKOUT_URL;
     } catch {
       setMsg("Checkout failed — try again.");
@@ -77,13 +74,13 @@ export function Pricing() {
           {isTr && <span className="text-xs font-bold text-teal-300">🇹🇷 Türkiye Özel Fiyatı</span>}
         </div>
         <p className="text-sm font-semibold uppercase tracking-wider text-teal-300">
-          {t("pro_plan")} · {isTr ? `${trPriceRaw} ${trPriceSymbol} (${trPriceLocal})` : "$5"}{t("per_month")}
+          {t("pro_plan")} · {isTr ? `${trPriceTl} /ay` : "$5"}{t("per_month")}
         </p>
         <p className="mt-2 text-4xl font-bold">
-          {isTr ? `${trPriceRaw} ${trPriceSymbol}` : "$5"}<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
+          {isTr ? trPriceTl : "$5"}<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
         </p>
         {isTr && (
-          <p className="mt-1 text-xs text-teal-400">{trPriceLocal}</p>
+          <p className="mt-1 text-xs text-teal-400">{trPriceUsd} / {t("per_month")}</p>
         )}
         <ul className="mt-4 space-y-2 text-sm text-slate-200">
           <li className="flex items-center gap-2"><I name="check" size={14} /> {t("price_p1")}</li>
@@ -95,7 +92,7 @@ export function Pricing() {
           disabled={busy}
           className="mt-6 rounded-full bg-teal-300 px-5 py-2.5 text-sm font-bold text-slate-900 hover:bg-teal-200 disabled:opacity-60"
         >
-          {busy ? "…" : t("go_pro")}
+          {busy ? "…" : isTr ? `Pro'ya geç — ${trPriceTl}/ay` : t("go_pro")}
         </button>
         {msg ? <p className="mt-3 text-xs text-amber-200">{msg}</p> : null}
       </div>

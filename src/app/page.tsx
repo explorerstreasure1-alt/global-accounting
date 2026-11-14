@@ -12,7 +12,10 @@ const IKONLAR = ["report", "excel", "globe"] as const;
 const MESLEKLER = ["land_p1", "land_p2", "land_p3", "land_p4", "land_p5", "land_p6", "land_p7", "land_p8"] as const;
 
 export default function HomePage() {
-  const { t } = useT();
+  const { t, locale } = useT();
+
+  const isTr = locale === "tr";
+  const pricingBtnLabel = isTr ? "Fiyatlandırma ₺150/ay" : t("land_pricing_btn");
 
   useEffect(() => {
     async function logVisit() {
@@ -58,7 +61,7 @@ export default function HomePage() {
               {t("land_open")}
             </a>
             <a href="#pricing" className="hidden rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold hover:border-slate-900 md:inline-block">
-              {t("land_pricing_btn")}
+              {pricingBtnLabel}
             </a>
           </div>
         </header>
