@@ -11,13 +11,14 @@ import { GlobalBar } from "./GlobalBar";
 import { I } from "./ui-icon";
 import { useT } from "@/lib/i18n";
 import { ReportModal, SettingsModal, TelefonModal } from "./ReportModals";
+import { AbonelikModal } from "./AbonelikModal";
 import { TakvimPanel } from "./TakvimPanel";
 import { KlavuzPaneli } from "./KlavuzPaneli";
 import { ProBanner } from "./ProBanner";
 import { PwaInstallBtn, KurulumModal } from "./PwaInstallBtn";
 import { GiderlerBolumu } from "./GiderlerBolumu";
 
-export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: { gun: number; email: string }; sub?: { plan: string; gun: number; email: string } }) {
+export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: { gun: number; email: string }; sub?: { plan: string; gun: number; email: string; cancelled?: boolean; country?: string } }) {
   const { t, intl, currency, locale } = useT();
   const fm = (v: number) => formatMoneyLocale(v, intl, currency);
   const monthNames = getMonthNames(intl);
@@ -42,7 +43,8 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
   const [takvimOpen, setTakvimOpen] = useState(false);
   const [kilavuzOpen, setKilavuzOpen] = useState(true);
   // Telefonda kılavuz paneli defterin altında kalmasın diye kapalı gelsin (hydration sonrası kapatılır, kayma olmaz)
-  const [mobilAktifTab, setMobilAktifTab] = useState<"takvim" | "gun" | "ay" | "z" | "ayarlar" | null>(null);
+  const [mobilAktifTab, setMobilAktifTab] = useState<"takvim" | "gun" | "ay" | "z" | "ayarlar" | "abonelik" | null>(null);
+  const [abonelikOpen, setAbonelikOpen] = useState(false);
   useEffect(() => {
     const h = setTimeout(() => {
       if (window.innerWidth < 1280) setKilavuzOpen(false);
@@ -304,9 +306,9 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
     <div className="desk-app min-h-screen">
       <div className={`mobil-alt-bos mx-auto flex min-h-screen max-w-[1600px] flex-col px-3 py-3 md:px-5 md:py-4 ${zOpen || gunOpen ? "no-print" : ""}`}>
         <div className="mb-2">
-          <GlobalBar userEmail={trial?.email || sub?.email} />
+          <GlobalBar userEmail={trial?.email || sub?.email} sub={sub} />
         </div>
-        {trial && trial.gun <= 4 ? <ProBanner gun={trial.gun} email={trial.email} /> : null}
+        {trial && trial.gun <= 4 ? <ProBanner gun={trial.gun} email={trial.email} country={sub?.country} /> : null}
         <header className="no-print mb-3 flex flex-wrap items-center gap-3 rounded-[24px] bg-black/25 px-3 py-2 text-amber-50 backdrop-blur-md">
           <img src="/images/logo.svg" alt="Shop Ledger" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-slate-200/40 sm:h-12 sm:w-12" />
           <div className="min-w-0">
@@ -546,12 +548,16 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       ) : null}
       <MobilEylemBar
         aktifTab={mobilAktifTab}
+        abonelikVar={Boolean(sub)}
+        onAbonelik={() => { setMobilAktifTab("abonelik"); setAbonelikOpen(true); }}
         onTakvim={() => { setMobilAktifTab("takvim"); setTakvimOpen(true); }}
         onGun={() => { setMobilAktifTab("gun"); setGunOpen(true); }}
         onAy={() => { setMobilAktifTab("ay"); setAyOpen(true); }}
         onZ={() => { setMobilAktifTab("z"); setZOpen(true); }}
         onAyarlar={() => { setMobilAktifTab("ayarlar"); setSettingsOpen(true); }}
       />
+
+      <AbonelikModal open={abonelikOpen} onClose={() => { setAbonelikOpen(false); setMobilAktifTab(null); }} sub={sub} />
 
       {/* Mobil hızlı ekleme butonu (FAB): defterin alt sabit formuna odaklanır */}
       <button
@@ -599,6 +605,8 @@ function MobilEylemBar({
   onAy,
   onZ,
   onAyarlar,
+  onAbonelik,
+  abonelikVar,
   aktifTab,
 }: {
   onTakvim: () => void;
@@ -606,6 +614,8 @@ function MobilEylemBar({
   onAy: () => void;
   onZ: () => void;
   onAyarlar: () => void;
+  onAbonelik: () => void;
+  abonelikVar: boolean;
   aktifTab: string | null;
 }) {
   const { t } = useT();
@@ -631,6 +641,12 @@ function MobilEylemBar({
         <I name="settings" size={20} />
         <span>{t("set_title")}</span>
       </button>
+      {abonelikVar ? (
+        <button type="button" className={`mobil-btn ${aktifTab === "abonelik" ? "aktif" : ""}`} onClick={onAbonelik} aria-pressed={aktifTab === "abonelik"}>
+          <I name="card" size={20} />
+          <span>{t("sub_manage_short")}</span>
+        </button>
+      ) : null}
     </nav>
   );
 }

@@ -23,6 +23,8 @@ create table if not exists businesses (
   trial_ends_at timestamptz not null default (now() + interval '7 days'),
   lemon_customer_id text,
   lemon_subscription_id text,
+  lemon_order_id text,
+  subscription_ends_at timestamptz,
   created_at timestamptz not null default now()
 );
 create index if not exists businesses_owner_idx on businesses(owner_id);
@@ -100,7 +102,12 @@ as $$
     select 1 from businesses
     where id = b
       and owner_id = auth.uid()
-      and (plan = 'pro' or trial_ends_at > now())
+      and (
+        plan = 'pro' and (
+          subscription_ends_at is null or subscription_ends_at > now()
+        )
+        or trial_ends_at > now()
+      )
   );
 $$;
 

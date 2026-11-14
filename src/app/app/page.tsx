@@ -24,7 +24,7 @@ export default async function AppPage() {
 
   // Trial bitti + free plan → full kilit
   if (!ctx.canUse) {
-    return <KilitEkrani trialLeft={ctx.trialLeft} email={ctx.user.email} businessName={ctx.business.name} />;
+    return <KilitEkrani trialLeft={ctx.trialLeft} email={ctx.user.email} businessName={ctx.business.name} country={ctx.business.locale} />;
   }
 
   const supa = await createClient();
@@ -45,6 +45,6 @@ export default async function AppPage() {
     ctx.business.plan === "pro"
       ? undefined
       : { gun: ctx.trialLeft, email: ctx.user.email };
-  const sub = { plan: ctx.business.plan, gun: ctx.trialLeft, email: ctx.user.email };
+  const sub = { plan: ctx.business.plan, gun: ctx.trialLeft, email: ctx.user.email, cancelled: ctx.business.status === "cancelled", country: ctx.business.locale };
   return <LedgerApp initial={initial} trial={trial} sub={sub} />;
 }

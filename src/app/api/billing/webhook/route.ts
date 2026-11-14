@@ -5,7 +5,15 @@ export const dynamic = "force-dynamic";
 /**
  * Lemon Squeezy webhook: /api/billing/webhook
  * Dashboard → Settings → Webhooks → signing secret → LEMONSQUEEZY_WEBHOOK_SECRET
- * Olaylar: subscription_created/updated → pro aç, subscription_cancelled/expired → free'ye düşür.
+ *
+ * Davranış:
+ *  - subscription_created / updated / resumed / unpaused / order_created
+ *    → plan="pro", status="active", subscription_ends_at = ends_at (dönem sonu)
+ *    Kullanıcı ödemeye devam ettiği sürece uygulama kilitlenmez.
+ *  - subscription_cancelled
+ *    → status="cancelled", plan="pro" korunur (grace period: dönem sonuna kadar erişim)
+ *  - subscription_expired
+ *    → plan="free", status="expired" (ödeme bitti, erişim kapatılır)
  */
 
 async function verifySignature(raw: string, sig: string | null): Promise<boolean> {
@@ -35,7 +43,15 @@ type LemonEvent = {
   meta?: { event_name?: string; custom_data?: { user_id?: string } };
   data?: {
     id?: string;
-    attributes?: { customer_id?: number | string; status?: string; user_email?: string; user_name?: string };
+    attributes?: {
+      customer_id?: number | string;
+      status?: string;
+      user_email?: string;
+      user_name?: string;
+      ends_at?: string | null;
+      renews_at?: string | null;
+      order_id?: number | string;
+    };
   };
 };
 
@@ -56,7 +72,10 @@ export async function POST(req: Request) {
   const userId = ev?.meta?.custom_data?.user_id;
   const subId = ev?.data?.id ? String(ev.data.id) : null;
   const custId = ev?.data?.attributes?.customer_id != null ? String(ev.data.attributes.customer_id) : null;
+  const orderId = ev?.data?.attributes?.order_id != null ? String(ev.data.attributes.order_id) : null;
   const buyerEmail = ev?.data?.attributes?.user_email || null;
+  const lemonStatus = ev?.data?.attributes?.status || null;
+  const endsAt = ev?.data?.attributes?.ends_at ?? null;
 
   async function ownerIdFor(): Promise<string | null> {
     if (userId) return userId;
@@ -82,15 +101,50 @@ export async function POST(req: Request) {
   if (ownerId && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const supa = await createServiceClient();
-      if (name === "subscription_created" || name === "subscription_updated" || name === "subscription_resumed" || name === "subscription_unpaused" || name === "order_created") {
-        await supa.from("businesses").update({
-          plan: "pro",
-          lemon_customer_id: custId,
-          lemon_subscription_id: subId,
-        }).eq("owner_id", ownerId);
-        console.log("[billing webhook] pro opened for", ownerId);
-      } else if (name === "subscription_cancelled" || name === "subscription_expired") {
-        await supa.from("businesses").update({ plan: "free" }).eq("owner_id", ownerId);
+
+      if (
+        name === "subscription_created" ||
+        name === "subscription_updated" ||
+        name === "subscription_resumed" ||
+        name === "subscription_unpaused" ||
+        name === "order_created"
+      ) {
+        // Abonelik aktif/yeni → pro aç, bitiş tarihini kaydet.
+        // Lemon "updated" olayını her değişiklikte gönderir; ends_at her seferinde güncellenir.
+        const expired = lemonStatus === "expired";
+        const cancelled = lemonStatus === "cancelled";
+        await supa
+          .from("businesses")
+          .update({
+            plan: expired ? "free" : "pro",
+            status: expired ? "expired" : cancelled ? "cancelled" : "active",
+            lemon_customer_id: custId,
+            lemon_subscription_id: subId,
+            lemon_order_id: orderId,
+            subscription_ends_at: endsAt,
+          })
+          .eq("owner_id", ownerId);
+        console.log(
+          "[billing webhook] subscription synced for",
+          ownerId,
+          lemonStatus || name,
+          "ends_at:",
+          endsAt,
+        );
+      } else if (name === "subscription_cancelled") {
+        // İptal edildi ama ödeme yapılan dönem sonuna kadar erişim sürer (grace period).
+        // plan="pro" kalır, yalnızca status="cancelled" yapılır; webhook expired gelince free'ye düşer.
+        await supa
+          .from("businesses")
+          .update({ status: "cancelled", subscription_ends_at: endsAt })
+          .eq("owner_id", ownerId);
+        console.log("[billing webhook] subscription cancelled (grace period) for", ownerId, "ends_at:", endsAt);
+      } else if (name === "subscription_expired") {
+        // Dönem bendi + ödeme yapılmadı → free'ye düş, erişim kısıtlanır.
+        await supa
+          .from("businesses")
+          .update({ plan: "free", status: "expired" })
+          .eq("owner_id", ownerId);
         console.log("[billing webhook] downgraded to free for", ownerId);
       }
     } catch (e) {

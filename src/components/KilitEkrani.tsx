@@ -2,13 +2,26 @@
 
 import { useState } from "react";
 import { useT } from "@/lib/i18n";
-import { LEMON_DIRECT_URL } from "@/lib/billing";
+import { LEMON_DIRECT_URL, LEMON_CHECKOUT_URL_TR } from "@/lib/billing";
 import { I } from "./ui-icon";
 
-export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: number; email: string; businessName: string }) {
-  const { t } = useT();
+export function KilitEkrani({
+  trialLeft,
+  email,
+  businessName,
+  country,
+}: {
+  trialLeft: number;
+  email: string;
+  businessName: string;
+  country?: string;
+}) {
+  const { t, locale } = useT();
   const [busy, setBusy] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+
+  const isTr = locale === "tr" || country === "TR";
+  const checkoutUrl = isTr ? LEMON_CHECKOUT_URL_TR : LEMON_DIRECT_URL;
 
   async function proOl() {
     setBusy(true);
@@ -17,16 +30,16 @@ export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: num
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, locale, country: isTr ? "TR" : undefined }),
       });
       const json = (await res.json()) as { ok: boolean; url?: string; error?: string };
       if (json.ok && json.url) {
         window.location.href = json.url;
         return;
       }
-      window.location.href = LEMON_DIRECT_URL;
+      window.location.href = checkoutUrl;
     } catch (e) {
-      window.location.href = LEMON_DIRECT_URL;
+      window.location.href = checkoutUrl;
     } finally {
       setBusy(false);
     }
@@ -42,7 +55,16 @@ export function KilitEkrani({ trialLeft, email, businessName }: { trialLeft: num
           {trialLeft < 0 ? ` (${Math.abs(trialLeft)})` : ""}
         </p>
         <div className="mt-4 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <p className="text-4xl font-extrabold">$5<span className="text-base font-normal text-slate-500">{t("kilit_per")}</span></p>
+          <p className="text-4xl font-extrabold">
+            {isTr ? "3 USD" : "$5"}
+            <span className="text-base font-normal text-slate-500">{t("kilit_per")}</span>
+          </p>
+          {isTr ? (
+            <>
+              <p className="mt-1 text-xs text-teal-600 font-semibold">🇹🇷 ₺150 / ay</p>
+              <p className="mt-1 text-xs text-teal-600 font-semibold">{t("tr_special_price")}</p>
+            </>
+          ) : null}
           <p className="mt-1 text-xs text-slate-500">{t("kilit_feat")}</p>
         </div>
         {hata ? <p className="mt-2 text-xs text-rose-700">{hata}</p> : null}

@@ -1,16 +1,33 @@
-import { billingConfigured, createCheckoutUrl } from "@/lib/billing";
+import { billingConfigured, createCheckoutUrl, getCheckoutUrlForCountry } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!billingConfigured()) {
-    return Response.json({ ok: false, error: "Billing not configured" }, { status: 500 });
-  }
   try {
-    const body = (await req.json().catch(() => ({}))) as { email?: string; userId?: string };
-    const url = await createCheckoutUrl({ email: body.email, userId: body.userId });
-    return Response.json({ ok: true, url });
+    const body = (await req.json().catch(() => ({}))) as {
+      email?: string;
+      userId?: string;
+      country?: string;
+      locale?: string;
+    };
+
+    // API anahtarı yoksa ülkeye göre doğrudan bağlantıya düş
+    if (!billingConfigured()) {
+      return Response.json({ ok: true, url: getCheckoutUrlForCountry(body.country) });
+    }
+
+    try {
+      const url = await createCheckoutUrl({
+        email: body.email,
+        userId: body.userId,
+        country: body.country,
+      });
+      return Response.json({ ok: true, url });
+    } catch {
+      // API hatası durumunda ülkeye göre doğrudan bağlantı
+      return Response.json({ ok: true, url: getCheckoutUrlForCountry(body.country) });
+    }
   } catch (e) {
-    return Response.json({ ok: false, error: (e as Error)?.message || "checkout failed" }, { status: 500 });
+    return Response.json({ ok: false, error: (e as Error)?.message || "checkout failed" }, { status: 502 });
   }
 }

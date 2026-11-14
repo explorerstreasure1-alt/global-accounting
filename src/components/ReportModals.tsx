@@ -7,6 +7,7 @@ import { gonderRapor, raporCanvas, raporJpgIndir, type GonderFormati } from "@/l
 import { waGonderenOnay } from "@/lib/wa-mesaj";
 import { I } from "./ui-icon";
 import { useT, catLabel } from "@/lib/i18n";
+import { LEMON_DIRECT_URL, LEMON_CHECKOUT_URL_TR } from "@/lib/billing";
 
 /** Gönderici numarası ülke kodları (ISO ile, dil bağımsız). */
 const ULKE_KODLARI: Array<{ kod: string; etiket: string }> = [
@@ -702,18 +703,31 @@ type SettingsProps = {
   onYedekYukle: () => void;
   onSifirla: () => void;
   onKiraBol: (ay: number) => Promise<boolean>;
-  sub?: { plan: string; gun: number; email: string };
+  sub?: SubInfo;
 };
 
-export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; email: string } }) {
-  const { t } = useT();
+export type SubInfo = { plan: string; gun: number; email: string; cancelled?: boolean };
+
+export function AbonelikBolumu({
+  sub,
+  alwaysShow = false,
+}: {
+  sub?: SubInfo;
+  alwaysShow?: boolean;
+}) {
+  const { t, locale } = useT();
   const [kurulu, setKurulu] = useState(false);
   const [yapiliyor, setYapiliyor] = useState(false);
+  const [portalYukleniyor, setPortalYukleniyor] = useState(false);
+  const [proYukleniyor, setProYukleniyor] = useState(false);
   const [sonuc, setSonuc] = useState<string | null>(null);
+  const [iptalEdildi, setIptalEdildi] = useState(false);
   if (!sub) return null;
   const pro = sub.plan === "pro";
+  const isTr = locale === "tr";
+  const cancelled = sub.cancelled || iptalEdildi;
   // İlk günler satış kokmasın: ücretsiz denemenin ilk 3 gününde abonelik kartı gizli.
-  if (!pro && sub.gun > 4) return null;
+  if (!pro && !alwaysShow && sub.gun > 4) return null;
 
   async function iptalEt() {
     setYapiliyor(true);
@@ -722,9 +736,11 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
       const res = await fetch("/api/billing/cancel", { method: "POST" });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !json.ok) throw new Error(json.error || "cancel failed");
-      setSonuc(t("sub_cancel_ok"));
+      setIptalEdildi(true);
       setKurulu(false);
-      setTimeout(() => window.location.reload(), 1500);
+      setSonuc(t("sub_cancel_ok"));
+      // Sunucudaki plan/rozet bilgisi de tazelensin.
+      setTimeout(() => window.location.reload(), 2000);
     } catch {
       setSonuc(t("sub_cancel_fail"));
     } finally {
@@ -732,26 +748,95 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
     }
   }
 
+  async function portalAc() {
+    setPortalYukleniyor(true);
+    setSonuc(null);
+    try {
+      const res = await fetch("/api/billing/portal");
+      const json = (await res.json()) as { ok?: boolean; url?: string };
+      if (json.ok && json.url) {
+        window.open(json.url, "_blank", "noopener,noreferrer");
+        return;
+      }
+      setSonuc(t("sub_portal_fail"));
+    } catch {
+      setSonuc(t("sub_portal_fail"));
+    } finally {
+      setPortalYukleniyor(false);
+    }
+  }
+
+  async function proOl() {
+    setProYukleniyor(true);
+    setSonuc(null);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: sub?.email, locale }),
+      });
+      const json = (await res.json()) as { ok?: boolean; url?: string };
+      if (json.ok && json.url) {
+        window.location.href = json.url;
+        return;
+      }
+      window.location.href = isTr ? LEMON_CHECKOUT_URL_TR : LEMON_DIRECT_URL;
+    } catch {
+      window.location.href = isTr ? LEMON_CHECKOUT_URL_TR : LEMON_DIRECT_URL;
+    } finally {
+      setProYukleniyor(false);
+    }
+  }
+
   return (
     <div className="rounded-2xl bg-slate-900 p-4 text-slate-100">
-      <p className="font-hand text-2xl text-teal-200">{t("sub_title")}</p>
-      <p className="mt-1 text-sm">
-        {pro ? (
-          <span className="font-semibold text-teal-300">✓ {t("sub_pro")}</span>
-        ) : (
-          <span>{t("sub_free")} · {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
-        )}
-      </p>
-      <p className="mt-1 text-[11px] text-slate-400">{sub.email}</p>
+      <div className="flex items-start gap-2.5">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-400/15 text-teal-200">
+          <I name="card" size={17} />
+        </span>
+        <div className="min-w-0">
+          <p className="font-hand text-2xl leading-tight text-teal-200">{t("sub_title")}</p>
+          <p className="mt-0.5 text-sm">
+            {pro ? (
+              cancelled ? (
+                <span className="inline-flex items-center gap-1 font-semibold text-amber-300">
+                  <I name="warn" size={13} /> {t("sub_cancelled")}
+                </span>
+              ) : (
+                <span className="font-semibold text-teal-300">✓ {t("sub_pro")}</span>
+              )
+            ) : (
+              <span>{t("sub_free")} · {t("sub_days").replace("{n}", String(Math.max(sub.gun, 0)))}</span>
+            )}
+          </p>
+          <p className="mt-0.5 truncate text-[11px] text-slate-400">{sub.email}</p>
+        </div>
+      </div>
+
+      {cancelled ? (
+        <p className="mt-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-2.5 text-xs text-amber-100">
+          {t("sub_cancelled_desc")}
+        </p>
+      ) : null}
+
       <div className="mt-3">
         {pro ? (
-          !kurulu ? (
+          cancelled ? (
+            <button
+              type="button"
+              onClick={() => void portalAc()}
+              disabled={portalYukleniyor}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-60"
+            >
+              <I name="external" size={14} /> {portalYukleniyor ? "…" : t("sub_portal")}
+            </button>
+          ) : !kurulu ? (
             <button
               type="button"
               onClick={() => { setKurulu(true); setSonuc(null); }}
-              className="w-full rounded-lg border border-rose-400/60 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/10"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-400/60 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/10"
             >
-              {t("sub_cancel")}
+              <I name="close" size={14} /> {t("sub_cancel")}
             </button>
           ) : (
             <div className="rounded-xl border border-rose-500/40 p-3">
@@ -763,7 +848,7 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
                   onClick={() => void iptalEt()}
                   className="flex-1 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
                 >
-                  {yapiliyor ? "…" : t("sub_cancel")}
+                  {yapiliyor ? "…" : t("sub_cancel_confirm")}
                 </button>
                 <button
                   type="button"
@@ -778,14 +863,25 @@ export function AbonelikBolumu({ sub }: { sub?: { plan: string; gun: number; ema
         ) : (
           <button
             type="button"
-            onClick={() => window.open("https://app.lemonsqueezy.com/", "_blank", "noopener")}
-            className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500"
+            onClick={() => void proOl()}
+            disabled={proYukleniyor}
+            className="w-full rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-60"
           >
-            {t("sub_go")}
+            {proYukleniyor ? "…" : t("sub_go")}
           </button>
         )}
         {sonuc ? <p className="mt-2 text-xs text-amber-200">{sonuc}</p> : null}
-        <p className="mt-1 text-[11px] text-slate-400">{t("sub_hint")}</p>
+        {pro && !cancelled ? (
+          <button
+            type="button"
+            onClick={() => void portalAc()}
+            disabled={portalYukleniyor}
+            className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px] text-slate-300 underline decoration-slate-500 underline-offset-2 hover:text-white disabled:opacity-60"
+          >
+            <I name="external" size={11} /> {portalYukleniyor ? "…" : t("sub_portal")}
+          </button>
+        ) : null}
+        <p className="mt-1 text-[11px] text-slate-400">{pro ? (cancelled ? t("sub_modal_hint") : t("sub_hint")) : t("sub_free_desc")}</p>
       </div>
     </div>
   );
