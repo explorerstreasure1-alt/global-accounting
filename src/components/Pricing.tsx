@@ -71,18 +71,36 @@ export function Pricing() {
       </div>
       <div className="rounded-3xl border-2 border-slate-900 bg-slate-900 p-6 text-white shadow-xl">
         {isTr && (
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="text-3xl">🇹🇷</span>
-            <span className="text-sm font-bold text-teal-300 uppercase tracking-wider">
-              Türkiye Özel Fiyatı
-            </span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <img
+                src="/images/tr-flag.svg"
+                alt="Türkiye"
+                className="w-5 h-3.5"
+                width={24}
+                height={16}
+              />
+              <span className="text-sm font-bold text-teal-300 uppercase tracking-wider">
+                Türkiye Özel Fiyatı
+              </span>
+            </div>
           </div>
         )}
         <p className="text-sm font-semibold uppercase tracking-wider text-teal-300">
           {t("pro_plan")} · {isTr ? `${trPriceTl} /ay` : "$5"}{t("per_month")}
         </p>
-        <p className="mt-2 text-4xl font-bold">
-          {isTr ? trPriceTl : "$5"}<span className="text-base font-normal text-slate-300">{t("per_month")}</span>
+        <p className="mt-2 flex items-baseline gap-1">
+          {isTr ? (
+            <>
+              <span className="text-5xl font-bold">{trPriceTl}</span>
+              <span className="text-sm font-normal text-teal-400">{t("per_month")}</span>
+            </>
+          ) : (
+            <>
+              <span className="text-5xl font-bold">$5</span>
+              <span className="text-sm font-normal text-slate-300">{t("per_month")}</span>
+            </>
+          )}
         </p>
         {isTr && (
           <p className="mt-1 text-xs text-teal-400">{trPriceUsd} / {t("per_month")}</p>
