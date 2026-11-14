@@ -70,9 +70,14 @@ export function Pricing() {
         </a>
       </div>
       <div className="rounded-3xl border-2 border-slate-900 bg-slate-900 p-6 text-white shadow-xl">
-        <div className="flex items-center gap-1 mb-1">
-          {isTr && <span className="text-xs font-bold text-teal-300">🇹🇷 Türkiye Özel Fiyatı</span>}
-        </div>
+        {isTr && (
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-3xl">🇹🇷</span>
+            <span className="text-sm font-bold text-teal-300 uppercase tracking-wider">
+              Türkiye Özel Fiyatı
+            </span>
+          </div>
+        )}
         <p className="text-sm font-semibold uppercase tracking-wider text-teal-300">
           {t("pro_plan")} · {isTr ? `${trPriceTl} /ay` : "$5"}{t("per_month")}
         </p>
