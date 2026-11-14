@@ -21,6 +21,19 @@ export function GlobalBar({
   // dile geçse seçiciler canlı güncellenir, artık yalnız onun state'i çoğul.
   const { t, locale, currency } = useT();
 
+  const LOCALE_FLAGS: Record<LocaleCode, string> = {
+    en: "🇺🇸",
+    tr: "🇹🇷",
+    ru: "🇷🇺",
+    de: "🇩🇪",
+    fr: "🇫🇷",
+    es: "🇪🇸",
+    ar: "🇸🇦",
+    fa: "🇮🇷",
+    he: "🇮🇱",
+    ku: "🇮🇶",
+  };
+
   useEffect(() => {
     // Tek tema: kâğıt defter kilitlidir.
     setTheme("notebook");
@@ -47,10 +60,11 @@ export function GlobalBar({
         >
           {LOCALES.map((l) => (
             <option key={l.code} value={l.code}>
-              {l.label}
+              {LOCALE_FLAGS[l.code]} {l.label}
             </option>
           ))}
         </select>
+        <span className="ml-1 text-xs font-bold">{LOCALE_FLAGS[locale]}</span>
       </label>
       {!compact ? (
       <label className="flex items-center gap-1 text-xs">
