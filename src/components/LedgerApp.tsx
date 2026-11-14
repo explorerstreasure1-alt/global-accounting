@@ -548,7 +548,7 @@ export function LedgerApp({ initial, trial, sub }: { initial: InitData; trial?: 
       ) : null}
       <MobilEylemBar
         aktifTab={mobilAktifTab}
-        abonelikVar={Boolean(sub)}
+        abonelikVar={Boolean(sub) && (sub?.plan === "pro" || (sub?.gun ?? 0) > 0)}
         onAbonelik={() => { setMobilAktifTab("abonelik"); setAbonelikOpen(true); }}
         onTakvim={() => { setMobilAktifTab("takvim"); setTakvimOpen(true); }}
         onGun={() => { setMobilAktifTab("gun"); setGunOpen(true); }}

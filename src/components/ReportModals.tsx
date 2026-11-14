@@ -830,34 +830,37 @@ export function AbonelikBolumu({
             >
               <I name="external" size={14} /> {portalYukleniyor ? "…" : t("sub_portal")}
             </button>
-          ) : !kurulu ? (
-            <button
-              type="button"
-              onClick={() => { setKurulu(true); setSonuc(null); }}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-400/60 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/10"
-            >
-              <I name="close" size={14} /> {t("sub_cancel")}
-            </button>
           ) : (
-            <div className="rounded-xl border border-rose-500/40 p-3">
-              <p className="text-xs text-rose-200">{t("sub_cancel_emin")}</p>
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  disabled={yapiliyor}
-                  onClick={() => void iptalEt()}
-                  className="flex-1 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"
-                >
-                  {yapiliyor ? "…" : t("sub_cancel_confirm")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setKurulu(false)}
-                  className="rounded-lg bg-white/10 px-3 py-1.5 text-sm"
-                >
-                  {t("rep_giveUp")}
-                </button>
-              </div>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => { setKurulu(true); setSonuc(null); }}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-rose-500 bg-rose-500/10 px-3 py-2.5 text-sm font-bold text-rose-300 hover:bg-rose-500/20 transition-all"
+              >
+                <I name="close" size={14} /> {t("sub_cancel")}
+              </button>
+              {kurulu ? (
+                <div className="rounded-xl border-2 border-rose-500 bg-rose-500/10 p-3 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                  <p className="text-xs font-semibold text-rose-200">{t("sub_cancel_emin")}</p>
+                  <div className="mt-2.5 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={yapiliyor}
+                      onClick={() => void iptalEt()}
+                      className="flex-1 rounded-lg bg-rose-600 px-3 py-2 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50 shadow-sm"
+                    >
+                      {yapiliyor ? "…" : t("sub_cancel_confirm")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setKurulu(false)}
+                      className="rounded-lg bg-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/20"
+                    >
+                      {t("rep_giveUp")}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           )
         ) : (

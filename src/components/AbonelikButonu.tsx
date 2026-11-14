@@ -8,7 +8,8 @@ import { I } from "./ui-icon";
 
 /**
  * Üst barda her zaman görünen abonelik düğmesi.
- * Pro ise "PRO", denemede ise kalan gün rozeti gösterir; tıklayınca iptal merkezi açılır.
+ * Pro veya deneme durumunda💳 ikonla görünür; tıklayınca iptal merkezi açılır.
+ * Kullanıcı istediği zaman kolayca iptal edebilir, zorlama yoktur.
  */
 export function AbonelikButonu({ sub, fetchStatus = false }: { sub?: SubInfo; fetchStatus?: boolean }) {
   const { t } = useT();
@@ -34,6 +35,9 @@ export function AbonelikButonu({ sub, fetchStatus = false }: { sub?: SubInfo; fe
 
   const pro = info.plan === "pro";
   const cancelled = Boolean(info.cancelled);
+  const hasActiveSub = pro || (info.gun ?? 0) > 0;
+  if (!hasActiveSub) return null;
+
   const badge = cancelled ? t("sub_cancelled_short") : pro ? "PRO" : `${Math.max(info.gun, 0)}g`;
   const badgeClass = cancelled
     ? "bg-amber-300/20 text-amber-100"
@@ -41,10 +45,10 @@ export function AbonelikButonu({ sub, fetchStatus = false }: { sub?: SubInfo; fe
       ? "bg-teal-300/25 text-teal-100"
       : "bg-white/15 text-amber-50";
   const pillClass = cancelled
-    ? "bg-amber-400/15 text-amber-50 ring-amber-300/40 hover:bg-amber-400/25"
+    ? "bg-amber-500/20 text-amber-100 ring-amber-400/40 hover:bg-amber-500/30"
     : pro
-      ? "bg-teal-400/15 text-teal-50 ring-teal-300/40 hover:bg-teal-400/25"
-      : "bg-white/10 text-amber-50 ring-white/20 hover:bg-white/20";
+      ? "bg-teal-500/20 text-teal-100 ring-teal-400/40 hover:bg-teal-500/30"
+      : "bg-white/15 text-amber-50 ring-white/20 hover:bg-white/30";
 
   return (
     <>
@@ -53,11 +57,11 @@ export function AbonelikButonu({ sub, fetchStatus = false }: { sub?: SubInfo; fe
         onClick={() => setOpen(true)}
         title={t("sub_manage")}
         aria-label={t("sub_manage")}
-        className={`inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5 text-xs font-semibold outline-none ring-1 shadow-sm transition ${pillClass}`}
+        className={`inline-flex items-center gap-2 rounded-full py-1.5 pl-2.5 pr-2.5 text-xs font-bold outline-none ring-1 shadow-md transition ${pillClass}`}
       >
-        <I name="card" size={14} />
+        <span className="text-[16px]">💳</span>
         <span className="hidden sm:inline">{t("sub_manage_short")}</span>
-        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${badgeClass}`}>{badge}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold leading-none ${badgeClass}`}>{badge}</span>
       </button>
       <AbonelikModal open={open} onClose={() => setOpen(false)} sub={info} />
     </>
